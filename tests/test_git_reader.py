@@ -72,3 +72,25 @@ def test_read_snapshot_combines_refs_and_data(git_repo: Path) -> None:
     assert snapshot.tags == ("v1.0.0",)
     assert len(snapshot.commits) == 2
     assert snapshot.scanned_at is not None
+
+
+def test_ignored_files_are_excluded(git_repo: Path) -> None:
+    (git_repo / ".gitignore").write_text("*.tmp\n", encoding="utf-8")
+    (git_repo / "ignored.tmp").write_text("do not report\n", encoding="utf-8")
+
+    paths = {record.path for record in GitReader(git_repo).read_files()}
+
+    assert "ignored.tmp" not in paths
+
+
+def test_empty_repository_returns_empty_snapshot(tmp_path: Path) -> None:
+    repo = tmp_path / "empty"
+    repo.mkdir()
+    run_git(repo, "init", "-b", "main")
+
+    snapshot = GitReader(repo).read_snapshot()
+
+    assert snapshot.commits == ()
+    assert snapshot.files == ()
+    assert snapshot.branches == ()
+    assert snapshot.tags == ()
