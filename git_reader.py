@@ -118,6 +118,8 @@ class GitReader:
         """Return commits from all local branches, newest first."""
 
         self._ensure_validated()
+        if max_commits == 0:
+            return []
         output = self._run(
             (
                 "log",
