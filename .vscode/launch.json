@@ -1,0 +1,62 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "打开界面（演示数据）",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/run_gui.py",
+            "args": [
+                "--demo"
+            ],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
+            "name": "打开界面（真实仓库 RepoScope）",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/run_gui.py",
+            "args": [
+                "--path",
+                "${workspaceFolder}"
+            ],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
+            "name": "打开界面（手动选仓库）",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/run_gui.py",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
+            "name": "重新生成九页截图",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/tools/screenshot.py",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
+            "name": "运行全部测试",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "pytest",
+            "args": [
+                "-q"
+            ],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "justMyCode": false
+        }
+    ]
+}

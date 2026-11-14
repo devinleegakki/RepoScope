@@ -8,7 +8,7 @@ RepoScope 的设计目标是把“提交记录”转换为可以理解、可以�
 
 - **Local-First**：直接读取本地 `.git` 目录，不上传仓库源码，也不依赖 GitHub/GitLab API。
 - **可解释分析**：每条风险都包含指标名称、实际值、阈值、风险等级和建议动作。
-- **图形化查看**：通过 PySide6 和 PyQtGraph 展示仪表盘、时间趋势、贡献者分布和文件热点。
+- **图形化查看**：通过 PySide6（内置 QtCharts 绘制图表）展示仪表盘、时间趋势、贡献者分布和文件热点。
 - **可配置规则**：支持通过 GUI 或 YAML/JSON 修改分析阈值和提交信息格式。
 - **多仓库比较**：支持一次分析多个本地仓库，便于课程项目和团队维护比较。
 - **多格式导出**：支持 Markdown、HTML 和 CSV，方便提交、展示和后续数据处理。
@@ -59,7 +59,7 @@ commit_message_pattern: "^(feat|fix|docs|refactor)(\\(.+\\))?:"
 ## 技术架构
 
 ```text
-PySide6 + PyQtGraph GUI
+PySide6 GUI（QtCharts 图表）
             |
 应用服务层：任务调度、配置、结果组合
             |
@@ -70,7 +70,7 @@ PySide6 + PyQtGraph GUI
 本地 Git 仓库
 ```
 
-- GUI 使用 PySide6 和 PyQtGraph。
+- GUI 使用 PySide6；图表用 PySide6 自带的 QtCharts，不引入额外图表库。
 - Git 数据读取使用 Python `subprocess` 调用系统 Git，避免上层模块直接拼接 Git 命令。
 - 长时间分析使用后台线程，避免阻塞界面。
 - 数据模型在各层之间统一传递，便于单元测试和后续扩展。
@@ -81,18 +81,25 @@ PySide6 + PyQtGraph GUI
 ```text
 models.py                            共享的数据模型
 git_reader.py                        本地 Git 数据读取层
+gui/                                 图形界面层（九页 + 契约 + 后台线程）
+run_gui.py                           图形界面入口
 tests/test_models.py                 数据模型测试
 tests/test_git_reader.py             临时 Git 仓库集成测试
 tests/test_git_reader_validation.py  仓库路径和 Git 校验测试
+tests/test_gui_smoke.py              界面冒烟测试（离屏运行，无需显示器）
+docs/GUI_INTERFACE.md                GUI 接口说明（给队友看字段和接法）
+docs/DEMO.md                         演示执行卡
 ```
 
-当前仓库已完成 Git 数据读取层，包括仓库校验、提交历史、文件元数据、分支、tag 和统一异常处理。统计分析、GUI、CLI 和报告导出将在后续模块中接入相同的数据模型。
+已完成：Git 数据读取层（仓库校验、提交历史、文件元数据、分支、tag、统一异常处理）和图形界面的九个页面（导航、图表、表格、导出、后台分析线程）。
+
+进行中：`metrics.py` 的统计指标与反模式规则、CLI、报告导出模块。界面目前接的是 `gui/mock_data.py` 里的临时统计（函数头标了 `TEMP`），`metrics.py` 到位后只替换这一处，界面不动。
 
 ## 环境要求
 
 - Python 3.10 或更高版本
 - Git，并且 Git 命令位于系统 `PATH` 中
-- GUI 阶段需要 PySide6 和 PyQtGraph
+- GUI 阶段只需要 PySide6（QtCharts 随 PySide6 一起安装，不需要额外图表库）
 - 测试需要 pytest
 
 Git 数据读取层使用系统 Git 和 Python 标准库，不需要 GitPython，也不需要网络连接或远程平台账号。
@@ -102,16 +109,44 @@ Git 数据读取层使用系统 Git 和 Python 标准库，不需要 GitPython�
 在项目根目录执行：
 
 ```powershell
-python -m pip install pytest
-python -m pytest -q
+python -m pip install pytest pyside6   # 测试 + 图形界面
+python -m pytest -q                    # 全部测试
 ```
 
-GUI 模块完成后，再按项目依赖安装 PySide6 和 PyQtGraph。当前 Git 数据层测试只需要 `pytest`：
+只跑数据层测试的话 `pytest` 单独装就够——GUI 冒烟测试在没有 PySide6 时会自动跳过，不会让其他人红一片。
+
+### Windows：`python` 命令没有任何输出
+
+如果输入 `python -V` 后既没有版本号也没有报错、直接回到提示符，说明命令行里的 `python` 指向了 Windows 应用商店的占位程序（`...\WindowsApps\python.exe`），它不是真正的解释器，退出码 9009。
+
+用 Python 官方的启动器绕过它，并在项目里建一个独立环境（`.venv/` 已在 `.gitignore` 中）：
 
 ```powershell
-python -m pip install pytest
-python -m pytest -q
+py -0p                                              # 列出本机所有解释器
+py -3.11 -m venv .venv                              # 用 3.11 建环境
+.\.venv\Scripts\python.exe -m pip install pyside6   # 装依赖
+.\.venv\Scripts\python.exe run_gui.py --demo        # 启动界面
 ```
+
+环境建好之后，`.venv\Scripts\` 里有真正的 `python.exe`，激活后 `python` 这个名字就恢复正常了，也不再受应用商店占位程序影响。
+
+想彻底修好全局的 `python` 名字，两步：一是在「设置 → 应用 → 高级应用设置 → 应用执行别名」里关掉 `python.exe` 和 `python3.exe`；二是把真实的 Python 目录（例如 `%LOCALAPPDATA%\Programs\Python\Python311\` 和其下的 `Scripts\`）加入用户 `PATH`。
+
+## 图形界面（GUI）
+
+三种启动方式：
+
+```powershell
+python run_gui.py                     # 启动后在界面里选仓库
+python run_gui.py --demo              # 内置演示数据集（160 次提交 / 4 位作者）
+python run_gui.py --path <仓库目录>    # 启动即分析指定仓库
+```
+
+`run_gui.bat` 和 `run_real.bat` 是上面后两条的双击版，会自动检查环境。`--demo` 与 `--path` 互斥。
+
+界面按八个区域分成九页：仓库选择、分析配置、总览仪表板、提交趋势、作者贡献、数据分析、反模式中心、报告区、多仓库对比。「进度反馈」是常驻顶部进度条，不单独成页。分析在 `QThread` 子线程执行，主线程只接信号，所以切换页面不阻塞、分析期间不白屏。
+
+界面只认 `gui/contract.py` 里的 `AnalysisView` 契约，不直接依赖 `git_reader` 或 `metrics`，两者可以并行开发。字段清单、待补字段和接入方式见 [`docs/GUI_INTERFACE.md`](docs/GUI_INTERFACE.md)；两种演示模式的差异和台本见 [`docs/DEMO.md`](docs/DEMO.md)。
 
 ## 功能边界
 
