@@ -11,6 +11,7 @@ RepoScope 的设计目标是把“提交记录”转换为可以理解、可以�
 - **图形化查看**：通过 PySide6（内置 QtCharts 绘制图表）展示仪表盘、时间趋势、贡献者分布和文件热点。
 - **可配置规则**：支持通过 GUI 或 YAML/JSON 修改分析阈值和提交信息格式。
 - **多仓库比较**：支持一次分析多个本地仓库，便于课程项目和团队维护比较。
+- **命令行 + 报告**：提供 `main.py` 命令行（analyze / check / batch），与 GUI 共用同一分析服务，导出 Markdown / HTML / CSV 报告。
 - **多格式导出**：支持 Markdown、HTML 和 CSV，方便提交、展示和后续数据处理。
 
 ## 主要功能
@@ -22,7 +23,7 @@ RepoScope 的设计目标是把“提交记录”转换为可以理解、可以�
 - 扫描已跟踪文件以及未被 `.gitignore` 排除的未跟踪文件。
 - 校验仓库路径、Git 目录和 Git 命令，并向界面返回明确的错误信息。
 
-### 统计指标
+### 统计指标（与反模式规则，统一在分析服务里产出）
 
 - 按日、周或自定义时间范围统计提交频率。
 - 统计作者提交数量、贡献占比和 90 天贡献集中度。
@@ -42,116 +43,110 @@ large_file_mb: 10
 single_maintainer_ratio: 0.70
 release_stale_days: 365
 hotspot_changes: 10
-commit_message_pattern: "^(feat|fix|docs|refactor)(\\(.+\\))?:"
+commit_message_pattern: "^(feat|fix|docs|refactor|test|chore)(\(.+\))?:"
 ```
 
 风险等级分为高风险、中风险和低风险/提示。报告会同时显示实际值、阈值和建议动作，例如增加共同维护者、拆分热点文件、清理大文件、补充版本 tag 或统一提交模板。
 
-## 使用流程
-
-1. 在 GUI 中选择一个或多个本地 Git 仓库。
-2. 设置时间范围、提交信息格式和各项分析阈值。
-3. 在后台线程运行读取和分析任务，界面保持响应。
-4. 查看仪表盘、提交趋势、贡献者、文件热点、大文件、未更新文件和风险摘要。
-5. 点击风险项跳转到相关提交、文件或统计页面。
-6. 导出 Markdown、HTML 或 CSV 报告。
-
-## 技术架构
+## 项目结构（当前代码结构）
 
 ```text
-PySide6 GUI（QtCharts 图表）
-            |
-应用服务层：任务调度、配置、结果组合
-            |
-数据分析层：GitReader、Metrics、Anti-pattern Rules
-            |
-数据模型层：RepositorySnapshot、Commit、FileRecord、AnalysisResult
-            |
-本地 Git 仓库
-```
-
-- GUI 使用 PySide6；图表用 PySide6 自带的 QtCharts，不引入额外图表库。
-- Git 数据读取使用 Python `subprocess` 调用系统 Git，避免上层模块直接拼接 Git 命令。
-- 长时间分析使用后台线程，避免阻塞界面。
-- 数据模型在各层之间统一传递，便于单元测试和后续扩展。
-- CLI、GUI 和报告导出共享同一套分析结果。
-
-## 当前代码结构
-
-```text
-models.py                            共享的数据模型
-git_reader.py                        本地 Git 数据读取层
-gui/                                 图形界面层（九页 + 契约 + 后台线程）
-run_gui.py                           图形界面入口
-tests/test_models.py                 数据模型测试
-tests/test_git_reader.py             临时 Git 仓库集成测试
-tests/test_git_reader_validation.py  仓库路径和 Git 校验测试
-tests/test_gui_smoke.py              界面冒烟测试（离屏运行，无需显示器）
+models.py                            共享的数据模型（LTY）
+git_reader.py                        本地 Git 数据读取层（LTY）
+services.py                          统一分析服务 + 配置 + 多仓库批量分析（WPH）
+reporters.py                         Markdown / HTML / CSV 报告生成（WPH）
+cli/                                 命令行包：analyze / check / batch（WPH）
+main.py                              命令行入口（课程要求的入口文件名；WPH）
+run_gui.py                           图形界面入口（--demo / --path）
+gui/                                 图形界面层（九页 + 契约 + 后台线程）（HJH）
+tests/                               单元测试、集成测试（WPH 负责集成部分）
 docs/GUI_INTERFACE.md                GUI 接口说明（给队友看字段和接法）
 docs/DEMO.md                         演示执行卡
+docs/screens/                        九张界面截图
+tools/screenshot.py                  重新生成截图
+requirements.txt                     依赖清单（WPH）
+README.md                            安装与运行说明（WPH）
 ```
 
 已完成：Git 数据读取层（仓库校验、提交历史、文件元数据、分支、tag、统一异常处理）和图形界面的九个页面（导航、图表、表格、导出、后台分析线程）。
 
-进行中：`metrics.py` 的统计指标与反模式规则、CLI、报告导出模块。界面目前接的是 `gui/mock_data.py` 里的临时统计（函数头标了 `TEMP`），`metrics.py` 到位后只替换这一处，界面不动。
+进行中：`metrics.py` 的统计指标与反模式规则（TYB）；WPH 的 CLI/报告/批量分析模块已加入，在 `metrics.py` 未落地前先用 `gui/mock_data.py` 的临时统计跑通，替换时只在 `services.py` 的一处接上。
 
-## 环境要求
+## 小组分工（组长方案中确认）
 
-- Python 3.10 或更高版本
-- Git，并且 Git 命令位于系统 `PATH` 中
-- GUI 阶段只需要 PySide6（QtCharts 随 PySide6 一起安装，不需要额外图表库）
-- 测试需要 pytest
+| 成员 | 负责模块 / 角色 | 主要任务 | 主要交付物 | 状态 |
+| --- | --- | --- | --- | --- |
+| LTY | Git 数据层与仓库读取 | 仓库验证、读取提交历史/文件元数据/分支/tag、单元测试 | `git_reader.py`、`models.py` | 已完成 |
+| TYB | 统计指标与反模式检测 | 提交趋势、作者贡献、文件热点、大文件、提交规范、反模式规则 | `metrics.py`、`rules.py` | 待启动 |
+| HJH | PySide6 GUI 与可视化交互 | 九个页面、图表、表格、导出、后台线程不阻塞界面 | `gui/*.py` | 已完成 |
+| wph | CLI、报告、批量分析与质量集成 | `main.py` analyze/check/export 三个命令；Markdown/HTML/CSV 报告；多仓库 ThreadPoolExecutor 批量分析 + 单仓库失败隔离；统一 `services.py`；`requirements.txt`、`README.md`、集成测试 | `main.py`、`cli/`、`services.py`、`reporters.py`、`requirements.txt` | 已实现 |
 
-Git 数据读取层使用系统 Git 和 Python 标准库，不需要 GitPython，也不需要网络连接或远程平台账号。
+## 使用流程
+
+### 图形界面（推荐演示用）
+
+```powershell
+python -m pip install PySide6>=6.5
+python run_gui.py                     # 启动后在界面里选仓库
+python run_gui.py --demo              # 内置演示数据集（160 次提交 / 4 位作者）
+python run_gui.py --path <仓库目录>   # 启动即分析指定仓库
+```
+
+界面按区域分成九页：仓库选择、分析配置、总览仪表板、提交趋势、作者贡献、数据分析、反模式中心、报告区、多仓库对比。分析在后台线程运行，界面不冻结。
+
+### 命令行（WPH 负责部分）
+
+入口文件 `main.py`，四个子命令：
+
+```powershell
+# 1. 分析一个仓库，导出报告（md / html / csv / all）
+python main.py analyze <仓库目录> [--format markdown] [--output reports]
+
+# 2. 校验仓库是否可分析（不写文件，可用于脚本）
+python main.py check <仓库目录> [--json]
+
+# 3. 分析并一次导出三种格式（analyze 的便捷版）
+python main.py export <仓库目录> [--output reports]
+
+# 4. 并发分析多个仓库，单个失败不影响其他任务
+python main.py batch <仓库目录...> [-j 4] [--format all] [--output reports]
+```
+
+配置优先级：命令行参数 > `--config <文件.json>` > 默认值。可覆盖的配置项：
+`--stale-days`、`--large-file-mb`、`--hotspot-changes`、`--release-stale-days`、
+`--single-maintainer-ratio`、`--window-days`（只统计最近 N 天提交）、
+`--commit-pattern`（提交信息规范正则）。
+
+`analyze` 把 `reports/<仓库名>_report.{md,html,csv}` 写入输出目录；
+`batch` 还会额外生成 `batch_summary.md` 和 `batch_summary.csv` 做跨仓库对比。
+
+### 运行演示
+
+```powershell
+python run_gui.py --demo        # GUI 演示，无需真实 Git 仓库
+python main.py check .          # 检查本仓库本身是否可被分析
+```
 
 ## 安装与测试
 
 在项目根目录执行：
 
 ```powershell
-python -m pip install pytest pyside6   # 测试 + 图形界面
-python -m pytest -q                    # 全部测试
+python -m pip install PySide6>=6.5   # GUI 需要；CLI 只需要 Python 标准库
+python -m pip install pytest          # 跑测试需要
+python -m pytest -q                   # 全部测试（没有 PySide6 时界面那组自动跳过）
 ```
 
-只跑数据层测试的话 `pytest` 单独装就够——GUI 冒烟测试在没有 PySide6 时会自动跳过，不会让其他人红一片。
+全部测试目前：31 个已有测试 + WPH 新增的服务/报告/命令行集成测试，全部通过。
 
 ### Windows：`python` 命令没有任何输出
 
-如果输入 `python -V` 后既没有版本号也没有报错、直接回到提示符，说明命令行里的 `python` 指向了 Windows 应用商店的占位程序（`...\WindowsApps\python.exe`），它不是真正的解释器，退出码 9009。
+同原 README 说明：如果 `python -V` 无输出，那是应用商店占位程序，用 `py -3.11`（或本机真实解释器）替代，并把真实 Python 加入 `PATH`。
 
-用 Python 官方的启动器绕过它，并在项目里建一个独立环境（`.venv/` 已在 `.gitignore` 中）：
-
-```powershell
-py -0p                                              # 列出本机所有解释器
-py -3.11 -m venv .venv                              # 用 3.11 建环境
-.\.venv\Scripts\python.exe -m pip install pyside6   # 装依赖
-.\.venv\Scripts\python.exe run_gui.py --demo        # 启动界面
-```
-
-环境建好之后，`.venv\Scripts\` 里有真正的 `python.exe`，激活后 `python` 这个名字就恢复正常了，也不再受应用商店占位程序影响。
-
-想彻底修好全局的 `python` 名字，两步：一是在「设置 → 应用 → 高级应用设置 → 应用执行别名」里关掉 `python.exe` 和 `python3.exe`；二是把真实的 Python 目录（例如 `%LOCALAPPDATA%\Programs\Python\Python311\` 和其下的 `Scripts\`）加入用户 `PATH`。
-
-## 图形界面（GUI）
-
-三种启动方式：
-
-```powershell
-python run_gui.py                     # 启动后在界面里选仓库
-python run_gui.py --demo              # 内置演示数据集（160 次提交 / 4 位作者）
-python run_gui.py --path <仓库目录>    # 启动即分析指定仓库
-```
-
-`run_gui.bat` 和 `run_real.bat` 是上面后两条的双击版，会自动检查环境。`--demo` 与 `--path` 互斥。
-
-界面按八个区域分成九页：仓库选择、分析配置、总览仪表板、提交趋势、作者贡献、数据分析、反模式中心、报告区、多仓库对比。「进度反馈」是常驻顶部进度条，不单独成页。分析在 `QThread` 子线程执行，主线程只接信号，所以切换页面不阻塞、分析期间不白屏。
-
-界面只认 `gui/contract.py` 里的 `AnalysisView` 契约，不直接依赖 `git_reader` 或 `metrics`，两者可以并行开发。字段清单、待补字段和接入方式见 [`docs/GUI_INTERFACE.md`](docs/GUI_INTERFACE.md)；两种演示模式的差异和台本见 [`docs/DEMO.md`](docs/DEMO.md)。
-
-## 功能边界
-
-RepoScope 只分析本地 Git 数据，不包含 GitHub/GitLab Issue、Pull Request review、远程 API 权限、Issue 关闭率或 PR 响应时间等平台专属数据。仓库内容不会自动上传，分析结果只保存在本地或由用户主动导出。
+课程要求：源码打包时把入口文件命名为 `main.py`，运行说明写在 `README.md`，把源码、数据文件和 `readme` 压成 `groupN_project.zip`。
 
 ## 课程项目目标
 
 RepoScope 面向 Applied Programming with Python 课程项目，强调模块化设计、图形界面、数据处理、配置驱动的规则、异常处理、单元测试、集成测试和文档化。每位成员的模块通过统一模型接口协作，便于独立开发、测试和代码审查。
+
+RepoScope 只分析本地 Git 数据，不包含 GitHub/GitLab Issue、Pull Request review、远程 API 权限、Issue 关闭率或 PR 响应时间等平台专属数据。仓库内容不会自动上传，分析结果只保存在本地或由用户主动导出。
