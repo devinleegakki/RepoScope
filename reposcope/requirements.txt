@@ -1,0 +1,8 @@
+# RepoScope analysis core (task 2) dependencies
+# GUI / GitPython dependencies are owned by other members and listed in the
+# project-level requirements maintained by Wph (task 4).
+
+PyYAML>=6.0
+
+# Testing (development)
+pytest>=7.0
