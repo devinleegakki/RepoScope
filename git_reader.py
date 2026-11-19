@@ -45,6 +45,8 @@ class GitReader:
         self.repo_path = Path(repo_path).expanduser().resolve(strict=False)
         self.timeout = timeout
         self._validated = False
+        self._tag_map: Optional[dict[str, tuple[str, ...]]] = None
+        self._tags_cache: Optional[list[str]] = None
 
     def validate(self) -> Path:
         """Validate the configured path and return its Git top-level directory."""
@@ -115,34 +117,60 @@ class GitReader:
         return completed.stdout
 
     def read_commits(self, *, max_commits: Optional[int] = None) -> list[Commit]:
-        """Return commits from all local branches, newest first."""
+        """Return commits from all local branches, newest first.
+
+        Commit metadata and numstat are fetched in one ``git log`` process.
+        Tags are indexed once with ``for-each-ref`` instead of running a
+        ``tag --points-at`` process for every commit.
+        """
 
         self._ensure_validated()
         if max_commits == 0:
             return []
-        output = self._run(
-            (
+        log_args = [
                 "log",
                 "--all",
                 "--date=iso-strict",
-                "--format=%H%x1f%an%x1f%ae%x1f%aI%x1f%s%x1e",
-            ),
+                "--root",
+                "-M",
+                "--numstat",
+                "--format=%x1e%H%x1f%an%x1f%ae%x1f%aI%x1f%s",
+        ]
+        if max_commits is not None:
+            # Let Git stop walking history early; parsing fewer records alone
+            # would still leave the expensive history traversal untouched.
+            log_args.extend(("-n", str(max_commits)))
+        output = self._run(
+            tuple(log_args),
             error_code="commit_read_failed",
         )
+        tag_map = self._read_tag_map()
         records: list[Commit] = []
         for raw in output.split("\x1e"):
             raw = raw.strip("\r\n")
             if not raw:
                 continue
-            fields = raw.split("\x1f")
+            lines = raw.splitlines()
+            fields = lines[0].split("\x1f")
             if len(fields) != 5:
-                raise GitReaderError("parse_error", "Unexpected commit record from Git", details=raw)
+                raise GitReaderError("parse_error", "Unexpected commit record from Git", details=lines[0])
             commit_hash, author, email, timestamp, message = fields
             try:
                 authored_at = datetime.fromisoformat(timestamp)
             except ValueError as exc:
                 raise GitReaderError("parse_error", "Invalid commit timestamp", details=timestamp) from exc
-            insertions, deletions, files = self._read_commit_stats(commit_hash)
+            insertions = deletions = 0
+            files: list[str] = []
+            for stat_line in lines[1:]:
+                parts = stat_line.split("\t", 2)
+                if len(parts) != 3:
+                    continue
+                added, removed, path = parts
+                if added.isdigit():
+                    insertions += int(added)
+                if removed.isdigit():
+                    deletions += int(removed)
+                files.append(path.replace("\\", "/"))
             records.append(
                 Commit(
                     hash=commit_hash,
@@ -153,7 +181,7 @@ class GitReader:
                     files_changed=tuple(files),
                     insertions=insertions,
                     deletions=deletions,
-                    tags=tuple(self._tags_for_commit(commit_hash)),
+                    tags=tag_map.get(commit_hash, ()),
                 )
             )
             if max_commits is not None and len(records) >= max_commits:
@@ -219,8 +247,35 @@ class GitReader:
 
     def read_tags(self) -> list[str]:
         self._ensure_validated()
+        if self._tags_cache is not None:
+            return list(self._tags_cache)
         output = self._run(("tag", "--list"), error_code="ref_read_failed")
-        return [line.strip() for line in output.splitlines() if line.strip()]
+        self._tags_cache = [line.strip() for line in output.splitlines() if line.strip()]
+        return list(self._tags_cache)
+
+    def _read_tag_map(self) -> dict[str, tuple[str, ...]]:
+        """Read all tag -> commit mappings in one Git process."""
+        if self._tag_map is not None:
+            return self._tag_map
+        output = self._run(
+            ("for-each-ref", "--format=%(objectname)%00%(*objectname)%00%(refname:short)", "refs/tags"),
+            error_code="ref_read_failed",
+        )
+        mapping: dict[str, list[str]] = {}
+        names: list[str] = []
+        for line in output.splitlines():
+            fields = line.split("\x00", 2)
+            if len(fields) != 3:
+                continue
+            object_hash, peeled_hash, name = fields
+            names.append(name)
+            for commit_hash in (peeled_hash, object_hash):
+                if commit_hash and set(commit_hash) != {"0"}:
+                    mapping.setdefault(commit_hash, []).append(name)
+        self._tag_map = {key: tuple(value) for key, value in mapping.items()}
+        if self._tags_cache is None:
+            self._tags_cache = names
+        return self._tag_map
 
     def _tags_for_commit(self, commit_hash: str) -> list[str]:
         output = self._run(("tag", "--points-at", commit_hash), error_code="ref_read_failed")
