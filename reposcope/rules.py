@@ -27,6 +27,11 @@ _RULE_NAMES = {
     "large_file": "Large / binary file risk",
     "stale_file": "Zombie file",
     "commit_message": "Non-standard commit message",
+    "dangerous_code": "Dangerous code pattern",
+    "code_quality": "Code quality issues",
+    "ownership": "Single-owner file risk",
+    "dependency": "Dependency hygiene risk",
+    "secret": "Potential secret detected",
 }
 
 # Where the GUI should jump when the warning is clicked.
@@ -37,6 +42,8 @@ _RULE_TARGETS = {
     "large_file": "large_files",
     "stale_file": "staleness",
     "commit_message": "compliance",
+    "dangerous_code": "security",
+    "test_coverage": "code_quality",
 }
 
 
@@ -188,6 +195,54 @@ def detect_commit_messages(metrics: RepositoryMetrics, config: AnalysisConfig) -
         evidence={"examples": violations[:5], "pattern": config.commit_message_pattern},
     )
 
+def detect_code_quality(metrics: RepositoryMetrics, config: AnalysisConfig) -> Optional[Warning]:
+    q = metrics.code_quality; count = len(q.long_functions) + len(q.long_files) + q.bare_except_count
+    if count == 0: return None
+    return Warning(_RULE_NAMES["code_quality"], _level(config, "code_quality"), count,
+                   0, "Refactor long/complex code and add focused tests.",
+                   f"{count} code quality issue(s); test ratio {q.test_ratio:.0%}.", "code_quality",
+                   {"long_functions": q.long_functions[:20], "long_files": q.long_files[:20], "bare_except": q.bare_except_count})
+
+def detect_ownership(metrics: RepositoryMetrics, config: AnalysisConfig) -> Optional[Warning]:
+    rows = metrics.ownership.high_risk_files
+    if not rows: return None
+    return Warning(_RULE_NAMES["ownership"], _level(config, "ownership"), len(rows), 0,
+                   "Add reviewers and share ownership of high-risk files.",
+                   f"{len(rows)} file(s) are dominated by one author.", "ownership",
+                   {"files": [r.to_dict() for r in rows[:20]]})
+
+def detect_dependency(metrics: RepositoryMetrics, config: AnalysisConfig) -> Optional[Warning]:
+    d = metrics.dependencies
+    if not d.unpinned and not d.duplicates and (not d.manifests or d.lockfiles): return None
+    return Warning(_RULE_NAMES["dependency"], _level(config, "dependency"), len(d.unpinned) + len(d.duplicates), 0,
+                   "Pin dependencies, remove duplicates, and commit a lock file.",
+                   f"{len(d.unpinned)} unpinned and {len(d.duplicates)} duplicate dependencies.", "dependencies", d.to_dict())
+
+def detect_secrets(metrics: RepositoryMetrics, config: AnalysisConfig) -> Optional[Warning]:
+    if not metrics.security_findings: return None
+    return Warning(_RULE_NAMES["secret"], _level(config, "secret"), len(metrics.security_findings), 0,
+                   "Remove the credential, rotate it, and use environment or secret storage.",
+                   f"{len(metrics.security_findings)} potential secret(s) detected.", "security",
+                   {"findings": [f.to_dict() for f in metrics.security_findings]})
+
+def detect_dangerous_code(metrics: RepositoryMetrics, config: AnalysisConfig) -> Optional[Warning]:
+    patterns = metrics.code_quality.dangerous_patterns
+    if not patterns:
+        return None
+    return Warning(_RULE_NAMES["dangerous_code"], _level(config, "dangerous_code"), len(patterns), 0,
+                   "Replace dangerous calls with safe, parameterized APIs and validate untrusted input.",
+                   f"{len(patterns)} dangerous code pattern(s) detected.", "security",
+                   {"patterns": patterns[:20]})
+
+def detect_test_coverage(metrics: RepositoryMetrics, config: AnalysisConfig) -> Optional[Warning]:
+    q = metrics.code_quality
+    if q.python_files == 0 or q.test_ratio >= config.min_test_ratio:
+        return None
+    return Warning("Insufficient test coverage", _level(config, "test_coverage"), round(q.test_ratio, 4), config.min_test_ratio,
+                   "Add regression tests for core modules and raise the test file ratio.",
+                   f"Test files cover only {q.test_ratio:.0%} of Python files.", "code_quality",
+                   {"python_files": q.python_files, "test_files": q.test_files})
+
 
 _ALL_RULES = (
     detect_single_maintainer,
@@ -196,6 +251,12 @@ _ALL_RULES = (
     detect_large_files,
     detect_stale_files,
     detect_commit_messages,
+    detect_code_quality,
+    detect_ownership,
+    detect_dependency,
+    detect_secrets,
+    detect_dangerous_code,
+    detect_test_coverage,
 )
 
 

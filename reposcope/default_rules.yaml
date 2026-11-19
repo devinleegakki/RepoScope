@@ -45,8 +45,14 @@ binary_extensions:
 # Risk level per anti-pattern rule: high (red) | medium (orange) | low (blue)
 rule_levels:
   single_maintainer: high
+  secret: high
+  dangerous_code: high
   release_stale_illusion: medium
   hotspot_changes: medium
   large_file: medium
+  dependency: medium
+  test_coverage: medium
+  ownership: medium
+  code_quality: low
   stale_file: low
   commit_message: low

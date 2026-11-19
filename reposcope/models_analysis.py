@@ -155,6 +155,12 @@ class AnalysisConfig:
     hotspot_changes: int = 10
     commit_message_pattern: str = r"^(feat|fix|docs|refactor)(\(.+\))?:"
     min_message_length: int = 5
+    max_function_lines: int = 80
+    max_file_lines: int = 500
+    min_test_ratio: float = 0.05
+    ownership_ratio: float = 0.80
+    enable_dependency_scan: bool = True
+    enable_secret_scan: bool = True
 
     # Classification helpers
     binary_extensions: List[str] = field(
@@ -174,6 +180,12 @@ class AnalysisConfig:
             "large_file": "medium",
             "stale_file": "low",
             "commit_message": "low",
+            "secret": "high",
+            "dangerous_code": "high",
+            "dependency": "medium",
+            "test_coverage": "medium",
+            "ownership": "medium",
+            "code_quality": "low",
         }
     )
 
@@ -185,11 +197,14 @@ class AnalysisConfig:
         if not 0.0 <= self.single_maintainer_ratio <= 1.0:
             raise ValueError("single_maintainer_ratio must be within [0, 1]")
         for key in ("observation_days", "recent_days", "stale_days",
-                    "release_stale_days", "hotspot_changes", "min_message_length"):
+                    "release_stale_days", "hotspot_changes", "min_message_length",
+                    "max_function_lines", "max_file_lines"):
             if getattr(self, key) < 0:
                 raise ValueError(f"{key} must be non-negative")
         if self.large_file_mb < 0:
             raise ValueError("large_file_mb must be non-negative")
+        if not 0 <= self.min_test_ratio <= 1 or not 0 <= self.ownership_ratio <= 1:
+            raise ValueError("ratio thresholds must be within [0, 1]")
         # Compile once; an invalid user pattern fails fast with a clear error.
         self._compiled_pattern = re.compile(self.commit_message_pattern)
 
@@ -203,7 +218,8 @@ class AnalysisConfig:
             "observation_days", "recent_days", "trend_bucket", "stale_days",
             "large_file_mb", "single_maintainer_ratio", "release_stale_days",
             "hotspot_changes", "commit_message_pattern", "min_message_length",
-            "binary_extensions", "rule_levels",
+            "binary_extensions", "rule_levels", "max_function_lines", "max_file_lines",
+            "min_test_ratio", "ownership_ratio", "enable_dependency_scan", "enable_secret_scan",
         }
         kwargs = {k: v for k, v in data.items() if k in known}
         # Nested mappings may be loaded as dicts already; copy to avoid aliasing.
@@ -249,6 +265,12 @@ class AnalysisConfig:
             "hotspot_changes": self.hotspot_changes,
             "commit_message_pattern": self.commit_message_pattern,
             "min_message_length": self.min_message_length,
+            "max_function_lines": self.max_function_lines,
+            "max_file_lines": self.max_file_lines,
+            "min_test_ratio": self.min_test_ratio,
+            "ownership_ratio": self.ownership_ratio,
+            "enable_dependency_scan": self.enable_dependency_scan,
+            "enable_secret_scan": self.enable_secret_scan,
             "binary_extensions": list(self.binary_extensions),
             "rule_levels": dict(self.rule_levels),
         }
@@ -347,6 +369,10 @@ class RepositoryMetrics:
     commit_compliance: CommitCompliance = field(default_factory=CommitCompliance)
     days_since_last_tag: Optional[int] = None
     last_tag: str = ""
+    code_quality: "CodeQualityMetrics" = field(default_factory=lambda: CodeQualityMetrics())
+    ownership: "OwnershipMetrics" = field(default_factory=lambda: OwnershipMetrics())
+    dependencies: "DependencyMetrics" = field(default_factory=lambda: DependencyMetrics())
+    security_findings: List["SecurityFinding"] = field(default_factory=list)
 
     # ---- convenience ------------------------------------------------------
     @property
@@ -381,7 +407,88 @@ class RepositoryMetrics:
             "commit_compliance": self.commit_compliance.to_dict(),
             "days_since_last_tag": self.days_since_last_tag,
             "last_tag": self.last_tag,
+            "code_quality": self.code_quality.to_dict(),
+            "ownership": self.ownership.to_dict(),
+            "dependencies": self.dependencies.to_dict(),
+            "security_findings": [f.to_dict() for f in self.security_findings],
         }
+
+
+@dataclass
+class CodeQualityMetrics:
+    python_files: int = 0
+    lines: int = 0
+    functions: int = 0
+    classes: int = 0
+    max_function_lines: int = 0
+    max_file_lines: int = 0
+    long_functions: List[Dict[str, Any]] = field(default_factory=list)
+    long_files: List[Dict[str, Any]] = field(default_factory=list)
+    todo_count: int = 0
+    bare_except_count: int = 0
+    test_files: int = 0
+    test_ratio: float = 0.0
+    imports: Dict[str, List[str]] = field(default_factory=dict)
+    cycles: List[List[str]] = field(default_factory=list)
+    dangerous_patterns: List[Dict[str, Any]] = field(default_factory=list)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {"python_files": self.python_files, "lines": self.lines, "functions": self.functions,
+                "classes": self.classes, "max_function_lines": self.max_function_lines,
+                "max_file_lines": self.max_file_lines, "long_functions": list(self.long_functions),
+                "long_files": list(self.long_files), "todo_count": self.todo_count,
+                "bare_except_count": self.bare_except_count, "test_files": self.test_files,
+                "test_ratio": round(self.test_ratio, 4), "imports": dict(self.imports), "cycles": list(self.cycles),
+                "dangerous_patterns": list(self.dangerous_patterns)}
+
+
+@dataclass
+class FileOwnershipStat:
+    path: str
+    changes: int = 0
+    author_count: int = 0
+    top_author: str = ""
+    top_author_ratio: float = 0.0
+    recent_author: str = ""
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {"path": self.path, "changes": self.changes, "author_count": self.author_count,
+                "top_author": self.top_author, "top_author_ratio": round(self.top_author_ratio, 4),
+                "recent_author": self.recent_author}
+
+
+@dataclass
+class OwnershipMetrics:
+    files: List[FileOwnershipStat] = field(default_factory=list)
+    high_risk_files: List[FileOwnershipStat] = field(default_factory=list)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {"files": [f.to_dict() for f in self.files], "high_risk_files": [f.to_dict() for f in self.high_risk_files]}
+
+
+@dataclass
+class DependencyMetrics:
+    manifests: List[str] = field(default_factory=list)
+    lockfiles: List[str] = field(default_factory=list)
+    dependencies: List[Dict[str, Any]] = field(default_factory=list)
+    unpinned: List[str] = field(default_factory=list)
+    duplicates: List[str] = field(default_factory=list)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {"manifests": list(self.manifests), "lockfiles": list(self.lockfiles),
+                "dependencies": list(self.dependencies), "unpinned": list(self.unpinned), "duplicates": list(self.duplicates)}
+
+
+@dataclass
+class SecurityFinding:
+    path: str
+    kind: str
+    line: int = 0
+    preview: str = ""
+    severity: str = "medium"
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {"path": self.path, "kind": self.kind, "line": self.line, "preview": self.preview, "severity": self.severity}
 
 
 # --------------------------------------------------------------------------- #
