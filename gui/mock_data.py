@@ -1,14 +1,14 @@
-"""壳阶段的假数据源。
+"""text。
 
-作用只有一个：在 LTY / TYB / Wyh 的代码合并进来之前，让界面有东西可显示。
-接真数据时只需要把 ``build()`` 换成真实分析调用，界面代码一行不用改。
+text：text LTY / TYB / Wyh text，text。
+text ``build()`` textanalyzetext，text。
 
-真实数据优先：如果 ``git_reader.GitReader`` 能读通，就用仓库的真提交记录，
-读不通则退回内置的合成数据——保证演示永远不会白屏。
+text：text ``git_reader.GitReader`` text，textrepositorytextcommitstext，
+text——text。
 
-**所有临时计算都集中在这个文件里**，并且都标了 ``TEMP``。
-TYB 的 ``metrics.py`` 到位后整段删掉，换成 ``from metrics import analyse``，
-界面一行不动。
+**textfilestext**，text ``TEMP``。
+TYB text ``metrics.py`` text，text ``from metrics import analyse``，
+text。
 """
 
 from __future__ import annotations
@@ -40,7 +40,7 @@ _BINARY_SUFFIXES = {".png", ".jpg", ".jpeg", ".gif", ".ico", ".pdf", ".zip", ".w
 
 @dataclass
 class MockView:
-    """一个满足 ``AnalysisView`` 的简单容器。"""
+    """text ``AnalysisView`` text。"""
 
     snapshot: RepositorySnapshot
     health_score: float = 0.0
@@ -69,25 +69,25 @@ def build(
     commit_pattern: str = r"^(feat|fix|docs|refactor|test|chore)(\(.+\))?: ",
     force_synthetic: bool = False,
 ) -> MockView:
-    """跑一次分析，返回界面需要的数据。
+    """textanalyze，text。
 
-    现在内部是临时实现，用来验证界面；TYB 的 ``metrics.py`` 到位后，
-    把 ``_compute`` 换成他们的函数即可。
+    text，text；TYB text ``metrics.py`` text，
+    text ``_compute`` text。
 
-    ``force_synthetic=True`` 用于演示彩排：无视仓库真实内容，直接用内置的
-    160 次提交数据集。真实仓库历史太短时（比如新仓库只有 10 个提交），
-    趋势图和热力图会空得看不出效果，演示时用这个开关更稳妥。
+    ``force_synthetic=True`` text：textrepositorytext，text
+    160 textcommit counttext。textrepositorytext（textrepositorytext 10 textcommits），
+    text，text。
     """
     report = on_progress or (lambda percent, message: None)
     started = datetime.now()
 
-    report(5, "校验仓库路径")
+    report(5, "checkrepositoryPath")
     snapshot = None if force_synthetic else _read_real_snapshot(repo_path, report)
     if snapshot is None:
-        report(20, "使用内置演示数据集" if force_synthetic else "读取失败，使用演示数据")
+        report(20, "text" if force_synthetic else "textfailed，text")
         snapshot = _synthetic_snapshot(repo_path)
 
-    report(60, "统计指标")
+    report(60, "Compute metrics")
     view = _compute(
         snapshot,
         stale_days=stale_days,
@@ -96,14 +96,14 @@ def build(
         commit_pattern=commit_pattern,
     )
 
-    report(95, "整理结果")
+    report(95, "text")
     view.elapsed_seconds = (datetime.now() - started).total_seconds()
-    report(100, "完成")
+    report(100, "Complete")
     return view
 
 
 # --------------------------------------------------------------------------
-# 真实数据读取（失败则返回 None，交给合成数据兜底）
+# text（failedtext None，text）
 # --------------------------------------------------------------------------
 def _read_real_snapshot(repo_path: str, report: ProgressCallback) -> RepositorySnapshot | None:
     try:
@@ -111,20 +111,20 @@ def _read_real_snapshot(repo_path: str, report: ProgressCallback) -> RepositoryS
     except ImportError:
         return None
     try:
-        report(15, "读取提交历史")
+        report(15, "textcommitstext")
         reader = GitReader(repo_path)
         reader.validate()
-        report(40, "读取文件元数据")
+        report(40, "textfilestext")
         return reader.read_snapshot()
-    except Exception:  # 壳阶段：任何失败都退回演示数据，绝不白屏
+    except Exception:  # text：textfailedtext，text
         return None
 
 
 # --------------------------------------------------------------------------
-# TEMP: 临时统计。TYB 的 metrics.py 到位后删除本段。
+# TEMP: text。TYB text metrics.py text。
 # --------------------------------------------------------------------------
 def _naive(value: datetime | None) -> datetime | None:
-    """把带时区的时间统一成朴素时间，否则相减会抛 TypeError。"""
+    """text，text TypeError。"""
     if value is None:
         return None
     return value.replace(tzinfo=None) if value.tzinfo else value
@@ -146,7 +146,7 @@ def _compute(
     for commit in commits:
         calendar[_naive(commit.authored_at).strftime("%Y-%m-%d")] += 1
 
-    # -- 作者贡献 ------------------------------------------------------
+    # -- Author Contributions ------------------------------------------------------
     per_author: Counter[str] = Counter()
     insertions: Counter[str] = Counter()
     deletions: Counter[str] = Counter()
@@ -172,14 +172,14 @@ def _compute(
         for name, count in per_author.most_common(12)
     ]
 
-    # -- 文件榜单 ------------------------------------------------------
+    # -- filestext ------------------------------------------------------
     changes: Counter[str] = Counter()
     for commit in commits:
         for path in commit.files_changed:
             changes[path] += 1
 
-    # TEMP: 每个文件的改动行数拿不到（git log --numstat 在 TYB 那块），
-    # 这里按"改动次数 × 平均每次 12 行"估算，只用于演示列宽。
+    # TEMP: textfilestext（git log --numstat text TYB text），
+    # text"text × text 12 text"text，text。
     def _changed_lines(path: str) -> int:
         return changes[path] * 12
 
@@ -221,7 +221,7 @@ def _compute(
         if _naive(f.modified_at) and (now - _naive(f.modified_at)).days >= stale_days
     ][:50]
 
-    # -- 提交信息规范 --------------------------------------------------
+    # -- commitsInformationconvention --------------------------------------------------
     pattern = re.compile(commit_pattern) if commit_pattern else None
     violations: list[Violation] = []
     passed = 0
@@ -233,7 +233,7 @@ def _compute(
                 Violation(
                     commit_hash=commit.hash[:8],
                     message=commit.message.splitlines()[0][:60] if commit.message else "",
-                    reason="不符合约定格式（缺少 feat/fix/docs 前缀）",
+                    reason="text（Missing feat/fix/docs text）",
                 )
             )
     hygiene = CommitHygiene(
@@ -244,68 +244,68 @@ def _compute(
         violations=tuple(violations[:20]),
     )
 
-    # -- 反模式警告（四要素齐全） --------------------------------------
+    # -- anti-patternstext（text） --------------------------------------
     warnings: list[Warning] = []
     top_share = author_stats[0].share if author_stats else 0.0
     top_name = author_stats[0].name if author_stats else "—"
 
     if top_share >= 0.7:
         warnings.append(Warning(
-            rule="单一作者依赖",
+            rule="textauthorstext",
             severity="high",
-            message=f"{top_name} 承担了 {top_share:.0%} 的提交，关键知识集中在一人身上",
+            message=f"{top_name} text {top_share:.0%} textcommits，text",
             target=top_name,
-            condition="单一作者提交占比 ≥ 70%",
-            actual=f"{top_share:.0%}（{author_stats[0].commits} 次）",
+            condition="textauthorscommitstext ≥ 70%",
+            actual=f"{top_share:.0%}（{author_stats[0].commits} text）",
             threshold="70%",
-            action="让第二位成员参与核心模块，并在 PR 里补 code review 记录",
+            action="text，text PR text code review text",
         ))
     if len(stale) >= 3:
         warnings.append(Warning(
-            rule="陈旧文件堆积",
+            rule="Stale filestext",
             severity="medium",
-            message=f"{len(stale)} 个文件超过 {stale_days} 天未被修改，可能已经废弃",
+            message=f"{len(stale)} textfilestext {stale_days} text，text",
             target=stale[0].path,
-            condition=f"单文件距最后一次提交 ≥ {stale_days} 天",
-            actual=f"{len(stale)} 个文件（最久 {stale[0].days_since_change} 天）",
-            threshold=f"{stale_days} 天",
-            action="确认是否废弃：废弃则删除，仍在使用则补测试并写进 README",
+            condition=f"textfilestextcommits ≥ {stale_days} text",
+            actual=f"{len(stale)} textfiles（text {stale[0].days_since_change} text）",
+            threshold=f"{stale_days} text",
+            action="text：text，text README",
         ))
     if large:
         warnings.append(Warning(
-            rule="大文件入库",
+            rule="Large filestext",
             severity="medium",
-            message=f"{len(large)} 个文件超过 {large_file_mb}MB，仓库体积会持续膨胀",
+            message=f"{len(large)} textfilestext {large_file_mb}MB，repositorytext",
             target=large[0].path,
-            condition=f"单文件大小 ≥ {large_file_mb}MB",
-            actual=f"{len(large)} 个文件（最大 {large[0].size_bytes / 1048576:.1f}MB）",
+            condition=f"textfilestext ≥ {large_file_mb}MB",
+            actual=f"{len(large)} textfiles（text {large[0].size_bytes / 1048576:.1f}MB）",
             threshold=f"{large_file_mb} MB",
-            action="移出仓库或改用 Git LFS，并在 .gitignore 里加规则",
+            action="textrepositorytext Git LFS，text .gitignore textRules",
         ))
     if hotspots and hotspots[0].change_count >= max(hotspot_changes * 2, 20):
         warnings.append(Warning(
-            rule="热点文件过度修改",
+            rule="Hot filestext",
             severity="low",
-            message=f"{hotspots[0].path} 被修改 {hotspots[0].change_count} 次，是重构候选",
+            message=f"{hotspots[0].path} text {hotspots[0].change_count} text，text",
             target=hotspots[0].path,
-            condition=f"单文件修改次数 ≥ {hotspot_changes} 次",
-            actual=f"{hotspots[0].change_count} 次",
-            threshold=f"{hotspot_changes} 次",
-            action="拆分职责或补测试后再改，避免每次改动都波及全局",
+            condition=f"textfilestext ≥ {hotspot_changes} text",
+            actual=f"{hotspots[0].change_count} text",
+            threshold=f"{hotspot_changes} text",
+            action="text，text",
         ))
     if hygiene.pass_rate >= 0 and hygiene.pass_rate < 0.6:
         warnings.append(Warning(
-            rule="提交信息不规范",
+            rule="commitsInformationtextconvention",
             severity="low",
-            message=f"只有 {hygiene.pass_rate:.0%} 的提交符合约定格式",
+            message=f"text {hygiene.pass_rate:.0%} textcommitstext",
             target="git log",
-            condition="符合 pattern 的提交占比 < 60%",
+            condition="text pattern textcommitstext < 60%",
             actual=f"{hygiene.pass_rate:.0%}（{hygiene.passed}/{hygiene.total}）",
             threshold="60%",
-            action="用 commit-msg hook 或模板约束，历史提交不必追改",
+            action="text commit-msg hook text，textcommitstext",
         ))
 
-    # -- 健康度 --------------------------------------------------------
+    # -- health score --------------------------------------------------------
     penalty = {"high": 12, "medium": 6, "low": 3}
     health = 100.0
     for warning in warnings:
@@ -324,11 +324,11 @@ def _compute(
                                        if start.strftime("%Y-%m-%d") <= day <= last_date)
     warning_counts = Counter(warning.target for warning in warnings)
     dimensions = (
-        HealthDimension("Git 活跃度", min(100.0, len(calendar) / 90 * 100), "low" if len(calendar) >= 30 else "medium", 0, f"{len(calendar)} 个活跃日"),
-        HealthDimension("协作与所有权", max(0.0, 100 - warning_counts.get(top_name, 0) * 20), "high" if top_share >= 0.8 else ("medium" if top_share >= 0.7 else "low"), int(top_share >= 0.7), f"最高作者占比 {top_share:.0%}"),
-        HealthDimension("代码质量", 100.0, "low", 0, "暂无质量问题"),
-        HealthDimension("依赖与安全", 100.0, "low", 0, "本地规则未发现问题"),
-        HealthDimension("提交规范", hygiene.pass_rate * 100 if hygiene.pass_rate >= 0 else 0, "low" if hygiene.pass_rate >= .8 else "medium", hygiene.total - hygiene.passed, f"通过率 {hygiene.pass_rate:.0%}"),
+        HealthDimension("Git text", min(100.0, len(calendar) / 90 * 100), "low" if len(calendar) >= 30 else "medium", 0, f"{len(calendar)} text"),
+        HealthDimension("text", max(0.0, 100 - warning_counts.get(top_name, 0) * 20), "high" if top_share >= 0.8 else ("medium" if top_share >= 0.7 else "low"), int(top_share >= 0.7), f"textauthorstext {top_share:.0%}"),
+        HealthDimension("text", 100.0, "low", 0, "text"),
+        HealthDimension("text", 100.0, "low", 0, "localRulestext"),
+        HealthDimension("Commit convention", hygiene.pass_rate * 100 if hygiene.pass_rate >= 0 else 0, "low" if hygiene.pass_rate >= .8 else "medium", hygiene.total - hygiene.passed, f"pass rate {hygiene.pass_rate:.0%}"),
     )
     return MockView(
         snapshot=snapshot,
@@ -349,7 +349,7 @@ def _compute(
 
 
 # --------------------------------------------------------------------------
-# 合成数据（仓库读不通时的兜底，也用于 GUI 单元测试）
+# text（repositorytext，text GUI text）
 # --------------------------------------------------------------------------
 def _synthetic_snapshot(repo_path: str = "demo/repo") -> RepositorySnapshot:
     random.seed(20261124)
@@ -361,8 +361,8 @@ def _synthetic_snapshot(repo_path: str = "demo/repo") -> RepositorySnapshot:
 
     today = datetime.now()
     commits: list[Commit] = []
-    # 权重刻意做成"一人挑大头"：这是学生小组仓库最常见的形态，
-    # 也是"单一作者依赖"这条 high 规则要被触发的原因。四人平均分配的仓库反而少见。
+    # text"text"：textrepositorytext，
+    # text"textauthorstext"text high Rulestext。textrepositorytext。
     weights = [10, 2, 1, 1]
     for index in range(160):
         name, email = random.choices(authors, weights=weights, k=1)[0]

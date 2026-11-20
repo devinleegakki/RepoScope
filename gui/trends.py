@@ -1,11 +1,11 @@
-"""提交趋势页：折线图（日 / 周 / 月切换）+ GitHub 风格热力图。
+"""Commit Trendstext：text（text / text / text）+ GitHub text。
 
-两种读法不是重复：
-* **折线**回答"趋势在涨还是在跌"，能看出某个时间段突然停更；
-* **热力图**回答"哪几天在干活"，能看出周末加班或长期空窗。
+text：
+* **text**text"text"，text；
+* **text**text"text"，text。
 
-日 / 周 / 月只是**同一份 ``commit_calendar`` 的三种切片**，不是三份新数据，
-所以在展示层聚合，不向后端要字段。
+text / text / text**text ``commit_calendar`` text**，text，
+text，text。
 """
 
 from __future__ import annotations
@@ -28,7 +28,7 @@ from .contract import AnalysisView
 from .plotting import TrendChart
 from .widgets import Card, PageHeader
 
-_WEEKDAYS = ("一", "二", "三", "四", "五", "六", "日")
+_WEEKDAYS = ("text", "text", "text", "text", "text", "text", "text")
 _LEVEL_COLORS = ("#21262d", "#0e4429", "#006d32", "#26a641", "#39d353")
 _MAX_WEEKS = 60
 
@@ -57,12 +57,12 @@ def _parse(calendar: dict[str, int]) -> list[tuple[datetime, int]]:
 
 
 def aggregate(rows: list[tuple[datetime, int]], mode: str) -> list[tuple[datetime, int]]:
-    """把按天的提交数聚合成按周或按月。``mode`` 取 ``日`` / ``周`` / ``月``。"""
-    if mode == "日":
+    """textcommit counttext。``mode`` text ``text`` / ``text`` / ``text``。"""
+    if mode == "text":
         return rows
     buckets: dict[datetime, int] = {}
     for moment, count in rows:
-        if mode == "周":
+        if mode == "text":
             key = moment - timedelta(days=moment.weekday())
         else:
             key = moment.replace(day=1)
@@ -71,18 +71,18 @@ def aggregate(rows: list[tuple[datetime, int]], mode: str) -> list[tuple[datetim
 
 
 class HeatmapWidget(QWidget):
-    """GitHub 风格的提交热力图：7 行（周一到周日）× N 列（周）。
+    """GitHub textcommitstext：7 text（text）× N text（text）。
 
-    为什么自己画而不是用 ``QTableWidget`` 染色：
-    表格的行高会被 QSS 的 ``::item`` 内边距撑大（实测 15px 变 23px），
-    按 ``行数 × 15`` 算出来的固定高度就只塞得下四行；而且单元格之间的缝隙
-    没法控制，画出来是连成一片的色带，不是一格一格的方块。
-    ``paintEvent`` 里画圆角矩形只有十几行，尺寸完全可控。
+    text ``QTableWidget`` text：
+    text QSS text ``::item`` text（text 15px text 23px），
+    text ``text × 15`` text；text
+    text，text，text。
+    ``paintEvent`` text，text。
     """
 
-    CELL = 11      # 方块边长
-    GAP = 2        # 方块之间的缝隙
-    GUTTER = 22    # 左侧星期标签的宽度
+    CELL = 11      # text
+    GAP = 2        # text
+    GUTTER = 22    # texttagstext
 
     def __init__(self) -> None:
         super().__init__()
@@ -119,7 +119,7 @@ class HeatmapWidget(QWidget):
         )
         self.update()
 
-    def paintEvent(self, event) -> None:  # noqa: N802 (Qt 的命名约定)
+    def paintEvent(self, event) -> None:  # noqa: N802 (Qt text)
         if not self._weeks or self._start is None:
             return
         painter = QPainter(self)
@@ -165,11 +165,11 @@ class HeatmapWidget(QWidget):
         day = self._start + timedelta(days=column * 7 + row)
         if self._last is not None and day > self._last:
             return
-        self.setToolTip(f"{day.isoformat()} · {self._days.get(day, 0)} 次提交")
+        self.setToolTip(f"{day.isoformat()} · {self._days.get(day, 0)} textcommits")
 
 
 class TrendPage(QWidget):
-    """提交趋势页。"""
+    """Commit Trendstext。"""
 
     def __init__(self) -> None:
         super().__init__()
@@ -180,11 +180,11 @@ class TrendPage(QWidget):
         outer.setSpacing(14)
 
         self.mode = QComboBox()
-        self.mode.addItems(["按日", "按周", "按月"])
+        self.mode.addItems(["text", "text", "text"])
         self.mode.setCurrentIndex(1)
         self.mode.currentIndexChanged.connect(self._redraw)
 
-        self.header = PageHeader("提交趋势", "尚未分析任何仓库")
+        self.header = PageHeader("Commit Trends", "No repository analyzed yet")
         self.header.add_right(self.mode)
         outer.addWidget(self.header)
 
@@ -222,13 +222,13 @@ class TrendPage(QWidget):
 
         legend = QHBoxLayout()
         legend.setSpacing(4)
-        legend.addWidget(QLabel("少"))
+        legend.addWidget(QLabel("text"))
         for color in _LEVEL_COLORS:
             swatch = QLabel()
             swatch.setFixedSize(12, 12)
             swatch.setStyleSheet(f"background:{color}; border-radius:2px;")
             legend.addWidget(swatch)
-        legend.addWidget(QLabel("多"))
+        legend.addWidget(QLabel("text"))
         legend.addStretch(1)
         heat_layout.addLayout(legend)
         outer.addWidget(heat_card, 2)
@@ -240,11 +240,11 @@ class TrendPage(QWidget):
         self._rows = _parse(calendar)
         total = sum(calendar.values())
         self.header.set_hint(
-            f"共 {total:,} 次提交 · 覆盖 {len(calendar)} 个活跃日 · "
-            f"按{self.mode.currentText().removeprefix('按')}查看"
+            f"text {total:,} textcommits · text {len(calendar)} text · "
+            f"text{self.mode.currentText().removeprefix('text')}text"
         )
         self.heat_hint.setText(
-            f"每格一天，共 {len(calendar)} 个活跃日；颜色越亮当天提交越多"
+            f"text，text {len(calendar)} text；textcommitstext"
         )
         self.heatmap.set_calendar(calendar)
         self._redraw()
@@ -252,14 +252,14 @@ class TrendPage(QWidget):
     def _redraw(self) -> None:
         if not self._rows:
             return
-        mode = self.mode.currentText().removeprefix("按")
+        mode = self.mode.currentText().removeprefix("text")
         points = aggregate(self._rows, mode)
         self.chart.set_points(points)
         if points:
             peak_day, peak = max(points, key=lambda item: item[1])
-            label = "日" if mode == "日" else ("周" if mode == "周" else "月")
+            label = "text" if mode == "text" else ("text" if mode == "text" else "text")
             self.chart_hint.setText(
-                f"共 {len(points)} 个{label} · 峰值 {peak} 次"
+                f"text {len(points)} text{label} · text {peak} text"
                 f"（{peak_day.strftime('%Y-%m-%d')}）· "
-                f"平均 {sum(c for _, c in points) / max(1, len(points)):.1f} 次/{label}"
+                f"text {sum(c for _, c in points) / max(1, len(points)):.1f} text/{label}"
             )

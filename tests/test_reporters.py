@@ -1,7 +1,7 @@
-"""集成测试：报告生成（reporters.py）。
+"""text：reporttext（reporters.py）。
 
-验收点："Markdown、HTML、CSV 报告"齐全，且"三种报告数据一致"
-—— 三种格式从同一个 AnalysisView 渲染，关键数字必须对得上。
+text："Markdown、HTML、CSV report"text，text"textreporttext"
+—— text AnalysisView text，text。
 """
 
 from pathlib import Path
@@ -17,7 +17,7 @@ from core import reporters
 
 @pytest.fixture(scope="module")
 def view():
-    # 合成数据集不依赖真实 Git 仓库，测试结果稳定（随机种子固定）
+    # text Git repository，text（text）
     return mock_data.build("demo/workspace", force_synthetic=True)
 
 
@@ -30,12 +30,12 @@ def test_human_size_units() -> None:
 def test_markdown_covers_all_sections(view) -> None:
     markdown = reporters.render_markdown(view)
     for keyword in (
-        "总体评价", "关键指标", "作者贡献", "提交活跃度", "文件热点",
-        "大文件", "陈旧文件", "反模式清单", "提交规范", "复现方式",
+        "Overall assessment", "Key metrics", "Author Contributions", "Commit activity", "File hotspots",
+        "Large files", "Stale files", "Anti-pattern list", "Commit convention", "Reproduction",
     ):
         assert keyword in markdown
     assert view.snapshot.repo_name in markdown
-    assert f"健康度 **{view.health_score:.0f} / 100**" in markdown
+    assert f"health score **{view.health_score:.0f} / 100**" in markdown
 
 
 def test_html_is_standalone_document(view) -> None:
@@ -49,14 +49,14 @@ def test_html_is_standalone_document(view) -> None:
 def test_csv_contains_all_sections(view) -> None:
     content = reporters.render_csv(view)
     header = content.splitlines()[0]
-    assert header.startswith("类别,对象,提交数,占比")
-    assert "作者" in content
-    assert "反模式警告" in content
-    assert "汇总" in content
+    assert header.startswith("text,text,commit count,text")
+    assert "authors" in content
+    assert "anti-patternstext" in content
+    assert "text" in content
 
 
 def test_three_formats_share_the_same_numbers(view) -> None:
-    """三种报告数据一致：同一个健康度和同一条反模式规则名必须同时出现。"""
+    """textreporttext：texthealth scoretextanti-patternsRulestext。"""
     markdown = reporters.render_markdown(view)
     page = reporters.render_html(view)
     sheet = reporters.render_csv(view)

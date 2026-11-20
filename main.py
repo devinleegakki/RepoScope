@@ -1,7 +1,7 @@
-"""RepoScope 的唯一应用入口。
+"""RepoScope text。
 
-无参数或使用 ``--demo`` / ``--path`` 时启动 GUI；使用 ``analyze``、
-``check``、``export``、``batch`` 子命令时继续运行原有 CLI。
+text ``--demo`` / ``--path`` text GUI；text ``analyze``、
+``check``、``export``、``batch`` text CLI。
 """
 
 from __future__ import annotations
@@ -18,12 +18,12 @@ from cli import main as cli_main  # noqa: E402
 def _gui_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="main.py",
-        description="RepoScope 图形界面启动器",
+        description="RepoScope GUI launcher",
     )
     parser.add_argument(
         "--gui",
         action="store_true",
-        help="显式启动图形界面（默认行为）",
+        help="explicitly start the GUI (default)",
     )
     parser.add_argument(
         "--version",
@@ -31,13 +31,13 @@ def _gui_parser() -> argparse.ArgumentParser:
         version="RepoScope 1.0",
     )
     source = parser.add_mutually_exclusive_group()
-    source.add_argument("--demo", action="store_true", help="加载内置演示数据集")
-    source.add_argument("--path", metavar="目录", help="启动后立即分析本地 Git 仓库")
+    source.add_argument("--demo", action="store_true", help="load the built-in demo dataset")
+    source.add_argument("--path", metavar="directory", help="analyze a local Git repository after startup")
     return parser
 
 
 def _run_gui(argv: list[str] | None = None) -> int:
-    """启动 GUI；CLI-only 调用不会加载 PySide6。"""
+    """text GUI；CLI-only text PySide6。"""
     from gui.main_window import main as gui_main
 
     args = _gui_parser().parse_args(argv)

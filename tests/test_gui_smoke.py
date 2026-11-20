@@ -1,6 +1,6 @@
-"""GUI 冒烟测试：窗口能建、页面能切、数据能灌、报告能生成。
+"""GUI text：text、text、text、reporttext。
 
-用 offscreen 平台跑，所以不需要真实显示器，CI 里也能过：
+text offscreen text，text，CI text：
 
     QT_QPA_PLATFORM=offscreen python -m unittest tests.test_gui_smoke
 """
@@ -19,9 +19,9 @@ if str(ROOT) not in sys.path:
 
 try:
     from PySide6.QtWidgets import QApplication  # noqa: E402
-except ImportError as exc:  # pragma: no cover - 没装 GUI 依赖时整组跳过
+except ImportError as exc:  # pragma: no cover - text GUI text
     raise unittest.SkipTest(
-        f"GUI 冒烟测试需要 PySide6（pip install pyside6）：{exc}"
+        f"GUI text PySide6（pip install pyside6）：{exc}"
     ) from exc
 
 from gui import mock_data  # noqa: E402
@@ -57,17 +57,17 @@ class TestMockData(unittest.TestCase):
         self.assertEqual(seen[-1], 100)
 
     def test_warnings_carry_four_elements(self):
-        """反模式中心的要求：每条警告都要能解释"为什么、差多少、怎么改"。"""
+        """Anti-pattern Centertext：text"text、text、text"。"""
         self.assertTrue(_VIEW.warnings)
         for warning in _VIEW.warnings:
-            self.assertTrue(warning.has_evidence, f"{warning.rule} 缺少四要素")
+            self.assertTrue(warning.has_evidence, f"{warning.rule} Missingtext")
             self.assertIn(warning.severity, {"high", "medium", "low"})
 
     def test_commit_hygiene_is_computed(self):
         hygiene = _VIEW.commit_hygiene
         self.assertEqual(hygiene.total, _VIEW.total_commits)
         self.assertTrue(0 <= hygiene.pass_rate <= 1)
-        # violations 只保留前 20 条用于展示，所以这里是"不超出"而不是"相等"
+        # violations text 20 text，text"text"text"text"
         self.assertLessEqual(hygiene.passed + len(hygiene.violations), hygiene.total)
 
 
@@ -82,7 +82,7 @@ class TestMainWindow(unittest.TestCase):
         self.assertEqual(self.window.stack.count(), 9)
 
     def test_sidebar_has_group_headers_and_pages(self):
-        # 9 个页面 + 3 个分组标题
+        # 9 text + 3 text
         self.assertEqual(self.window.sidebar.count(), 12)
         self.assertEqual(len(self.window._row_to_page), 9)
 
@@ -92,12 +92,12 @@ class TestMainWindow(unittest.TestCase):
             self.assertEqual(self.window.stack.currentIndex(), page_index)
 
     def test_group_header_does_not_switch_page(self):
-        self.window.goto("分析配置")
+        self.window.goto("Analysis Settings")
         before = self.window.stack.currentIndex()
         header_row = 0
         self.assertEqual(self.window.sidebar.item(header_row).data(0x0100), "header")
         self.window.sidebar.setCurrentRow(header_row)
-        # 分组标题不可选，切换不会把页面切到空白
+        # text，text
         self.assertEqual(self.window.stack.currentIndex(), before)
 
     def test_every_data_page_accepts_view(self):
@@ -137,7 +137,7 @@ class TestMainWindow(unittest.TestCase):
         self.assertFalse(self.window.select_page.analyze_btn.isEnabled())
         self.window.select_page.path_edit.setText("/definitely/not/here")
         self.assertFalse(self.window.select_page.analyze_btn.isEnabled())
-        self.assertIn("不存在", self.window.select_page.status.text())
+        self.assertIn("does not exist", self.window.select_page.status.text())
 
     def test_empty_path_is_rejected_without_crashing(self):
         self.window.select_page.path_edit.setText("")
@@ -147,8 +147,8 @@ class TestMainWindow(unittest.TestCase):
 class TestReport(unittest.TestCase):
     def test_markdown_covers_all_sections(self):
         markdown = build_markdown(_VIEW)
-        for keyword in ("总体评价", "关键指标", "作者贡献", "提交活跃度",
-                        "热点文件", "反模式清单", "提交规范", "复现方式"):
+        for keyword in ("Overall assessment", "Key metrics", "Author Contributions", "Commit activity",
+                        "Hot files", "Anti-pattern list", "Commit convention", "Reproduction"):
             self.assertIn(keyword, markdown)
 
     def test_export_writes_three_formats(self):

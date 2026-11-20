@@ -25,7 +25,7 @@ def git_repo(tmp_path: Path) -> Path:
     run_git(repo, "config", "user.name", "Test Author")
     run_git(repo, "config", "user.email", "test@example.com")
     (repo / "README.md").write_text("first\n", encoding="utf-8")
-    (repo / "中文 文件.txt").write_text("one\n", encoding="utf-8")
+    (repo / "text files.txt").write_text("one\n", encoding="utf-8")
     run_git(repo, "add", "-A")
     run_git(repo, "commit", "-m", "feat: initial files")
     run_git(repo, "tag", "v1.0.0")
@@ -55,7 +55,7 @@ def test_read_files_includes_tracked_and_non_ignored_untracked(git_repo: Path) -
     by_path = {record.path: record for record in files}
 
     assert "README.md" in by_path
-    assert "中文 文件.txt" in by_path
+    assert "text files.txt" in by_path
     assert "new file.py" in by_path
     assert by_path["README.md"].is_tracked is True
     assert by_path["untracked.data"].is_tracked is False

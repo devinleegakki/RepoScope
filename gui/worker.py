@@ -1,10 +1,10 @@
-"""后台分析线程的 worker。
+"""textanalyzetext worker。
 
-Qt 铁律：控件只能在主线程里碰。所以这个对象被 ``moveToThread`` 挪到子线程后，
-唯一的对外通道就是三个信号：进度、完成、失败。
+Qt text：text。text ``moveToThread`` text，
+text：text、Complete、failed。
 
-分析改用 ``services.AnalysisService``（与命令行同一入口）；
-``allow_synthetic=True`` 表示读取失败时退回演示数据，界面永不白屏。
+analyzetext ``services.AnalysisService``（text）；
+``allow_synthetic=True`` textfailedtext，text。
 """
 
 from __future__ import annotations
@@ -17,7 +17,7 @@ from .contract import AnalysisRequest
 
 
 class AnalysisWorker(QObject):
-    """在子线程里跑一次分析，并只通过信号回主线程。"""
+    """textanalyze，text。"""
 
     progress = Signal(int, str)
     finished = Signal(object)
@@ -50,7 +50,7 @@ class AnalysisWorker(QObject):
                 config,
                 on_progress=lambda percent, message: self.progress.emit(percent, message),
             )
-        except Exception as exc:  # 任何异常都要变成一条可读消息，不能让线程静默死掉
+        except Exception as exc:  # text，text
             self.failed.emit(f"{type(exc).__name__}: {exc}")
             return
         self.finished.emit(view)

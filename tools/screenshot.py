@@ -1,13 +1,13 @@
-"""离屏截图：把九个页面各存一张 PNG，用于自查布局和写报告配图。
+"""text：text PNG，textreporttext。
 
-用法：
-    python tools/screenshot.py            # 输出到 docs/screens/
+text：
+    python tools/screenshot.py            # text docs/screens/
     python tools/screenshot.py out_dir
 
-为什么值得单独写一个脚本：
-* 改完 QSS 不用手点九次页面就能看到全部效果；
-* 报告和 PPT 需要配图，这个脚本一次出齐；
-* 用 ``QT_QPA_PLATFORM=offscreen``，没有显示器也能跑（CI 里同样可用）。
+text：
+* text QSS text；
+* reporttext PPT text，text；
+* text ``QT_QPA_PLATFORM=offscreen``，text（CI text）。
 """
 
 from __future__ import annotations
@@ -27,15 +27,15 @@ from PySide6.QtWidgets import QApplication  # noqa: E402
 from gui.main_window import MainWindow  # noqa: E402
 
 _PAGES = (
-    ("01-仓库选择", "仓库选择"),
-    ("02-分析配置", "分析配置"),
-    ("03-总览仪表板", "总览仪表板"),
-    ("04-提交趋势", "提交趋势"),
-    ("05-作者贡献", "作者贡献"),
-    ("06-数据分析", "数据分析"),
-    ("07-反模式中心", "反模式中心"),
-    ("08-报告区", "报告区"),
-    ("09-多仓库对比", "多仓库对比"),
+    ("01-Repository", "Repository"),
+    ("02-Analysis Settings", "Analysis Settings"),
+    ("03-Dashboard", "Dashboard"),
+    ("04-Commit Trends", "Commit Trends"),
+    ("05-Author Contributions", "Author Contributions"),
+    ("06-Data Analysis", "Data Analysis"),
+    ("07-Anti-pattern Center", "Anti-pattern Center"),
+    ("08-Reports", "Reports"),
+    ("09-Repository Comparison", "Repository Comparison"),
 )
 
 
