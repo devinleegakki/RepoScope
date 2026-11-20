@@ -1,4 +1,6 @@
-"""GUI Notes
+"""Stable data contract between the analysis engine and GUI pages.
+
+The adapter keeps PySide6 widgets independent from concrete metric models.
 
 files**GUI type**
 Notes ``AnalysisView`` Notes
@@ -11,7 +13,7 @@ rules code review Notes
   Notes
 * Notes ``AnalysisView``，Notes
 
-Notes ``docs/GUI_INTERFACE.md``）::
+    The stable view contract is documented in ``docs/API_REFERENCE.md``::
 
     snapshot / health_score / total_commits ...   LTY(git_reader) + TYB(metrics)
     commit_hygiene                                TYB(metrics + rules)
@@ -149,7 +151,7 @@ class AnalysisView(Protocol):
     """NotesTYB Notes ``AnalysisResult`` Notes
 
     Notes
-    Notes ``docs/GUI_INTERFACE.md``。
+    See ``docs/API_REFERENCE.md`` for the public field mapping.
     """
 
     snapshot: RepositorySnapshot

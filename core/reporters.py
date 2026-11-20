@@ -1,4 +1,7 @@
-"""reportMarkdown / HTML / CSV，Notes
+"""Render an ``AnalysisView`` as Markdown, HTML, or CSV reports.
+
+All renderers consume the same view model so GUI previews and CLI exports stay
+consistent.
 
 Notes PySide6，NotesGUI analysis
 Notes ``AnalysisView``，Notes

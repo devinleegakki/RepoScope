@@ -59,7 +59,7 @@ class ExportDialog(QDialog):
         self.setMinimumWidth(320)
 
         layout = QVBoxLayout(self)
-        layout.addWidget(QLabel("select"))
+        layout.addWidget(QLabel("Choose one or more report formats to export."))
 
         self.markdown = QCheckBox("Markdown (.md)")
         self.html = QCheckBox("HTML (.html)")

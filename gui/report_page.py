@@ -11,8 +11,12 @@ report"export"Notes
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from core import reporters
 from PySide6.QtWidgets import (
+    QApplication,
+    QDialog,
     QFileDialog,
     QHBoxLayout,
     QLabel,
@@ -134,21 +138,39 @@ class ReportPage(QWidget):
         if self._view is None:
             return
         dialog = dialogs.ExportDialog(self)
-        if dialog.exec() != dialog.Accepted:
+        if dialog.exec() != QDialog.Accepted:
             return
         formats = dialog.selected_formats()
         if not formats:
+            self.status.setText("Export cancelled · select at least one format")
             dialogs.show_error(self, "Export", "Select at least one output format.")
             return
-        target = QFileDialog.getExistingDirectory(self, "Choose output folder")
+        self.status.setText("Preparing export…")
+        self.export_btn.setEnabled(False)
+        QApplication.processEvents()
+
+        repository_path = Path(self._view.snapshot.repo_path)
+        default_dir = repository_path / "reports"
+        if not default_dir.is_dir():
+            default_dir = Path.cwd() / "reports"
+        target = QFileDialog.getExistingDirectory(
+            self,
+            "Choose output folder",
+            str(default_dir),
+        )
         if not target:
+            self.status.setText("Export cancelled")
+            self.export_btn.setEnabled(True)
             return
         try:
             written = export(self._view, formats, target)
-        except OSError as exc:
+        except (OSError, ValueError, RuntimeError) as exc:
+            self.status.setText("Export failed")
+            self.export_btn.setEnabled(True)
             dialogs.show_error(self, "Export failed", str(exc))
             return
         self.status.setText(f"Exported {len(written)} files to {target}")
+        self.export_btn.setEnabled(True)
         dialogs.show_info(
             self,
             "Export complete",
