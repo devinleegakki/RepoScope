@@ -21,11 +21,13 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Mapping, Sequence
 
-from models import Commit, FileRecord, RepositorySnapshot
+from core.models import Commit, FileRecord, RepositorySnapshot
 
 from .contract import (
     AuthorStat,
     CommitHygiene,
+    DashboardStats,
+    HealthDimension,
     FileStat,
     ProgressCallback,
     Violation,
@@ -54,6 +56,7 @@ class MockView:
     elapsed_seconds: float = 0.0
     commit_hygiene: CommitHygiene = field(default_factory=CommitHygiene)
     risk_level: str = "low"
+    dashboard_stats: DashboardStats = field(default_factory=DashboardStats)
 
 
 def build(
@@ -104,7 +107,7 @@ def build(
 # --------------------------------------------------------------------------
 def _read_real_snapshot(repo_path: str, report: ProgressCallback) -> RepositorySnapshot | None:
     try:
-        from git_reader import GitReader
+        from core.git_reader import GitReader
     except ImportError:
         return None
     try:
@@ -309,6 +312,24 @@ def _compute(
         health -= penalty.get(warning.severity, 3)
     health = round(max(0.0, min(100.0, health)), 1)
 
+    risk_counts = {level: sum(1 for warning in warnings if warning.severity == level)
+                   for level in ("high", "medium", "low")}
+    recent_commits = {}
+    last_date = max(calendar) if calendar else ""
+    if last_date:
+        last_dt = datetime.strptime(last_date, "%Y-%m-%d")
+        for days in (7, 30, 90):
+            start = last_dt - timedelta(days=days - 1)
+            recent_commits[days] = sum(value for day, value in calendar.items()
+                                       if start.strftime("%Y-%m-%d") <= day <= last_date)
+    warning_counts = Counter(warning.target for warning in warnings)
+    dimensions = (
+        HealthDimension("Git 活跃度", min(100.0, len(calendar) / 90 * 100), "low" if len(calendar) >= 30 else "medium", 0, f"{len(calendar)} 个活跃日"),
+        HealthDimension("协作与所有权", max(0.0, 100 - warning_counts.get(top_name, 0) * 20), "high" if top_share >= 0.8 else ("medium" if top_share >= 0.7 else "low"), int(top_share >= 0.7), f"最高作者占比 {top_share:.0%}"),
+        HealthDimension("代码质量", 100.0, "low", 0, "暂无质量问题"),
+        HealthDimension("依赖与安全", 100.0, "low", 0, "本地规则未发现问题"),
+        HealthDimension("提交规范", hygiene.pass_rate * 100 if hygiene.pass_rate >= 0 else 0, "low" if hygiene.pass_rate >= .8 else "medium", hygiene.total - hygiene.passed, f"通过率 {hygiene.pass_rate:.0%}"),
+    )
     return MockView(
         snapshot=snapshot,
         health_score=health,
@@ -323,6 +344,7 @@ def _compute(
         warnings=warnings,
         commit_hygiene=hygiene,
         risk_level=risk_of(health),
+        dashboard_stats=DashboardStats(dimensions=dimensions, risk_counts=risk_counts, recent_commits=recent_commits),
     )
 
 
@@ -377,3 +399,4 @@ def _synthetic_snapshot(repo_path: str = "demo/repo") -> RepositorySnapshot:
         tags=("v0.1.0",),
         scanned_at=today,
     )
+

@@ -77,7 +77,7 @@ def as_of() -> datetime:
 
 @pytest.fixture
 def config():
-    from models_analysis import AnalysisConfig
+    from reposcope.models_analysis import AnalysisConfig
     return AnalysisConfig()
 
 
@@ -102,3 +102,4 @@ def base_snapshot() -> Snapshot:
     ]
     tags = [Tag("v0.1", _ts(500))]  # last tag 500 days ago -> release stale
     return Snapshot("fixture-repo", commits, files, tags)
+

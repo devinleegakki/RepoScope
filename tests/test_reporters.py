@@ -10,9 +10,9 @@ import pytest
 
 from gui import mock_data
 from gui.contract import RepoSummary
-from services import BatchResult
+from core.services import BatchResult
 
-import reporters
+from core import reporters
 
 
 @pytest.fixture(scope="module")
@@ -108,3 +108,4 @@ def test_summary_reports_include_rows_and_failures() -> None:
     lines = sheet.strip().splitlines()
     assert len(lines) == 3
     assert "alpha" in lines[1] and "beta" in lines[2]
+

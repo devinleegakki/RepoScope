@@ -20,8 +20,8 @@ import threading
 from pathlib import Path
 from typing import Sequence
 
-import reporters
-from services import (
+from core import reporters
+from core.services import (
     AnalysisConfig,
     AnalysisError,
     AnalysisService,
@@ -44,7 +44,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="main.py",
         description="RepoScope — 本地 Git 仓库健康分析（CLI）",
-        epilog="GUI 版本：python run_gui.py（或 run_gui.py --demo）",
+        epilog="GUI 版本：python main.py（或 python main.py --demo）",
     )
     parser.add_argument(
         "--version",
@@ -394,3 +394,4 @@ def _ensure_utf8_stdio() -> None:
             stream.reconfigure(encoding="utf-8", errors="replace")
         except (ValueError, OSError):  # pragma: no cover - 某些被重定向的流不支持
             pass
+

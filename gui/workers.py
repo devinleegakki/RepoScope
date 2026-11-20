@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from PySide6.QtCore import QObject, Signal, Slot
 
-from git_reader import GitReader, GitReaderError
-from models import RepositorySnapshot
+from core.git_reader import GitReader, GitReaderError
+from core.models import RepositorySnapshot
 
 
 class SnapshotWorker(QObject):
@@ -32,3 +32,4 @@ class SnapshotWorker(QObject):
         else:
             self.progress.emit("扫描完成")
             self.finished.emit(snapshot)
+

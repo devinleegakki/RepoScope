@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 
 import pytest
 
-from models import Commit, FileRecord, RepositorySnapshot
+from core.models import Commit, FileRecord, RepositorySnapshot
 
 
 def test_models_are_immutable_and_keep_nested_values() -> None:
@@ -59,3 +59,4 @@ def test_models_are_immutable_and_keep_nested_values() -> None:
 def test_models_reject_invalid_values(factory, kwargs) -> None:
     with pytest.raises(ValueError):
         factory(**kwargs)
+

@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from metrics import compute_metrics
-from models_analysis import AnalysisConfig
+from reposcope.models_analysis import AnalysisConfig
 from rules import detect_all
 
 
@@ -40,3 +40,4 @@ def test_config_change_produces_different_warnings(base_snapshot, as_of):
     assert "Single-maintainer risk" not in w_strict
     assert "High-frequency change hotspot" in w_lenient
     assert "High-frequency change hotspot" not in w_strict
+

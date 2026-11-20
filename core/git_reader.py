@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterable, Optional, Sequence
 
-from models import Commit, FileRecord, GitReaderErrorInfo, RepositorySnapshot
+from core.models import Commit, FileRecord, GitReaderErrorInfo, RepositorySnapshot
 
 
 class GitReaderError(RuntimeError):
@@ -287,3 +287,4 @@ class GitReader:
 
 
 __all__ = ["GitReader", "GitReaderError"]
+

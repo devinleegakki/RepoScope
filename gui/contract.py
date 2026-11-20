@@ -7,7 +7,7 @@
 边界规则（写进 code review 检查项）：
 
 * ``gui/`` 只能 import 标准库、``models.py`` 和 ``PySide6``。
-* 不允许 ``from git_reader import ...``、``from metrics import ...``。
+* 不允许 ``from core.git_reader import ...``、``from metrics import ...``。
   那些模块还在改，直连会导致你每天都要修界面。
 * 传进界面的永远是一个 ``AnalysisView``，界面不关心它是真算出来的还是假的。
 
@@ -27,7 +27,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Callable, Mapping, Protocol, Sequence, Tuple, runtime_checkable
 
-from models import RepositorySnapshot
+from core.models import RepositorySnapshot
 
 # 后端还没实现的字段统一用这个占位符，界面据此显示"—"而不是 0，
 # 避免出现"明明是 0 却看起来像分析成功"的假数据。
@@ -83,6 +83,26 @@ class CommitHygiene:
     passed: int = 0
     pattern: str = ""
     violations: Tuple[Violation, ...] = field(default_factory=tuple)
+
+
+@dataclass(frozen=True)
+class HealthDimension:
+    """One explainable score shown in the dashboard health overview."""
+
+    name: str
+    score: float
+    level: str = "low"
+    issue_count: int = 0
+    hint: str = ""
+
+
+@dataclass(frozen=True)
+class DashboardStats:
+    """Precomputed dashboard-only aggregates; widgets do not recalculate them."""
+
+    dimensions: Tuple[HealthDimension, ...] = field(default_factory=tuple)
+    risk_counts: Mapping[str, int] = field(default_factory=dict)
+    recent_commits: Mapping[int, int] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -148,6 +168,7 @@ class AnalysisView(Protocol):
     # --- TODO(TYB) / TODO(Wyh) ---
     commit_hygiene: CommitHygiene   # 总览页的"提交规范通过率"
     risk_level: str                 # 总览页右上角的等级徽标
+    dashboard_stats: DashboardStats
 
 
 ProgressCallback = Callable[[int, str], None]
@@ -165,8 +186,16 @@ class AnalysisRequest:
     stale_days: int = 180
     large_file_mb: int = 10
     hotspot_changes: int = 10
+    release_stale_days: int = 365
+    single_maintainer_ratio: float = 0.70
     window_days: int = 0            # 0 = 全部历史；30 / 90 / 365
     commit_pattern: str = r"^(feat|fix|docs|refactor|test|chore)(\(.+\))?: "
+    max_function_lines: int = 80
+    max_file_lines: int = 500
+    min_test_ratio: float = 0.05
+    ownership_ratio: float = 0.80
+    enable_dependency_scan: bool = True
+    enable_secret_scan: bool = True
 
 
 def risk_of(score: float) -> str:
@@ -178,7 +207,7 @@ def risk_of(score: float) -> str:
     return "high"
 
 
-def adapt(result: object) -> AnalysisView:
+def adapt(result: object, snapshot: RepositorySnapshot | None = None) -> AnalysisView:
     """把 TYB 的 ``AnalysisResult`` 映射成 ``AnalysisView``。
 
     TODO(接口对接日): 等 ``metrics.py`` 落地后在这里补字段映射，界面不用改。
@@ -196,7 +225,55 @@ def adapt(result: object) -> AnalysisView:
 
     在映射补齐之前，调用它会明确抛错，避免界面显示 0 还以为分析成功。
     """
-    raise NotImplementedError(
-        "AnalysisResult -> AnalysisView 的字段映射尚未实现。"
-        "请先确认 metrics.py 的字段名，再在 gui/contract.py 的 adapt() 里补齐。"
+    from dataclasses import dataclass
+    from types import SimpleNamespace
+    metrics = getattr(result, "metrics", result)
+    snap = snapshot or getattr(result, "snapshot", None)
+    if snap is None:
+        raise TypeError("adapt 需要 snapshot")
+    authors = []
+    for a in getattr(metrics, "author_contributions", []):
+        authors.append(AuthorStat(a.author, a.commits, 0, 0, a.ratio, a.recent_ratio))
+    def files(items):
+        return [FileStat(f.path, f.changes, 0, f.size_bytes, f.stale_days or 0,
+                          f.lines_changed, f.file_type, f.is_binary) for f in items]
+    compliance = getattr(metrics, "commit_compliance", None)
+    hygiene = CommitHygiene(compliance.pass_rate, compliance.checked, compliance.valid,
+                            getattr(result, "commit_message_pattern", ""),
+                            tuple(Violation(v.get("sha", ""), v.get("message", ""), "; ".join(v.get("reasons", []))) for v in compliance.violations)) if compliance else CommitHygiene()
+    warnings = []
+    for w in getattr(result, "warnings", []):
+        warnings.append(Warning(w.name, w.level, w.message, w.target, str(w.threshold), str(w.actual_value), str(w.threshold), w.suggestion))
+    q = getattr(metrics, "code_quality", None)
+    extra = {
+        "code_quality": q, "ownership": getattr(metrics, "ownership", None),
+        "dependencies": getattr(metrics, "dependencies", None), "security_findings": getattr(metrics, "security_findings", []),
+    }
+    risk_counts = {level: sum(1 for w in warnings if w.severity == level) for level in ("high", "medium", "low")}
+    q = getattr(metrics, "code_quality", None)
+    own = getattr(metrics, "ownership", None)
+    dep = getattr(metrics, "dependencies", None)
+    findings = getattr(metrics, "security_findings", [])
+    quality_issues = (len(getattr(q, "long_functions", [])) + len(getattr(q, "long_files", [])) +
+                      getattr(q, "bare_except_count", 0)) if q else 0
+    security_issues = len(findings) + (len(getattr(dep, "unpinned", [])) + len(getattr(dep, "duplicates", [])) if dep else 0)
+    dimensions = (
+        HealthDimension("Git 活跃度", min(100.0, len(metrics.commit_trend) / 30 * 100), "low" if len(metrics.commit_trend) >= 30 else "medium", 0, f"{len(metrics.commit_trend)} 个活跃周期"),
+        HealthDimension("协作与所有权", max(0.0, 100 - len(getattr(own, "high_risk_files", [])) * 10), "high" if getattr(own, "high_risk_files", []) else "low", len(getattr(own, "high_risk_files", [])), f"{len(getattr(own, 'high_risk_files', []))} 个高风险文件"),
+        HealthDimension("代码质量", max(0.0, 100 - quality_issues * 8), "high" if quality_issues >= 5 else ("medium" if quality_issues else "low"), quality_issues, f"{quality_issues} 个规则问题"),
+        HealthDimension("依赖与安全", max(0.0, 100 - security_issues * 15), "high" if findings else ("medium" if security_issues else "low"), security_issues, f"{security_issues} 个依赖/安全问题"),
+        HealthDimension("提交规范", hygiene.pass_rate * 100 if hygiene and hygiene.pass_rate >= 0 else 0, "low" if hygiene and hygiene.pass_rate >= .8 else "medium", (hygiene.total - hygiene.passed) if hygiene else 0, f"通过率 {hygiene.pass_rate:.0%}" if hygiene else "待提供"),
     )
+    recent = {}
+    calendar = dict(metrics.commit_trend)
+    for days in (7, 30, 90):
+        recent[days] = sum(calendar.values()) if days == 90 else sum(list(calendar.values())[-days:])
+    stats = DashboardStats(dimensions=dimensions, risk_counts=risk_counts, recent_commits=recent)
+    return SimpleNamespace(snapshot=snap, health_score=max(0.0, 100.0 - 10.0 * len(warnings)),
+        total_commits=metrics.total_commits, author_count=metrics.total_authors,
+        file_count=metrics.total_files, commit_calendar=metrics.commit_trend,
+        author_stats=tuple(authors), hotspot_files=tuple(files(metrics.file_hotspots)),
+        large_files=tuple(files(metrics.large_files)), stale_files=tuple(files(metrics.stale_files)),
+        warnings=tuple(warnings), elapsed_seconds=0.0, commit_hygiene=hygiene,
+        risk_level=risk_of(max(0.0, 100.0 - 10.0 * len(warnings))), dashboard_stats=stats, **extra)
+

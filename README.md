@@ -51,13 +51,14 @@ commit_message_pattern: "^(feat|fix|docs|refactor|test|chore)(\(.+\))?:"
 ## 项目结构（当前代码结构）
 
 ```text
-models.py                            共享的数据模型（LTY）
-git_reader.py                        本地 Git 数据读取层（LTY）
-services.py                          统一分析服务 + 配置 + 多仓库批量分析（WPH）
-reporters.py                         Markdown / HTML / CSV 报告生成（WPH）
+core/                                共享数据模型、Git 读取、分析服务和报告生成
+  models.py                          共享的数据模型（LTY）
+  git_reader.py                      本地 Git 数据读取层（LTY）
+  services.py                        统一分析服务 + 配置 + 多仓库批量分析（WPH）
+  reporters.py                       Markdown / HTML / CSV 报告生成（WPH）
 cli/                                 命令行包：analyze / check / batch（WPH）
 main.py                              命令行入口（课程要求的入口文件名；WPH）
-run_gui.py                           图形界面入口（--demo / --path）
+main.py                              唯一入口：GUI（--demo / --path）与 CLI 子命令
 gui/                                 图形界面层（九页 + 契约 + 后台线程）（HJH）
 tests/                               单元测试、集成测试（WPH 负责集成部分）
 docs/GUI_INTERFACE.md                GUI 接口说明（给队友看字段和接法）
@@ -76,10 +77,10 @@ README.md                            安装与运行说明（WPH）
 
 | 成员 | 负责模块 / 角色 | 主要任务 | 主要交付物 | 状态 |
 | --- | --- | --- | --- | --- |
-| LTY | Git 数据层与仓库读取 | 仓库验证、读取提交历史/文件元数据/分支/tag、单元测试 | `git_reader.py`、`models.py` | 已完成 |
+| LTY | Git 数据层与仓库读取 | 仓库验证、读取提交历史/文件元数据/分支/tag、单元测试 | `core/git_reader.py`、`core/models.py` | 已完成 |
 | TYB | 统计指标与反模式检测 | 提交趋势、作者贡献、文件热点、大文件、提交规范、反模式规则 | `metrics.py`、`rules.py` | 待启动 |
 | HJH | PySide6 GUI 与可视化交互 | 九个页面、图表、表格、导出、后台线程不阻塞界面 | `gui/*.py` | 已完成 |
-| wph | CLI、报告、批量分析与质量集成 | `main.py` analyze/check/export 三个命令；Markdown/HTML/CSV 报告；多仓库 ThreadPoolExecutor 批量分析 + 单仓库失败隔离；统一 `services.py`；`requirements.txt`、`README.md`、集成测试 | `main.py`、`cli/`、`services.py`、`reporters.py`、`requirements.txt` | 已实现 |
+| wph | CLI、报告、批量分析与质量集成 | `main.py` analyze/check/export 三个命令；Markdown/HTML/CSV 报告；多仓库 ThreadPoolExecutor 批量分析 + 单仓库失败隔离；统一服务层；`requirements.txt`、`README.md`、集成测试 | `main.py`、`cli/`、`core/`、`requirements.txt` | 已实现 |
 
 ## 使用流程
 
@@ -87,9 +88,9 @@ README.md                            安装与运行说明（WPH）
 
 ```powershell
 python -m pip install PySide6>=6.5
-python run_gui.py                     # 启动后在界面里选仓库
-python run_gui.py --demo              # 内置演示数据集（160 次提交 / 4 位作者）
-python run_gui.py --path <仓库目录>   # 启动即分析指定仓库
+python main.py                          # 启动后在界面里选仓库
+python main.py --demo                   # 内置演示数据集（160 次提交 / 4 位作者）
+python main.py --path <仓库目录>        # 启动即分析指定仓库
 ```
 
 界面按区域分成九页：仓库选择、分析配置、总览仪表板、提交趋势、作者贡献、数据分析、反模式中心、报告区、多仓库对比。分析在后台线程运行，界面不冻结。
@@ -123,7 +124,7 @@ python main.py batch <仓库目录...> [-j 4] [--format all] [--output reports]
 ### 运行演示
 
 ```powershell
-python run_gui.py --demo        # GUI 演示，无需真实 Git 仓库
+python main.py --demo             # GUI 演示，无需真实 Git 仓库
 python main.py check .          # 检查本仓库本身是否可被分析
 ```
 
@@ -143,7 +144,7 @@ python -m pytest -q                   # 全部测试（没有 PySide6 时界面�
 
 仓库包含一条 CI 工作流：
 
-- `.github/workflows/ci.yml`：对 `main` 的 push 和所有 Pull Request 自动运行，使用 Windows、Python 3.11/3.12 两个环境安装 `requirements-dev.txt`，执行源码编译检查和完整测试。
+- `.github/workflows/ci.yml`：对 `main` 的 push 和所有 Pull Request 自动运行，使用 Windows、Python 3.11/3.12 两个环境安装 `config/requirements-dev.txt`，执行源码编译检查和完整测试。
 当前工作流只负责 Windows 环境下的自动测试；如需发布安装包，可以在此基础上另行增加 Windows 打包步骤。
 
 ### Windows：`python` 命令没有任何输出
@@ -157,3 +158,4 @@ python -m pytest -q                   # 全部测试（没有 PySide6 时界面�
 RepoScope 面向 Applied Programming with Python 课程项目，强调模块化设计、图形界面、数据处理、配置驱动的规则、异常处理、单元测试、集成测试和文档化。每位成员的模块通过统一模型接口协作，便于独立开发、测试和代码审查。
 
 RepoScope 只分析本地 Git 数据，不包含 GitHub/GitLab Issue、Pull Request review、远程 API 权限、Issue 关闭率或 PR 响应时间等平台专属数据。仓库内容不会自动上传，分析结果只保存在本地或由用户主动导出。
+

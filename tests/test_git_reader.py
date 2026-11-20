@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from git_reader import GitReader
+from core.git_reader import GitReader
 
 
 def run_git(repo: Path, *args: str) -> str:
@@ -94,3 +94,4 @@ def test_empty_repository_returns_empty_snapshot(tmp_path: Path) -> None:
     assert snapshot.files == ()
     assert snapshot.branches == ()
     assert snapshot.tags == ()
+

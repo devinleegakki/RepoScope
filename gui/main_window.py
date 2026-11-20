@@ -437,7 +437,7 @@ class MainWindow(QMainWindow):
         """直接灌入内置演示数据集，用于彩排和截图。
 
         真实仓库历史太短时（新仓库只有十来个提交），趋势图和热力图会空得看不出效果。
-        ``python run_gui.py --demo`` 就是走这条路，所有页面立刻有数据。
+        ``python main.py --demo`` 就是走这条路，所有页面立刻有数据。
         """
         from . import mock_data
 

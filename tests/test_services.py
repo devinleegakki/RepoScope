@@ -17,7 +17,7 @@ from pathlib import Path
 import pytest
 
 from gui.contract import AnalysisView
-from services import (
+from core.services import (
     AnalysisConfig,
     AnalysisError,
     AnalysisService,
@@ -197,3 +197,4 @@ def test_summarize_view_maps_contract_fields(repo: Path) -> None:
     assert summary.authors == view.author_count
     assert summary.health_score == view.health_score
     assert summary.risk_level in {"low", "medium", "high"}
+

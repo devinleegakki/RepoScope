@@ -1,7 +1,9 @@
 @echo off
-rem Launch RepoScope GUI against THIS repository (real git history, real numbers).
-rem Double-click: the window opens and starts analysing this folder immediately.
-cd /d "%~dp0"
+rem Launch RepoScope GUI with the built-in demo dataset.
+rem Uses a local .venv created from Python 3.11, so it does not depend on
+rem whatever "python" resolves to in PATH (on some machines that is a
+rem Windows Store placeholder that silently does nothing).
+cd /d "%~dp0.."
 
 if not exist ".venv\Scripts\python.exe" (
     echo [1/3] Creating virtual environment with Python 3.11 ...
@@ -28,6 +30,6 @@ if errorlevel 1 (
     )
 )
 
-echo [3/3] Analysing this repository with real git data ...
-".venv\Scripts\python.exe" run_gui.py --path "%CD%"
+echo [3/3] Starting RepoScope ...
+".venv\Scripts\python.exe" main.py --demo
 if errorlevel 1 pause

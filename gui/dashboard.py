@@ -19,6 +19,7 @@ from PySide6.QtWidgets import (
 )
 
 from .contract import AnalysisView
+from .plotting import HealthDimensionChart, RiskDistributionChart, TrendChart
 from .widgets import LEVEL_COLOR, LEVEL_TEXT, SEVERITY_TEXT, Badge, Card, MetricCard, PageHeader
 
 
@@ -92,6 +93,25 @@ class DashboardPage(QWidget):
         for card in (self.commits, self.authors, self.files, self.hygiene):
             top.addWidget(card, 1)
         outer.addLayout(top)
+
+        visuals = QHBoxLayout()
+        visuals.setSpacing(12)
+        self.dimension_chart = HealthDimensionChart()
+        self.dimension_chart.setMinimumHeight(150)
+        self.risk_chart = RiskDistributionChart()
+        self.risk_chart.setMinimumHeight(150)
+        self.activity_chart = Card()
+        activity_chart_layout = QVBoxLayout(self.activity_chart)
+        activity_chart_layout.setContentsMargins(12, 10, 12, 10)
+        activity_chart_layout.setSpacing(4)
+        activity_chart_layout.addWidget(QLabel("提交趋势"))
+        self.trend_chart = TrendChart()
+        self.trend_chart.setMinimumHeight(115)
+        activity_chart_layout.addWidget(self.trend_chart, 1)
+        visuals.addWidget(self.dimension_chart, 3)
+        visuals.addWidget(self.risk_chart, 2)
+        visuals.addWidget(self.activity_chart, 3)
+        outer.addLayout(visuals)
 
         bottom = QHBoxLayout()
         bottom.setSpacing(12)
@@ -171,6 +191,17 @@ class DashboardPage(QWidget):
 
         self._fill_risks(view)
         self._fill_recent(view)
+        stats = getattr(view, "dashboard_stats", None)
+        if stats is not None:
+            self.dimension_chart.set_dimensions(stats.dimensions)
+            self.risk_chart.set_counts(stats.risk_counts)
+        points = []
+        for day, count in sorted(dict(view.commit_calendar).items()):
+            try:
+                points.append((datetime.strptime(day, "%Y-%m-%d"), count))
+            except ValueError:
+                continue
+        self.trend_chart.set_points(points[-90:])
 
     @staticmethod
     def _concentration(view: AnalysisView) -> str:

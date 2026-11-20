@@ -189,14 +189,37 @@ def render_markdown(view: AnalysisView) -> str:
         lines.append("| （无） | — | — | — | — |")
     lines.append("")
 
-    lines += ["## 8. 反模式清单", ""]
+    quality = getattr(view, "code_quality", None)
+    ownership = getattr(view, "ownership", None)
+    dependencies = getattr(view, "dependencies", None)
+    findings = getattr(view, "security_findings", ())
+    if quality is not None:
+        lines += ["## 8. 代码质量", "", "| 指标 | 数值 |", "| --- | --- |",
+                  f"| Python 文件 | {quality.python_files} |", f"| 代码行数 | {quality.lines:,} |",
+                  f"| 函数 / 类 | {quality.functions} / {quality.classes} |",
+                  f"| 测试文件比例 | {quality.test_ratio:.0%} |",
+                  f"| TODO/FIXME | {quality.todo_count} |", f"| 裸 except | {quality.bare_except_count} |", ""]
+    if ownership is not None:
+        lines += ["## 9. 文件级协作风险", "", f"高风险单作者文件：{len(ownership.high_risk_files)}", ""]
+        lines += ["| 文件 | 修改次数 | 作者数 | 主要作者 | 集中度 |", "| --- | --- | --- | --- | --- |"]
+        for row in ownership.high_risk_files[:50]:
+            lines.append(f"| `{row.path}` | {row.changes} | {row.author_count} | {_md_cell(row.top_author)} | {row.top_author_ratio:.0%} |")
+        lines.append("")
+    if dependencies is not None or findings:
+        lines += ["## 10. 依赖与安全", ""]
+        if dependencies is not None:
+            lines += [f"依赖清单：{len(dependencies.dependencies)}，未固定：{len(dependencies.unpinned)}，重复：{len(dependencies.duplicates)}，锁文件：{len(dependencies.lockfiles)}。", ""]
+        lines.append(f"疑似安全发现：{len(findings)}。" if findings else "未发现疑似硬编码凭据。")
+        lines.append("")
+
+    lines += ["## 11. 反模式清单", ""]
     if not view.warnings:
         lines += ["没有命中任何反模式规则。", ""]
     else:
         for index, warning in enumerate(view.warnings, start=1):
             lines += _warning_block(index, warning)
 
-    lines += ["## 9. 提交规范", ""]
+    lines += ["## 12. 提交规范", ""]
     if hygiene is None:
         lines.append("提交规范检查结果待后端提供。")
     elif hygiene.pass_rate < 0:
@@ -223,7 +246,7 @@ def render_markdown(view: AnalysisView) -> str:
     lines.append("")
 
     lines += [
-        "## 10. 复现方式",
+        "## 13. 复现方式",
         "",
         "```bash",
         f"python main.py analyze {snapshot.repo_path}",

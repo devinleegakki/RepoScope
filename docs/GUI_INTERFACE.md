@@ -1,6 +1,6 @@
 # GUI 接口说明
 
-面向 LTY（`git_reader`）、TYB（`metrics` / `rules`）、Wyh（CLI / 报告 / 依赖清单）。
+面向 LTY（`core/git_reader.py`）、TYB（`reposcope/metrics.py` / `reposcope/rules.py`）、Wyh（CLI / 报告 / 依赖清单）。
 **你不需要读 GUI 代码，只需要看这一页。**
 
 ---
@@ -14,7 +14,7 @@
 from gui.contract import AnalysisView
 ```
 
-`gui/contract.py` 只依赖标准库和 `models.py`，**不装 PySide6 也能 import**，可以拿它当对齐字段的清单。
+`gui/contract.py` 只依赖标准库和 `core/models.py`，**不装 PySide6 也能 import**，可以拿它当对齐字段的清单。
 
 ---
 
@@ -23,10 +23,10 @@ from gui.contract import AnalysisView
 ```powershell
 py -3.11 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install pyside6 pytest
-.\.venv\Scripts\python.exe run_gui.py --demo     # 内置数据集，界面立刻有内容
+.\.venv\Scripts\python.exe main.py --demo     # 内置数据集，界面立刻有内容
 ```
 
-不想敲命令就双击仓库根目录的 `run_gui.bat`（演示数据）或 `run_real.bat`（分析本仓库）。两个脚本会自己检查环境、缺什么装什么。
+不想敲命令就双击 `scripts/run_gui.bat`（演示数据）或 `scripts/run_real.bat`（分析本仓库）。两个脚本会自己检查环境、缺什么装什么。
 
 在 VS Code 里按 `F5` 也行，`.vscode/launch.json` 里已经配好五条。
 
@@ -186,8 +186,10 @@ gui/
   widgets.py        ← 指标卡 / 徽标 / 页头 / 空状态
   dialogs.py        ← 仓库校验、错误提示、导出对话框
   style.qss         ← 配色和间距
-run_gui.py          ← 入口（--demo / --path / 无参数）
+main.py             ← 唯一入口（GUI 与 CLI）
 docs/DEMO.md        ← 演示执行卡：两种模式、哪几页会空、台本
 ```
 
 九页对应组长文档的八个区域——文档里的第八个区域「进度反馈」是常驻顶部进度条，不单独成页。
+
+

@@ -7,7 +7,7 @@ pytest.importorskip("PySide6")
 from PySide6.QtWidgets import QApplication
 
 from gui.main_window import MainWindow
-from models import Commit, FileRecord, RepositorySnapshot
+from core.models import Commit, FileRecord, RepositorySnapshot
 
 
 @pytest.fixture(scope="module")
@@ -55,3 +55,4 @@ def test_window_categories_and_snapshot_render(qapp):
         assert window.pages.currentIndex() == index
 
     window.close()
+

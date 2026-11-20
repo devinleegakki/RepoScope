@@ -27,9 +27,11 @@ from PySide6.QtWidgets import (
     QTableWidgetItem,
     QVBoxLayout,
     QWidget,
+    QProgressBar,
+    QHBoxLayout,
 )
 
-from .widgets import Card
+from .widgets import Card, LEVEL_COLOR
 
 try:  # pragma: no cover - 取决于安装的 PySide6 发行包
     from PySide6.QtCharts import (
@@ -238,3 +240,48 @@ class _FallbackTable(Card):
             item.setTextAlignment(Qt.AlignCenter)
             self.table.setItem(index, 1, item)
         self.table.horizontalHeader().setStretchLastSection(True)
+
+
+class HealthDimensionChart(Card):
+    """Compact score bars for the dashboard health dimensions."""
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self._layout = QVBoxLayout(self)
+        self._layout.setContentsMargins(12, 10, 12, 10)
+        self._layout.setSpacing(5)
+        title = QLabel("健康维度"); title.setObjectName("sectionTitle"); self._layout.addWidget(title)
+        self._rows = QVBoxLayout()
+        self._layout.addLayout(self._rows)
+
+    def set_dimensions(self, dimensions) -> None:
+        while self._rows.count():
+            item = self._rows.takeAt(0)
+            if item.widget(): item.widget().deleteLater()
+        for dimension in dimensions:
+            row = QWidget(); layout = QHBoxLayout(row); layout.setContentsMargins(0, 0, 0, 0); layout.setSpacing(6)
+            label = QLabel(dimension.name); label.setMinimumWidth(76); label.setObjectName("metricHint")
+            bar = QProgressBar(); bar.setRange(0, 100); bar.setValue(round(max(0, min(100, dimension.score)))); bar.setTextVisible(False); bar.setFixedHeight(8)
+            bar.setStyleSheet(f"QProgressBar::chunk {{ background: {LEVEL_COLOR.get(dimension.level, LINE_COLOR)}; border-radius: 4px; }}")
+            score = QLabel(f"{dimension.score:.0f}"); score.setMinimumWidth(28); score.setAlignment(Qt.AlignRight); score.setObjectName("metricHint")
+            label.setToolTip(dimension.hint); bar.setToolTip(dimension.hint)
+            layout.addWidget(label); layout.addWidget(bar, 1); layout.addWidget(score); self._rows.addWidget(row)
+
+
+class RiskDistributionChart(Card):
+    """Text-first risk distribution that remains legible without QtCharts."""
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(parent); self._layout = QVBoxLayout(self); self._layout.setContentsMargins(12, 10, 12, 10); self._layout.setSpacing(8)
+        title = QLabel("风险分布"); title.setObjectName("sectionTitle"); self._layout.addWidget(title)
+
+    def set_counts(self, counts) -> None:
+        while self._layout.count() > 1:
+            item = self._layout.takeAt(0)
+            if item.widget(): item.widget().deleteLater()
+        total = sum(counts.values())
+        for level, text in (("high", "高风险"), ("medium", "中风险"), ("low", "低风险")):
+            count = counts.get(level, 0); ratio = f"{count / total:.0%}" if total else "0%"
+            row = QLabel(f"● {text}   {count} 条   ({ratio})"); row.setObjectName("riskRow"); row.setStyleSheet(f"color:{LEVEL_COLOR[level]};")
+            self._layout.addWidget(row)
+        hint = QLabel(f"共 {total} 条规则命中" if total else "没有命中风险规则"); hint.setObjectName("metricHint"); self._layout.addWidget(hint)

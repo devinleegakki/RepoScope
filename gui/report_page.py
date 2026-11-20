@@ -11,7 +11,7 @@
 
 from __future__ import annotations
 
-import reporters
+from core import reporters
 from PySide6.QtWidgets import (
     QFileDialog,
     QHBoxLayout,
@@ -154,3 +154,4 @@ class ReportPage(QWidget):
             "导出完成",
             "\n".join(str(path) for path in written),
         )
+

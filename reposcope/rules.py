@@ -16,7 +16,7 @@ from typing import List, Optional
 try:  # works both as ``reposcope.rules`` and as a top-level ``rules``
     from .models_analysis import AnalysisConfig, RepositoryMetrics, Warning
 except ImportError:  # pragma: no cover - fallback when loaded without package context
-    from models_analysis import AnalysisConfig, RepositoryMetrics, Warning  # type: ignore[no-redef]
+    from reposcope.models_analysis import AnalysisConfig, RepositoryMetrics, Warning  # type: ignore[no-redef]
 
 
 # Human-readable names (also used as report/table labels).
@@ -275,3 +275,4 @@ def detect_all(metrics: RepositoryMetrics, config: Optional[AnalysisConfig] = No
 
 def _iso(dt) -> Optional[str]:
     return dt.isoformat() if dt is not None else None
+

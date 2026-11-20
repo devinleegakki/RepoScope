@@ -53,6 +53,12 @@ class AnalysisConfig:
     single_maintainer_ratio: float = 0.70
     window_days: int = 0            # 0 = 全部历史；30 / 90 / 365
     commit_pattern: str = DEFAULT_COMMIT_PATTERN
+    max_function_lines: int = 80
+    max_file_lines: int = 500
+    min_test_ratio: float = 0.05
+    ownership_ratio: float = 0.80
+    enable_dependency_scan: bool = True
+    enable_secret_scan: bool = True
 
     def validate(self) -> None:
         """在真正读 Git 之前把明显错误的参数挡掉，错误信息直接给人看。"""
@@ -68,6 +74,10 @@ class AnalysisConfig:
             raise ValueError("single_maintainer_ratio 必须落在 (0, 1] 区间")
         if self.window_days < 0:
             raise ValueError("window_days 不能是负数")
+        if self.max_function_lines < 0 or self.max_file_lines < 0:
+            raise ValueError("代码规模阈值不能是负数")
+        if not 0 <= self.min_test_ratio <= 1 or not 0 <= self.ownership_ratio <= 1:
+            raise ValueError("代码质量比例阈值必须在 [0, 1] 区间")
         if self.commit_pattern:
             import re
 
@@ -216,13 +226,13 @@ class AnalysisService:
         return replace(snapshot, commits=commits)
     @staticmethod
     def _reader(repo_path: str | Path):
-        from git_reader import GitReader
+        from core.git_reader import GitReader
 
         return GitReader(repo_path)
 
     @staticmethod
     def _snapshot(reader):
-        from git_reader import GitReaderError
+        from core.git_reader import GitReaderError
 
         try:
             return reader.read_snapshot()
@@ -252,17 +262,17 @@ class AnalysisService:
         替换点全部收敛在这里 —— metrics.py 落地后，把下面 ``_select_engine``
         返回的函数换掉即可，``analyze()`` 的调用方一行不动。
         """
-        engine = _select_engine()
-        if engine is not None:
-            try:
-                result = engine(snapshot, config)
-                from gui.contract import adapt
-
-                return adapt(result)
-            except (NotImplementedError, TypeError):
-                # metrics.py 到位但 contract.adapt() 的字段映射还没补：
-                # 退回临时统计，同时不丢进度语义（调用方拿到的仍是 AnalysisView）。
-                report(70, "metrics 字段映射未就绪，使用临时统计")
+        try:
+            from reposcope.metrics import compute_metrics
+            from reposcope.rules import detect_all
+            from gui.contract import adapt
+            metrics = compute_metrics(snapshot, _analysis_config(config))
+            metrics.warnings = detect_all(metrics, _analysis_config(config)) if hasattr(metrics, "warnings") else detect_all(metrics, _analysis_config(config))
+            view = adapt(metrics, snapshot)
+            report(90, "静态质量、协作与安全分析")
+            return view
+        except (ImportError, TypeError, ValueError) as exc:
+            report(70, f"高级分析不可用，使用兼容统计：{exc}")
 
         from gui.mock_data import _compute as legacy_compute  # TEMP 段，TYB 到位后删除
 
@@ -274,6 +284,21 @@ class AnalysisService:
             hotspot_changes=config.hotspot_changes,
             commit_pattern=config.commit_pattern,
         )
+
+
+def _analysis_config(config: AnalysisConfig):
+    from reposcope.models_analysis import AnalysisConfig as CoreConfig
+    return CoreConfig(stale_days=config.stale_days, large_file_mb=config.large_file_mb,
+                      hotspot_changes=config.hotspot_changes, release_stale_days=config.release_stale_days,
+                      single_maintainer_ratio=config.single_maintainer_ratio,
+                      recent_days=config.window_days or 90, observation_days=config.window_days or 90,
+                      commit_message_pattern=config.commit_pattern,
+                      max_function_lines=config.max_function_lines,
+                      max_file_lines=config.max_file_lines,
+                      min_test_ratio=config.min_test_ratio,
+                      ownership_ratio=config.ownership_ratio,
+                      enable_dependency_scan=config.enable_dependency_scan,
+                      enable_secret_scan=config.enable_secret_scan)
 
 
 def _select_engine():
@@ -416,3 +441,4 @@ class BatchAnalyzer:
             view=view,
             elapsed_seconds=time.monotonic() - started,
         )
+

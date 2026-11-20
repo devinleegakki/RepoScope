@@ -16,6 +16,8 @@ import re
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QComboBox,
+    QCheckBox,
+    QDoubleSpinBox,
     QFormLayout,
     QHBoxLayout,
     QLabel,
@@ -34,6 +36,12 @@ _DEFAULTS = {
     "stale": 180,
     "large": 10,
     "hotspot": 10,
+    "release_stale": 365,
+    "maintainer": 70,
+    "max_function": 80,
+    "max_file": 500,
+    "test_ratio": 5,
+    "ownership": 80,
     "pattern": r"^(feat|fix|docs|refactor|test|chore)(\(.+\))?: ",
 }
 
@@ -78,6 +86,44 @@ class SettingsPage(QWidget):
         self.hotspot.setValue(_DEFAULTS["hotspot"])
         self.hotspot.setSuffix(" 次")
 
+        self.release_stale = QSpinBox()
+        self.release_stale.setRange(7, 3650)
+        self.release_stale.setValue(_DEFAULTS["release_stale"])
+        self.release_stale.setSuffix(" 天")
+
+        self.maintainer = QDoubleSpinBox()
+        self.maintainer.setRange(1, 100)
+        self.maintainer.setDecimals(0)
+        self.maintainer.setValue(_DEFAULTS["maintainer"])
+        self.maintainer.setSuffix(" %")
+
+        self.max_function = QSpinBox()
+        self.max_function.setRange(1, 10000)
+        self.max_function.setValue(_DEFAULTS["max_function"])
+        self.max_function.setSuffix(" 行")
+
+        self.max_file = QSpinBox()
+        self.max_file.setRange(1, 100000)
+        self.max_file.setValue(_DEFAULTS["max_file"])
+        self.max_file.setSuffix(" 行")
+
+        self.test_ratio = QDoubleSpinBox()
+        self.test_ratio.setRange(0, 100)
+        self.test_ratio.setDecimals(0)
+        self.test_ratio.setValue(_DEFAULTS["test_ratio"])
+        self.test_ratio.setSuffix(" %")
+
+        self.ownership = QDoubleSpinBox()
+        self.ownership.setRange(1, 100)
+        self.ownership.setDecimals(0)
+        self.ownership.setValue(_DEFAULTS["ownership"])
+        self.ownership.setSuffix(" %")
+
+        self.dependency_scan = QCheckBox("启用依赖扫描")
+        self.dependency_scan.setChecked(True)
+        self.secret_scan = QCheckBox("启用疑似秘密扫描")
+        self.secret_scan.setChecked(True)
+
         self.pattern = QLineEdit(_DEFAULTS["pattern"])
         self.pattern.textChanged.connect(self._validate_pattern)
         self.pattern_note = QLabel("")
@@ -87,6 +133,14 @@ class SettingsPage(QWidget):
         form.addRow("陈旧文件阈值", self._with_hint(self.stale, "距最后一次提交超过这个天数，且仍在仓库里的文件"))
         form.addRow("大文件阈值", self._with_hint(self.large, "单文件超过这个体积会进入大文件榜"))
         form.addRow("热点阈值", self._with_hint(self.hotspot, "被修改次数达到这个值算热点文件"))
+        form.addRow("发布停滞阈值", self._with_hint(self.release_stale, "仓库仍有近期提交，但最新 tag 超过这个天数"))
+        form.addRow("单一维护者占比", self._with_hint(self.maintainer, "最近窗口内单个作者占比达到这个值时提示协作风险"))
+        form.addRow("最大函数长度", self._with_hint(self.max_function, "Python 函数超过这个行数时提示代码质量风险"))
+        form.addRow("最大文件长度", self._with_hint(self.max_file, "Python 文件超过这个行数时提示代码质量风险"))
+        form.addRow("最低测试文件比例", self._with_hint(self.test_ratio, "测试文件占 Python 文件比例低于此值时提示"))
+        form.addRow("文件作者集中度", self._with_hint(self.ownership, "单个作者修改同一文件达到此占比时提示所有权风险"))
+        form.addRow("扫描开关", self._with_hint(self.dependency_scan, "关闭后不分析依赖清单和锁文件"))
+        form.addRow("", self._with_hint(self.secret_scan, "关闭后不扫描疑似 API key、token、密码和私钥"))
         form.addRow("提交信息格式", self.pattern)
         form.addRow("", self.pattern_note)
 
@@ -140,6 +194,14 @@ class SettingsPage(QWidget):
         self.stale.setValue(_DEFAULTS["stale"])
         self.large.setValue(_DEFAULTS["large"])
         self.hotspot.setValue(_DEFAULTS["hotspot"])
+        self.release_stale.setValue(_DEFAULTS["release_stale"])
+        self.maintainer.setValue(_DEFAULTS["maintainer"])
+        self.max_function.setValue(_DEFAULTS["max_function"])
+        self.max_file.setValue(_DEFAULTS["max_file"])
+        self.test_ratio.setValue(_DEFAULTS["test_ratio"])
+        self.ownership.setValue(_DEFAULTS["ownership"])
+        self.dependency_scan.setChecked(True)
+        self.secret_scan.setChecked(True)
         self.pattern.setText(_DEFAULTS["pattern"])
 
     def to_request(self, repo_path: str) -> AnalysisRequest:
@@ -148,6 +210,14 @@ class SettingsPage(QWidget):
             stale_days=self.stale.value(),
             large_file_mb=self.large.value(),
             hotspot_changes=self.hotspot.value(),
+            release_stale_days=self.release_stale.value(),
+            single_maintainer_ratio=self.maintainer.value() / 100,
             window_days=int(self.window.currentData() or 0),
             commit_pattern=self.pattern.text(),
+            max_function_lines=self.max_function.value(),
+            max_file_lines=self.max_file.value(),
+            min_test_ratio=self.test_ratio.value() / 100,
+            ownership_ratio=self.ownership.value() / 100,
+            enable_dependency_scan=self.dependency_scan.isChecked(),
+            enable_secret_scan=self.secret_scan.isChecked(),
         )
