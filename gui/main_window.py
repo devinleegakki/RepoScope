@@ -17,7 +17,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from PySide6.QtCore import QSize, Qt, QThread, QTimer
+from PySide6.QtCore import QEasingCurve, QPropertyAnimation, QSize, Qt, QThread, QTimer
 from PySide6.QtWidgets import (
     QApplication,
     QHBoxLayout,
@@ -28,9 +28,11 @@ from PySide6.QtWidgets import (
     QProgressBar,
     QPushButton,
     QStackedWidget,
+    QToolButton,
     QVBoxLayout,
     QWidget,
 )
+from PySide6.QtGui import QIcon, QStandardItem, QStandardItemModel
 
 from . import dialogs
 from .batch import BatchPage
@@ -51,6 +53,29 @@ _NAV_GROUPS = (
     ("批量", ("多仓库对比",)),
 )
 
+_NAV_ICONS = {
+    "仓库选择": "cil-folder-open.png",
+    "分析配置": "cil-settings.png",
+    "总览仪表板": "cil-speedometer.png",
+    "提交趋势": "cil-chart-line.png",
+    "作者贡献": "cil-people.png",
+    "数据分析": "cil-file.png",
+    "反模式中心": "cil-task.png",
+    "报告区": "cil-description.png",
+    "多仓库对比": "cil-layers.png",
+}
+
+
+class _LegacyNavigation:
+    """Small adapter for the pre-grouped four-page navigation API."""
+
+    def __init__(self, stack: QStackedWidget) -> None:
+        self._stack = stack
+
+    def setCurrentRow(self, row: int) -> None:
+        if 0 <= row < self._stack.count():
+            self._stack.setCurrentIndex(row)
+
 
 class MainWindow(QMainWindow):
     """程序主窗口。"""
@@ -65,6 +90,12 @@ class MainWindow(QMainWindow):
         self._view: AnalysisView | None = None
         self._row_to_page: dict[int, int] = {}
         self._name_to_row: dict[str, int] = {}
+        self._nav_titles: dict[int, str] = {}
+        self._sidebar_expanded = True
+        # Compatibility aliases kept for older integrations that used the
+        # original four-page prototype API.
+        self.navigation = self.sidebar if hasattr(self, "sidebar") else None
+        self.pages = self.stack if hasattr(self, "stack") else None
 
         self._build_ui()
         self._apply_stylesheet()
@@ -117,11 +148,63 @@ class MainWindow(QMainWindow):
         self.dashboard_page.open_patterns.connect(lambda: self.goto("反模式中心"))
         self.sidebar.currentRowChanged.connect(self._on_nav_changed)
         self.sidebar.setCurrentRow(self._name_to_row["仓库选择"])
+        self.navigation = _LegacyNavigation(self.stack)
+        self.pages = self.stack
+        self.overview_values = {"repo_name": QLabel("—")}
+        self.commit_model = QStandardItemModel(self)
+        self.file_model = QStandardItemModel(self)
+        self.refs_model = QStandardItemModel(self)
+
+    def _render_snapshot(self, snapshot) -> None:
+        """Render the raw snapshot for callers of the original GUI API."""
+        self.overview_values["repo_name"].setText(snapshot.repo_name)
+        self.commit_model.clear()
+        self.file_model.clear()
+        self.refs_model.clear()
+        for commit in snapshot.commits:
+            self.commit_model.appendRow([QStandardItem(commit.hash), QStandardItem(commit.message)])
+        for file_record in snapshot.files:
+            self.file_model.appendRow([QStandardItem(file_record.path), QStandardItem(str(file_record.size_bytes))])
+        for ref in (*snapshot.branches, *snapshot.tags):
+            self.refs_model.appendRow([QStandardItem(ref)])
 
     def _build_sidebar(self) -> QListWidget:
         self.sidebar = QListWidget()
         self.sidebar.setObjectName("sidebar")
-        self.sidebar.setFixedWidth(196)
+        self.sidebar.setIconSize(QSize(18, 18))
+        self.sidebar.setMinimumWidth(220)
+        self.sidebar.setMaximumWidth(220)
+
+        self.sidebar_host = QWidget()
+        self.sidebar_host.setObjectName("sidebarHost")
+        self.sidebar_host.setMinimumWidth(220)
+        self.sidebar_host.setMaximumWidth(220)
+        host_layout = QVBoxLayout(self.sidebar_host)
+        host_layout.setContentsMargins(0, 0, 0, 0)
+        host_layout.setSpacing(0)
+
+        header = QWidget()
+        self.sidebar_header = header
+        header.setObjectName("sidebarHeader")
+        header_layout = QHBoxLayout(header)
+        header_layout.setContentsMargins(16, 14, 12, 12)
+        header_layout.setSpacing(8)
+        logo = QLabel("R")
+        self.sidebar_logo = logo
+        logo.setObjectName("sidebarLogo")
+        header_layout.addWidget(logo)
+        title = QLabel("RepoScope")
+        self.sidebar_title = title
+        title.setObjectName("sidebarTitle")
+        header_layout.addWidget(title)
+        header_layout.addStretch(1)
+        self.sidebar_toggle = QToolButton()
+        self.sidebar_toggle.setObjectName("sidebarToggle")
+        self.sidebar_toggle.setIcon(self._icon("cil-menu.png"))
+        self.sidebar_toggle.setToolTip("收起侧栏")
+        self.sidebar_toggle.clicked.connect(self._toggle_sidebar)
+        header_layout.addWidget(self.sidebar_toggle)
+        host_layout.addWidget(header)
 
         page_index = 0
         for group, names in _NAV_GROUPS:
@@ -132,14 +215,57 @@ class MainWindow(QMainWindow):
             self.sidebar.addItem(header)
 
             for name in names:
-                item = QListWidgetItem(f"   {name}")
+                item = QListWidgetItem(name)
+                icon_name = _NAV_ICONS.get(name)
+                if icon_name:
+                    item.setIcon(self._icon(icon_name))
                 item.setSizeHint(QSize(0, 40))
                 item.setData(Qt.UserRole, name)
                 self.sidebar.addItem(item)
                 self._row_to_page[self.sidebar.count() - 1] = page_index
                 self._name_to_row[name] = self.sidebar.count() - 1
+                self._nav_titles[self.sidebar.count() - 1] = name
                 page_index += 1
-        return self.sidebar
+        host_layout.addWidget(self.sidebar, 1)
+        return self.sidebar_host
+
+    @staticmethod
+    def _icon(name: str) -> QIcon:
+        path = Path(__file__).with_name("assets") / "icons" / name
+        return QIcon(str(path)) if path.exists() else QIcon()
+
+    def _toggle_sidebar(self) -> None:
+        self._sidebar_expanded = not self._sidebar_expanded
+        start = 220 if not self._sidebar_expanded else 64
+        end = 220 if self._sidebar_expanded else 64
+        # Hide the brand text while collapsed so the menu button remains
+        # inside the 64px hit area and can always be used to expand again.
+        self.sidebar_logo.setVisible(self._sidebar_expanded)
+        self.sidebar_title.setVisible(self._sidebar_expanded)
+        self.sidebar_header.layout().setContentsMargins(
+            16 if self._sidebar_expanded else 10,
+            14,
+            12 if self._sidebar_expanded else 10,
+            12,
+        )
+        self._sidebar_animation = QPropertyAnimation(self.sidebar_host, b"minimumWidth", self)
+        self._sidebar_animation.setDuration(180)
+        self._sidebar_animation.setStartValue(start)
+        self._sidebar_animation.setEndValue(end)
+        self._sidebar_animation.setEasingCurve(QEasingCurve.InOutCubic)
+        self._sidebar_animation.start()
+        self.sidebar_host.setMaximumWidth(end)
+        self.sidebar.setMinimumWidth(end)
+        self.sidebar.setMaximumWidth(end)
+        for row, title in self._nav_titles.items():
+            item = self.sidebar.item(row)
+            item.setText(title if self._sidebar_expanded else "")
+            item.setToolTip(title)
+        for row in range(self.sidebar.count()):
+            item = self.sidebar.item(row)
+            if item.data(Qt.UserRole) == "header":
+                item.setHidden(not self._sidebar_expanded)
+        self.sidebar_toggle.setToolTip("收起侧栏" if self._sidebar_expanded else "展开侧栏")
 
     def _on_nav_changed(self, row: int) -> None:
         page = self._row_to_page.get(row)
