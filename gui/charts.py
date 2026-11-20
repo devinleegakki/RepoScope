@@ -1,8 +1,8 @@
-"""Author Contributionstext：text + text。
+"""authors + Notes
 
-text"text"，text"text、text"。
-``recent_90d_share``（text 90 textcommitstext）text"text"text，
-text"—"，text。
+Notes"Notes"，Notes"current"。
+``recent_90d_share``（current 90 commits"high"Notes
+display"—"，Notes
 """
 
 from __future__ import annotations
@@ -26,12 +26,12 @@ from .widgets import Card, PageHeader
 
 _COLUMNS = (
     ("authors", lambda row: row.name, Qt.AlignLeft | Qt.AlignVCenter),
-    ("commit count", lambda row: str(row.commits), Qt.AlignCenter),
-    ("text", lambda row: f"+{row.insertions:,}", Qt.AlignCenter),
-    ("text", lambda row: f"-{row.deletions:,}", Qt.AlignCenter),
-    ("commitstext", lambda row: f"{row.share:.0%}", Qt.AlignCenter),
+    ("commits", lambda row: str(row.commits), Qt.AlignCenter),
+    ("Insertions", lambda row: f"+{row.insertions:,}", Qt.AlignCenter),
+    ("Deletions", lambda row: f"-{row.deletions:,}", Qt.AlignCenter),
+    ("commits", lambda row: f"{row.share:.0%}", Qt.AlignCenter),
     (
-        "text 90 text",
+        "Recent 90-day share",
         lambda row: "—" if row.recent_90d_share < 0 else f"{row.recent_90d_share:.0%}",
         Qt.AlignCenter,
     ),
@@ -39,7 +39,7 @@ _COLUMNS = (
 
 
 class AuthorTableModel(QAbstractTableModel):
-    """``AuthorStat`` text → Qt text。text，text。"""
+    """``AuthorStat`` Notes → Qt Notes"""
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -60,13 +60,13 @@ class AuthorTableModel(QAbstractTableModel):
             return getter(row)
         if role == Qt.TextAlignmentRole:
             return int(_COLUMNS[index.column()][2])
-        if role == Qt.ForegroundRole and title == "text 90 text":
+        if role == Qt.ForegroundRole and title == "Recent 90-day share":
             if row.recent_90d_share < 0:
                 return QColor("#6e7681")
             if row.recent_90d_share < 0.2:
                 return QColor("#EF9F27")
-        if role == Qt.ToolTipRole and title == "text 90 text" and row.recent_90d_share < 0:
-            return "textNot provided by backend（metrics.py text recent_90d_share）"
+        if role == Qt.ToolTipRole and title == "Recent 90-day share" and row.recent_90d_share < 0:
+            return "Recent activity data is unavailable"
         return None
 
     def headerData(self, section: int, orientation: Qt.Orientation, role: int = Qt.DisplayRole):
@@ -81,7 +81,7 @@ class AuthorTableModel(QAbstractTableModel):
 
 
 class AuthorsPage(QWidget):
-    """Author Contributionstext。"""
+    """authors"""
 
     def __init__(self) -> None:
         super().__init__()
@@ -89,7 +89,7 @@ class AuthorsPage(QWidget):
         outer.setContentsMargins(24, 20, 24, 20)
         outer.setSpacing(14)
 
-        self.header = PageHeader("Author Contributions", "No repository analyzed yet")
+        self.header = PageHeader("Author contributions", "Repository activity by author")
         outer.addWidget(self.header)
 
         chart_card = Card()
@@ -105,7 +105,7 @@ class AuthorsPage(QWidget):
         table_layout = QVBoxLayout(table_card)
         table_layout.setContentsMargins(12, 10, 12, 10)
         table_layout.setSpacing(6)
-        note = QLabel("textcommit counttext；text“text”text")
+        note = QLabel("Top three contributors and their commit activity")
         note.setObjectName("pageHint")
         table_layout.addWidget(note)
 
@@ -129,13 +129,16 @@ class AuthorsPage(QWidget):
         self.chart.set_authors([(a.name, a.commits) for a in authors])
 
         if not authors:
-            self.header.set_hint("textauthor counttext（repositorytextcommits）")
+            self.header.set_hint("No author activity found")
             return
         top = authors[0]
         concentration = ", ".join(
             f"{a.name} {a.share:.0%}" for a in authors[:3]
         )
         self.header.set_hint(
-            f"{len(authors)} textauthors · {top.name} commitstext（{top.share:.0%}，{top.commits} text）"
-            f" · text：{concentration}"
+            f"{len(authors)} authors · {top.name} contributes {top.share:.0%} of commits "
+            f"({top.commits:,}) · Top three: {concentration}"
         )
+
+
+

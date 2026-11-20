@@ -33,3 +33,6 @@ if errorlevel 1 (
 echo [3/3] Starting RepoScope ...
 ".venv\Scripts\python.exe" main.py --demo
 if errorlevel 1 pause
+
+
+

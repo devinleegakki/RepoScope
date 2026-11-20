@@ -350,3 +350,6 @@ def compute_metrics(
      metrics.dependencies, metrics.security_findings) = run_static_analysis(snapshot, cfg)
     return metrics
 
+
+
+

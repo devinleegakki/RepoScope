@@ -1,17 +1,17 @@
-"""text：Commit Trendstext + Author Contributionstext。
+"""commits + authors
 
-text ``PySide6.QtCharts`` text pyqtgraph / matplotlib：
+Notes ``PySide6.QtCharts`` Notes pyqtgraph / matplotlib：
 
-* QtCharts text ``pip install pyside6`` text，**requirements.txt text**，
-  text PySide6 text，text"text"。
-* matplotlib text Qt text，texttagstext，text。
-* pyqtgraph text，textRisk。
+* QtCharts Notes ``pip install pyside6`` Notes**requirements.txt Notes**，
+  Notes PySide6 Notes"Notes"。
+* matplotlib Notes Qt medium
+* pyqtgraph risk
 
-text：text 7×52 text，text ``QTableWidget`` text，
-text。
+Notes 7×52 Notes ``QTableWidget`` Notes
+Notes
 
-**text**：text QtCharts text（PySide6-Essentials text），
-text ``CHARTS_AVAILABLE`` text False，text，text。
+**Notes**：Notes QtCharts NotesPySide6-Essentials Notes
+Notes ``CHARTS_AVAILABLE`` Notes False，Notes
 """
 
 from __future__ import annotations
@@ -33,7 +33,7 @@ from PySide6.QtWidgets import (
 
 from .widgets import Card, LEVEL_COLOR
 
-try:  # pragma: no cover - text PySide6 text
+try:  # pragma: no cover - Notes PySide6 Notes
     from PySide6.QtCharts import (
         QBarCategoryAxis,
         QBarSet,
@@ -62,7 +62,7 @@ def _axis_font() -> QFont:
 
 
 class TrendChart(QWidget):
-    """Commit Trendstext：text，textcommitstext，text。"""
+    """commits"""
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -71,7 +71,7 @@ class TrendChart(QWidget):
         layout.setSpacing(0)
 
         if not CHARTS_AVAILABLE:
-            self._fallback = _FallbackTable("text QtCharts，text")
+            self._fallback = _FallbackTable("QtCharts is unavailable; showing a table instead")
             layout.addWidget(self._fallback)
             self._chart = None
             return
@@ -90,10 +90,10 @@ class TrendChart(QWidget):
         layout.addWidget(self._view)
 
     def set_points(self, points: list[tuple[datetime, int]], unit: str = "commits") -> None:
-        """``points`` text，text（text）。"""
+        """``points`` time"""
         if self._chart is None:
             self._fallback.set_rows([(d.strftime("%Y-%m-%d"), str(c)) for d, c in points],
-                                    ("text", unit))
+                                    ("time", unit))
             return
 
         chart = self._chart
@@ -113,8 +113,8 @@ class TrendChart(QWidget):
             line.append(int(moment.timestamp() * 1000), count)
 
         axis_x = QDateTimeAxis()
-        # text：text Qt text（yyyy / MM / dd），text strftime text %Y-%m。
-        # text %Y-%m text。
+        # Notes Qt timeyyyy / MM / dd），Notes strftime Notes %Y-%m。
+        # Notes %Y-%m Notes
         axis_x.setFormat("MM-dd" if (points[-1][0] - points[0][0]).days <= 120 else "yyyy-MM")
         axis_x.setTickCount(min(7, max(2, len(points))))
         axis_x.setLabelsColor(QColor(TEXT_COLOR))
@@ -140,7 +140,7 @@ class TrendChart(QWidget):
 
 
 class AuthorBarChart(QWidget):
-    """Author Contributionstext。text，text 10 text。"""
+    """authors 10 Notes"""
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -149,7 +149,7 @@ class AuthorBarChart(QWidget):
         layout.setSpacing(0)
 
         if not CHARTS_AVAILABLE:
-            self._fallback = _FallbackTable("text QtCharts，text")
+            self._fallback = _FallbackTable("QtCharts is unavailable; showing a table instead")
             layout.addWidget(self._fallback)
             self._chart = None
             return
@@ -168,7 +168,7 @@ class AuthorBarChart(QWidget):
 
     def set_authors(self, rows: list[tuple[str, int]]) -> None:
         if self._chart is None:
-            self._fallback.set_rows([(n, str(c)) for n, c in rows], ("authors", "commit count"))
+            self._fallback.set_rows([(n, str(c)) for n, c in rows], ("authors", "commits"))
             return
 
         chart = self._chart
@@ -179,7 +179,7 @@ class AuthorBarChart(QWidget):
             return
 
         rows = rows[:10]
-        bar_set = QBarSet("commit count")
+        bar_set = QBarSet("commits")
         bar_set.setColor(QColor(LINE_COLOR))
         bar_set.setBorderColor(QColor(LINE_COLOR))
         for _, count in rows:
@@ -189,7 +189,7 @@ class AuthorBarChart(QWidget):
         series.append(bar_set)
         series.setLabelsVisible(True)
         series.setLabelsPosition(QHorizontalBarSeries.LabelsInsideEnd)
-        # tagstext QBarSet；QBarSeries text/text/text
+        # Notes QBarSet；QBarSeries Notes/Notes/Notes
         bar_set.setLabelColor(QColor("#0d1117"))
         bar_set.setLabelFont(_axis_font())
 
@@ -215,7 +215,7 @@ class AuthorBarChart(QWidget):
 
 
 class _FallbackTable(Card):
-    """QtCharts textelapsedtext：text，text，text。"""
+    """QtCharts Notes"""
 
     def __init__(self, note: str) -> None:
         super().__init__()
@@ -250,7 +250,7 @@ class HealthDimensionChart(Card):
         self._layout = QVBoxLayout(self)
         self._layout.setContentsMargins(12, 10, 12, 10)
         self._layout.setSpacing(5)
-        title = QLabel("text"); title.setObjectName("sectionTitle"); self._layout.addWidget(title)
+        title = QLabel("health"); title.setObjectName("sectionTitle"); self._layout.addWidget(title)
         self._rows = QVBoxLayout()
         self._layout.addLayout(self._rows)
 
@@ -273,15 +273,18 @@ class RiskDistributionChart(Card):
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent); self._layout = QVBoxLayout(self); self._layout.setContentsMargins(12, 10, 12, 10); self._layout.setSpacing(8)
-        title = QLabel("Risktext"); title.setObjectName("sectionTitle"); self._layout.addWidget(title)
+        title = QLabel("risk"); title.setObjectName("sectionTitle"); self._layout.addWidget(title)
 
     def set_counts(self, counts) -> None:
         while self._layout.count() > 1:
             item = self._layout.takeAt(0)
             if item.widget(): item.widget().deleteLater()
         total = sum(counts.values())
-        for level, text in (("high", "High risk"), ("medium", "Medium risk"), ("low", "Low risk")):
+        for level, text in (("high", "risk"), ("medium", "risk"), ("low", "risk")):
             count = counts.get(level, 0); ratio = f"{count / total:.0%}" if total else "0%"
-            row = QLabel(f"● {text}   {count} text   ({ratio})"); row.setObjectName("riskRow"); row.setStyleSheet(f"color:{LEVEL_COLOR[level]};")
+            row = QLabel(f"● {text}   {count}  items   ({ratio})"); row.setObjectName("riskRow"); row.setStyleSheet(f"color:{LEVEL_COLOR[level]};")
             self._layout.addWidget(row)
-        hint = QLabel(f"text {total} textRulestext" if total else "textMedium riskRules"); hint.setObjectName("metricHint"); self._layout.addWidget(hint)
+        hint = QLabel(f"{total} configured checks" if total else "No checks configured"); hint.setObjectName("metricHint"); self._layout.addWidget(hint)
+
+
+

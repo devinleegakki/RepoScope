@@ -1,13 +1,13 @@
-"""``main.py`` text：analyze / check / batch text。
+"""``main.py`` Notesanalyze / check / batch Notes
 
-text（text"CLI"text"Batchanalyze"text）：
+Notes"CLI"Notes"analysis"Notes
 
-* **textanalyzetext**：text ``services.AnalysisService``，
-  GUI text，text CLI text GUI text。
-* **textreport**：text ``reporters.write_report``，text GUI Reportstext。
-* **failedtext**：``batch`` text ``BatchAnalyzer``（ThreadPoolExecutor），
-  single repositoryfailedtext。
-* **textError**：textErrortextNotice + text，text。
+* **analysis**：Notes ``services.AnalysisService``，
+  GUI Notes CLI Notes GUI Notes
+* **report**：export ``reporters.write_report``，Notes GUI report
+* **error**：``batch`` Notes ``BatchAnalyzer``（ThreadPoolExecutor），
+  repository
+* **error**：error + Notes
 """
 
 from __future__ import annotations
@@ -37,20 +37,20 @@ EXIT_INTERRUPTED = 130
 _FORMAT_CHOICES = ("markdown", "md", "html", "csv", "all")
 
 
-# --- text ---------------------------------------------------------------
+# --- settings ---------------------------------------------------------------
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="main.py",
-        description="RepoScope — local Git repository health analysis（CLI）",
-        epilog="GUI:：python main.py（text python main.py --demo）",
+        description="RepoScope — analyze Git repositories from the command line",
+        epilog="Launch the GUI with: python main.py --demo",
     )
     parser.add_argument(
         "--version",
         action="version",
         version="RepoScope 1.0",
-        help="show version and exit",
+        help="Show the version and exit",
     )
 
     subparsers = parser.add_subparsers(dest="command", metavar="{analyze,check,export,batch}")
@@ -59,21 +59,21 @@ def build_parser() -> argparse.ArgumentParser:
     # analyze -------------------------------------------------------------
     analyze = subparsers.add_parser(
         "analyze",
-        help="analyzetextlocal Git repositorytextExport report",
-        description="analyzesingle repository，text Markdown / HTML / CSV report。",
+        help="Analyze a Git repository",
+        description="Analyze a repository and write a Markdown, HTML, or CSV report",
     )
-    analyze.add_argument("repo", metavar="repositorydirectory", help="local Git repositoryroot directory")
+    analyze.add_argument("repo", metavar="REPOSITORY", help="Path to a Git repository")
     analyze.add_argument(
-        "-c", "--config", metavar="configurationfiles.json",
-        help="JSON configurationfiles（threshold、time range、commit format）",
+        "-c", "--config", metavar="files.json",
+        help="Load analysis settings from a JSON file",
     )
     analyze.add_argument(
         "-f", "--format", default="markdown", choices=_FORMAT_CHOICES,
-        help="reporttext（default markdown；all = text）",
+        help="Report format (markdown, md, html, csv, or all)",
     )
     analyze.add_argument(
-        "-o", "--output", default="reports", metavar="output directory",
-        help="reportoutput directory（default ./reports）",
+        "-o", "--output", default="reports", metavar="DIR",
+        help="Output directory (default: reports)",
     )
     _add_config_overrides(analyze)
     analyze.set_defaults(handler=_handle_analyze)
@@ -81,21 +81,21 @@ def build_parser() -> argparse.ArgumentParser:
     # export --------------------------------------------------------------
     export = subparsers.add_parser(
         "export",
-        help="analyzerepositorytextExport report（defaulttext）",
-        description="text analyze textanalyze，defaulttext Markdown / HTML / CSV text。",
+        help="Export reports for a repository",
+        description="Analyze a repository and export all requested report formats",
     )
-    export.add_argument("repo", metavar="repositorydirectory", help="local Git repositoryroot directory")
+    export.add_argument("repo", metavar="REPOSITORY", help="Path to a Git repository")
     export.add_argument(
-        "-c", "--config", metavar="configurationfiles.json",
-        help="JSON configurationfiles（threshold、time range、commit format）",
+        "-c", "--config", metavar="files.json",
+        help="Load analysis settings from a JSON file",
     )
     export.add_argument(
         "-f", "--format", default="all", choices=_FORMAT_CHOICES,
-        help="reporttext（default all = text）",
+        help="Report format (default: all)",
     )
     export.add_argument(
-        "-o", "--output", default="reports", metavar="output directory",
-        help="reportoutput directory（default ./reports）",
+        "-o", "--output", default="reports", metavar="DIR",
+        help="Output directory (default: reports)",
     )
     _add_config_overrides(export)
     export.set_defaults(handler=_handle_analyze)
@@ -103,37 +103,37 @@ def build_parser() -> argparse.ArgumentParser:
     # check ---------------------------------------------------------------
     check = subparsers.add_parser(
         "check",
-        help="checkrepositorytextanalyze（textfiles）",
-        description="textPathtext Git repositoryroot directory、Git text、repositorytextcommitstext。",
+        help="Check a repository",
+        description="Validate a Git repository and print its basic metadata",
     )
-    check.add_argument("repo", metavar="repositorydirectory", help="local Git repositoryroot directory")
+    check.add_argument("repo", metavar="REPOSITORY", help="Path to a Git repository")
     check.add_argument(
-        "--json", action="store_true", help="text JSON textchecktext（text）",
+        "--json", action="store_true", help="Print machine-readable JSON",
     )
     check.set_defaults(handler=_handle_check)
 
     # batch ---------------------------------------------------------------
     batch = subparsers.add_parser(
         "batch",
-        help="analyze repositories concurrently and generate a comparison summary",
-        description="textanalyzetextrepository；single repositoryfailedtext。",
+        help="Analyze several repositories",
+        description="Analyze multiple repositories and write a combined summary",
     )
-    batch.add_argument("repos", nargs="+", metavar="repositorydirectory", help="textlocal Git repositoryroot directory")
+    batch.add_argument("repos", nargs="+", metavar="REPOSITORY", help="Paths to Git repositories")
     batch.add_argument(
-        "-c", "--config", metavar="configurationfiles.json",
-        help="JSON configurationfiles（threshold、time range、commit format）",
+        "-c", "--config", metavar="files.json",
+        help="Load analysis settings from a JSON file",
     )
     batch.add_argument(
         "-f", "--format", default="markdown", choices=_FORMAT_CHOICES,
-        help="textrepositorytextreporttext（default markdown；all = text）",
+        help="Report format (markdown, md, html, csv, or all)",
     )
     batch.add_argument(
-        "-o", "--output", default="reports", metavar="output directory",
-        help="reportoutput directory（default ./reports）",
+        "-o", "--output", default="reports", metavar="DIR",
+        help="Output directory (default: reports)",
     )
     batch.add_argument(
         "-j", "--max-workers", type=int, default=4, metavar="N",
-        help="text（default 4）",
+        help="Maximum parallel workers (default: 4)",
     )
     _add_config_overrides(batch)
     batch.set_defaults(handler=_handle_batch)
@@ -142,25 +142,25 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def _add_config_overrides(parser: argparse.ArgumentParser) -> None:
-    group = parser.add_argument_group("Configuration overrides (higher priority than --config file)")
+    group = parser.add_argument_group("Configuration overrides")
     group.add_argument("--stale-days", type=int, default=None, metavar="N",
-                       help="Stale filesthreshold（text）")
+                       help="Days after which a file is considered stale")
     group.add_argument("--large-file-mb", type=int, default=None, metavar="N",
-                       help="Large filesthreshold（MB）")
+                       help="Large-file threshold in megabytes")
     group.add_argument("--hotspot-changes", type=int, default=None, metavar="N",
-                       help="Hot filestextthreshold")
+                       help="Minimum changes for a hotspot file")
     group.add_argument("--release-stale-days", type=int, default=None, metavar="N",
-                       help="textthreshold（text）")
+                       help="Days after which a release is considered stale")
     group.add_argument("--single-maintainer-ratio", type=float, default=None, metavar="R",
-                       help="textthreshold（0~1）")
+                       help="Maximum share allowed for one maintainer (0–1)")
     group.add_argument("--window-days", type=int, default=None, metavar="N",
-                       help="text N textcommits（0 = text）")
-    group.add_argument("--commit-pattern", default=None, metavar="regex",
-                       help="commitsInformationconventiontextregex")
+                       help="Limit recent activity to N days; 0 disables the limit")
+    group.add_argument("--commit-pattern", default=None, metavar="REGEX",
+                       help="Regular expression for commit messages")
 
 
 def _resolve_config(args: argparse.Namespace) -> AnalysisConfig:
-    """configurationfilestext，text，textcheck。"""
+    """files"""
     config = AnalysisConfig.from_json(args.config) if args.config else AnalysisConfig()
     overrides = {
         field: getattr(args, field)
@@ -184,21 +184,21 @@ def _resolve_formats(value: str) -> list[str]:
     return [value]
 
 
-# --- text -----------------------------------------------------------------
+# --- Notes -----------------------------------------------------------------
 
 
 def _handle_analyze(args: argparse.Namespace) -> int:
     try:
         config = _resolve_config(args)
     except (ValueError, OSError) as exc:
-        return _fail(f"configurationtext：{exc}")
+        return _fail(f"Configuration error: {exc}")
 
     service = AnalysisService(allow_synthetic=False)
     progress = _progress_printer()
     try:
         view = service.analyze(args.repo, config, on_progress=progress)
     except AnalysisError as exc:
-        return _fail(f"analyzefailed（{exc.code}）：{exc.message}")
+        return _fail(f"Analysis failed ({exc.code}): {exc.message}")
 
     _print_view_summary(view)
 
@@ -219,7 +219,7 @@ def _handle_check(args: argparse.Namespace) -> int:
             print(json.dumps({"ok": False, "code": exc.code, "message": exc.message},
                              ensure_ascii=False))
         else:
-            print(f"checkfailed：{exc.message}", file=sys.stderr)
+            print(f"Check failed: {exc.message}", file=sys.stderr)
         return EXIT_FAILURE
 
     if args.json:
@@ -237,12 +237,12 @@ def _handle_check(args: argparse.Namespace) -> int:
         ))
         return EXIT_OK
 
-    print(f"OK：{info.repo_name} is a valid Git repository")
-    print(f"  Path：{info.path}")
-    print(f"  commits：{info.commits} · files：{info.files}")
-    print(f"  branches：{', '.join(info.branches) or '—'}")
-    print(f"  tags：{', '.join(info.tags) or '—'}")
-    print("You can run：python main.py analyze " + info.path)
+    print(f"OK: {info.repo_name} is a Git repository")
+    print(f"  Path: {info.path}")
+    print(f"  Commits: {info.commits} · Files: {info.files}")
+    print(f"  Branches: {', '.join(info.branches) or '—'}")
+    print(f"  Tags: {', '.join(info.tags) or '—'}")
+    print("  Analyze with: python main.py analyze " + info.path)
     return EXIT_OK
 
 
@@ -250,23 +250,23 @@ def _handle_batch(args: argparse.Namespace) -> int:
     try:
         config = _resolve_config(args)
     except (ValueError, OSError) as exc:
-        return _fail(f"configurationtext：{exc}")
+        return _fail(f"configuration{exc}")
     if args.max_workers < 1:
-        return _fail("--max-workers text 1")
+        return _fail("--max-workers must be at least 1")
 
     analyzer = BatchAnalyzer(max_workers=args.max_workers)
     cancel_event = threading.Event()
 
-    def on_signal(signum, frame):  # noqa: ARG001 - text signal text
+    def on_signal(signum, frame):  # noqa: ARG001 - Notes signal Notes
         if cancel_event.is_set():
-            raise KeyboardInterrupt  # text Ctrl+C text
-        print("\ntext，textrepositorytext（text）…", file=sys.stderr)
+            raise KeyboardInterrupt  # Notes Ctrl+C Notes
+        print("\nCancellation requested", file=sys.stderr)
         cancel_event.set()
 
     previous = signal.signal(signal.SIGINT, on_signal)
 
     def on_progress(result: BatchResult, done: int, total: int) -> None:
-        status = "success" if result.ok else ("textcancelled" if result.cancelled else "failed")
+        status = "complete" if result.ok else ("cancel" if result.cancelled else "error")
         name = result.repo_name or Path(result.path).name
         print(f"[{done}/{total}] {name}：{status}", file=sys.stderr)
 
@@ -307,12 +307,12 @@ def _handle_batch(args: argparse.Namespace) -> int:
     _print_written(written)
 
     if failures:
-        print(f"\n{len(failures)} textrepositoryfailedtextcancelled，text。", file=sys.stderr)
+        print(f"\n{len(failures)} repositories failed", file=sys.stderr)
         return EXIT_FAILURE
     return EXIT_OK
 
 
-# --- text ---------------------------------------------------------------
+# --- Notes ---------------------------------------------------------------
 
 
 def _fail(message: str) -> int:
@@ -334,38 +334,38 @@ def _progress_printer():
 
 def _print_view_summary(view) -> None:
     snapshot = view.snapshot
-    print(f"Analysis complete：{snapshot.repo_name}")
-    print(f"  repository：{snapshot.repo_path}")
+    print(f"Analysis: {snapshot.repo_name}")
+    print(f"  Repository: {snapshot.repo_path}")
     print(
-        f"  commits {view.total_commits} · authors {view.author_count} · files {view.file_count} · "
-        f"health score {view.health_score:.0f} · anti-patterns {len(view.warnings)} text · "
-        f"elapsed {view.elapsed_seconds:.1f}s"
+        f"  Commits: {view.total_commits} · Authors: {view.author_count} · Files: {view.file_count} · "
+        f"Health: {view.health_score:.0f} · Anti-patterns: {len(view.warnings)} · "
+        f"Elapsed: {view.elapsed_seconds:.1f}s"
     )
 
 
 def _print_batch_table(results: Sequence[BatchResult]) -> None:
-    print("\nBatch analysis results：")
+    print("\nBatch analysis")
     for result in results:
         if result.ok and result.view is not None:
             view = result.view
             print(
                 f"  {view.snapshot.repo_name:<24} commits {view.total_commits:<5} "
-                f"health score {view.health_score:>5.0f}  anti-patterns {len(view.warnings)} text"
+                f"health {view.health_score:>5.0f}  anti-patterns {len(view.warnings)}"
             )
         else:
             name = result.repo_name or Path(result.path).name
-            print(f"  {name:<24} failed：{result.error}")
+            print(f"  {name:<24} failed: {result.error}")
 
 
 def _print_written(paths: Sequence[Path]) -> None:
     if not paths:
         return
-    print("\nReports generated：")
+    print("\nReports written:")
     for path in paths:
         print(f"  {path}")
 
 
-# --- text -------------------------------------------------------------------
+# --- Notes -------------------------------------------------------------------
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -376,22 +376,25 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         return args.handler(args)
     except KeyboardInterrupt:
-        print("\ntext。", file=sys.stderr)
+        print("\nInterrupted", file=sys.stderr)
         return EXIT_INTERRUPTED
     except AnalysisError as exc:
-        return _fail(f"Error（{exc.code}）：{exc.message}")
+        return _fail(f"Error ({exc.code}): {exc.message}")
     except ValueError as exc:
-        return _fail(f"Error：{exc}")
+        return _fail(f"Error: {exc}")
 
 
 def _ensure_utf8_stdio() -> None:
-    """Windows textdefault cp936，textreportPathtext；text UTF-8。"""
+    """Windows default cp936，report UTF-8。"""
     for stream_name in ("stdout", "stderr"):
         stream = getattr(sys, stream_name, None)
         if stream is None or not hasattr(stream, "reconfigure"):
             continue
         try:
             stream.reconfigure(encoding="utf-8", errors="replace")
-        except (ValueError, OSError):  # pragma: no cover - text
+        except (ValueError, OSError):  # pragma: no cover - Notes
             pass
+
+
+
 

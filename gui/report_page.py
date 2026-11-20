@@ -1,12 +1,12 @@
-"""Reports：textResultstext Markdown / HTML / CSV。
+"""analysis Markdown / HTML / CSV。
 
-textreporttext GUI text，text"text"：
-text"text"text**text**。text，
-textAnti-pattern listtextreport，text"text"text。
+report GUI Notes"export"：
+Notes"Notes"Notes**none**。export
+report"export"Notes
 
-* Markdown / HTML / CSV text ``reporters`` text，text，
-  text。
-* Previewtext Markdown；textfilestext HTML，text。
+* Markdown / HTML / CSV Notes ``reporters`` Notes
+  export
+* Notes Markdown；files HTML，Notes
 """
 
 from __future__ import annotations
@@ -30,24 +30,24 @@ from .contract import AnalysisView
 from .widgets import Card, PageHeader
 
 _SECTIONS = (
-    ("1. Overall assessment", "Overall assessment"),
-    ("2. Key metrics", "Key metrics"),
-    ("3. Author Contributions", "Author Contributions"),
-    ("4. Commit activity", "Commit activity"),
-    ("5. File hotspots", "Hot files"),
+    ("1. Overview", "Overview"),
+    ("2. Repository summary", "Repository summary"),
+    ("3. authors", "authors"),
+    ("4. commits", "commits"),
+    ("5. Hotspot files", "Hotspot files"),
     ("6. Large files", "Large files"),
     ("7. Stale files", "Stale files"),
-    ("8. Anti-pattern list", "Anti-pattern list"),
-    ("9. Commit convention", "Commit convention"),
-    ("10. Reproduction", "Reproduction"),
+    ("8. anti-patterns", "anti-patterns"),
+    ("9. commits", "commits"),
+    ("10. Dependencies and security", "Dependencies and security"),
 )
 
-# reporttext，text reporters（text）：
+# report reporters（Notes
 build_markdown = reporters.render_markdown
 export = reporters.write_report
 
 class ReportPage(QWidget):
-    """Reports：text、textPreview、text。"""
+    """report"""
 
     def __init__(self) -> None:
         super().__init__()
@@ -57,7 +57,7 @@ class ReportPage(QWidget):
         outer.setContentsMargins(24, 20, 24, 20)
         outer.setSpacing(12)
 
-        self.header = PageHeader("Reports", "Analysis completetextreport")
+        self.header = PageHeader("Reports", "Generated analysis outputs")
         outer.addWidget(self.header)
 
         body = QHBoxLayout()
@@ -67,7 +67,7 @@ class ReportPage(QWidget):
         outline_layout = QVBoxLayout(outline_card)
         outline_layout.setContentsMargins(12, 12, 12, 12)
         outline_layout.setSpacing(8)
-        title = QLabel("text")
+        title = QLabel("Report sections")
         title.setObjectName("sectionTitle")
         outline_layout.addWidget(title)
         self.outline = QListWidget()
@@ -88,15 +88,15 @@ class ReportPage(QWidget):
         self.source = QTextBrowser()
         self.source.setObjectName("reportSource")
         self.tabs.addTab(self.preview, "Preview")
-        self.tabs.addTab(self.source, "Markdown Source")
+        self.tabs.addTab(self.source, "Markdown source")
         preview_layout.addWidget(self.tabs, 1)
 
         actions = QHBoxLayout()
-        self.status = QLabel("textreport")
+        self.status = QLabel("No report generated")
         self.status.setObjectName("pageHint")
         actions.addWidget(self.status)
         actions.addStretch(1)
-        self.export_btn = QPushButton("Export report…")
+        self.export_btn = QPushButton("Export report")
         self.export_btn.setObjectName("primary")
         self.export_btn.setEnabled(False)
         self.export_btn.clicked.connect(self._export)
@@ -106,7 +106,7 @@ class ReportPage(QWidget):
 
         outer.addLayout(body, 1)
 
-    # -- text ------------------------------------------------------------
+    # -- Notes ------------------------------------------------------------
     def set_data(self, view: AnalysisView | None) -> None:
         if view is None:
             return
@@ -114,11 +114,11 @@ class ReportPage(QWidget):
         markdown = build_markdown(view)
         self.preview.setMarkdown(markdown)
         self.source.setPlainText(markdown)
-        self.status.setText(f"text · {len(markdown.splitlines())} text · text Markdown / HTML / CSV")
+        self.status.setText(f"Generated {len(markdown.splitlines())} lines · export as Markdown, HTML, or CSV")
         self.export_btn.setEnabled(True)
         self.header.set_hint(
-            f"{view.snapshot.repo_name} · text {len(view.warnings)} textanti-patterns · "
-            f"health score {view.health_score:.0f}"
+            f"{view.snapshot.repo_name} · {len(view.warnings)} anti-patterns · "
+            f"health {view.health_score:.0f}"
         )
 
     def _jump(self, row: int) -> None:
@@ -138,20 +138,23 @@ class ReportPage(QWidget):
             return
         formats = dialog.selected_formats()
         if not formats:
-            dialogs.show_error(self, "textSelecttext", "text。")
+            dialogs.show_error(self, "Export", "Select at least one output format.")
             return
-        target = QFileDialog.getExistingDirectory(self, "Selecttextdirectory")
+        target = QFileDialog.getExistingDirectory(self, "Choose output folder")
         if not target:
             return
         try:
             written = export(self._view, formats, target)
         except OSError as exc:
-            dialogs.show_error(self, "textfailed", f"textfilestext：{exc}")
+            dialogs.show_error(self, "Export failed", str(exc))
             return
-        self.status.setText(f"text {len(written)} textfilestext {target}")
+        self.status.setText(f"Exported {len(written)} files to {target}")
         dialogs.show_info(
             self,
-            "textComplete",
+            "Export complete",
             "\n".join(str(path) for path in written),
         )
+
+
+
 

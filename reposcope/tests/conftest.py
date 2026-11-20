@@ -15,7 +15,7 @@ from typing import List, Optional
 
 import pytest
 
-# Allow running pytest from either the repository root or the package directory.
+# Allow running pytest from either the repo root or the package directory.
 PACKAGE_PARENT = Path(__file__).resolve().parents[1]
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 for import_root in (PROJECT_ROOT, PACKAGE_PARENT):
@@ -104,4 +104,7 @@ def base_snapshot() -> Snapshot:
     ]
     tags = [Tag("v0.1", _ts(500))]  # last tag 500 days ago -> release stale
     return Snapshot("fixture-repo", commits, files, tags)
+
+
+
 

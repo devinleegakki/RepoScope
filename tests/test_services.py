@@ -1,11 +1,11 @@
-"""text：textanalyzetext（services.py）。
+"""analysisservices.py）。
 
-text"CLI text GUI textanalyzetext"text"single repositoryfailedtext"：
+Notes"CLI Notes GUI analysis"Notes"repository"：
 
-* textrepositorytext；
-* InvalidPath、text Git directory、textconfigurationtextErrortext；
-* time range（window_days）textcommits；
-* Batchanalyzetext、failedtext、textcancelled。
+* repository
+* path Git configuration
+* timewindow_days）commits
+* analysis
 """
 
 import json
@@ -52,14 +52,14 @@ def make_repo(root: Path, name: str = "health repo") -> Path:
     run_git(repo, "commit", "-m", "feat: initial app")
     run_git(repo, "tag", "v0.1.0")
 
-    # textauthorscommitstext，textauthorstext"text"
+    # commits"Notes"
     run_git(repo, "config", "user.name", "Bob")
     run_git(repo, "config", "user.email", "bob@example.com")
     (repo / "app.py").write_text("print('hello world')\n", encoding="utf-8")
     run_git(repo, "add", "-A")
     run_git(repo, "commit", "-m", "fix: greet properly")
 
-    # textcommits，text window_days text
+    # commits window_days Notes
     old_date = (datetime.now() - timedelta(days=400)).isoformat()
     (repo / "legacy.py").write_text("old\n", encoding="utf-8")
     run_git(repo, "add", "-A")
@@ -80,7 +80,7 @@ def test_analyze_reads_real_repository(repo: Path) -> None:
 
     assert isinstance(view, AnalysisView)
     assert view.snapshot.repo_name == repo.name
-    assert view.total_commits == 3          # textcommitstext
+    assert view.total_commits == 3          # commits
     assert view.author_count == 2
     assert view.commit_calendar
     assert 0 <= view.health_score <= 100
@@ -118,7 +118,7 @@ def test_analyze_rejects_invalid_commit_pattern(repo: Path) -> None:
 
 
 def test_gui_mode_falls_back_to_synthetic_data(tmp_path: Path) -> None:
-    """GUI text allow_synthetic=True：textPathtext、text。"""
+    """GUI Notes allow_synthetic=True：path"""
     view = AnalysisService(allow_synthetic=True).analyze(tmp_path / "nope")
     assert isinstance(view, AnalysisView)
     assert view.total_commits > 0
@@ -126,7 +126,7 @@ def test_gui_mode_falls_back_to_synthetic_data(tmp_path: Path) -> None:
 
 def test_window_days_filters_old_commits(repo: Path) -> None:
     view = AnalysisService().analyze(repo, AnalysisConfig(window_days=30))
-    assert view.total_commits == 2           # 400 text
+    assert view.total_commits == 2           # 400 Notes
 
 
 def test_config_json_roundtrip(tmp_path: Path) -> None:
@@ -164,7 +164,7 @@ def test_batch_isolates_single_repository_failure(repo: Path, tmp_path: Path) ->
     assert results[0].ok and results[0].view is not None
     assert results[1].ok is False
     assert "path_not_found" in results[1].error
-    # successrepositorytextfailedrepositorytext
+    # repository
     assert results[0].view.total_commits == 3
 
 
@@ -197,4 +197,7 @@ def test_summarize_view_maps_contract_fields(repo: Path) -> None:
     assert summary.authors == view.author_count
     assert summary.health_score == view.health_score
     assert summary.risk_level in {"low", "medium", "high"}
+
+
+
 

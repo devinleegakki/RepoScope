@@ -60,3 +60,6 @@ def test_models_reject_invalid_values(factory, kwargs) -> None:
     with pytest.raises(ValueError):
         factory(**kwargs)
 
+
+
+

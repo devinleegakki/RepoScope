@@ -1,7 +1,6 @@
-"""RepoScope text。
+"""RepoScope application entry point.
 
-text ``--demo`` / ``--path`` text GUI；text ``analyze``、
-``check``、``export``、``batch`` text CLI。
+Launch the desktop GUI by default, or dispatch one of the CLI commands.
 """
 
 from __future__ import annotations
@@ -18,12 +17,12 @@ from cli import main as cli_main  # noqa: E402
 def _gui_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="main.py",
-        description="RepoScope GUI launcher",
+        description="RepoScope repository analysis",
     )
     parser.add_argument(
         "--gui",
         action="store_true",
-        help="explicitly start the GUI (default)",
+        help="Launch the desktop interface (the default)",
     )
     parser.add_argument(
         "--version",
@@ -31,13 +30,13 @@ def _gui_parser() -> argparse.ArgumentParser:
         version="RepoScope 1.0",
     )
     source = parser.add_mutually_exclusive_group()
-    source.add_argument("--demo", action="store_true", help="load the built-in demo dataset")
-    source.add_argument("--path", metavar="directory", help="analyze a local Git repository after startup")
+    source.add_argument("--demo", action="store_true", help="Open the interface with demo data")
+    source.add_argument("--path", metavar="REPOSITORY", help="Analyze a Git repository")
     return parser
 
 
 def _run_gui(argv: list[str] | None = None) -> int:
-    """text GUI；CLI-only text PySide6。"""
+    """Run the GUI; CLI commands do not require PySide6."""
     from gui.main_window import main as gui_main
 
     args = _gui_parser().parse_args(argv)
@@ -53,3 +52,6 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
+
+

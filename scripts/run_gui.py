@@ -11,3 +11,6 @@ from main import _run_gui
 
 if __name__ == "__main__":
     raise SystemExit(_run_gui(sys.argv[1:]))
+
+
+

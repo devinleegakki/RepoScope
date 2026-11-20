@@ -151,3 +151,6 @@ def run_static_analysis(snapshot: RepositorySnapshotLike, config: AnalysisConfig
     dependencies = scan_dependencies(snapshot) if config.enable_dependency_scan else DependencyMetrics()
     return quality, ownership, dependencies, scan_secrets(snapshot, config)
 
+
+
+

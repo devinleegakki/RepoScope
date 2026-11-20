@@ -1,16 +1,16 @@
-"""Anti-pattern Center：textRisktext"text、text、text"。
+"""anti-patterns"Notes"。
 
-text GUI text。text"text 3 textfilestext"，
-textRulestext**text**：
+Notes GUI Notes"Notes 3 files"，
+rules**Notes**：
 
-    Condition ← Rulestext（rules.py text pattern / thresholdtext）
-    Actual value   ← text
-    Configured threshold ← text「Analysis Settings」text
-    Suggested action ← text
+    Notes ← rulesrules.py Notes pattern / Notes
+    Notes   ← Notes
+    configuration ← configuration
+    Notes ← Notes
 
-text ``Warning`` text（textfilestext）。
-text，text"text rules.py text"，text——text，
-text"textthresholdtext"text。
+Notes ``Warning`` files
+display"pending rules.py Notes"，Notes
+Notes"Notes"Notes
 """
 
 from __future__ import annotations
@@ -35,14 +35,14 @@ from .widgets import LEVEL_COLOR, LEVEL_TEXT, SEVERITY_TEXT, Badge, Card, PageHe
 
 _EVIDENCE_FIELDS = (
     ("Condition", "condition"),
-    ("Actual value", "actual"),
-    ("Configured threshold", "threshold"),
+    ("Observed value", "actual"),
+    ("Threshold", "threshold"),
     ("Suggested action", "action"),
 )
 
 
 class PatternPage(QWidget):
-    """Anti-pattern Center：text，textDetails。"""
+    """anti-patterns"""
 
     def __init__(self) -> None:
         super().__init__()
@@ -53,10 +53,10 @@ class PatternPage(QWidget):
         outer.setSpacing(14)
 
         self.filter = QComboBox()
-        self.filter.addItems(["All levels", "High risk only", "Medium risk only", "Low risk only"])
+        self.filter.addItems(["All levels", "High", "Medium", "Low"])
         self.filter.currentIndexChanged.connect(self._refresh_list)
 
-        self.header = PageHeader("Anti-pattern Center", "No repository analyzed yet")
+        self.header = PageHeader("Anti-pattern center", "Review repository findings")
         self.header.add_right(self.filter)
         outer.addWidget(self.header)
 
@@ -67,7 +67,7 @@ class PatternPage(QWidget):
         left_layout = QVBoxLayout(left)
         left_layout.setContentsMargins(12, 12, 12, 12)
         left_layout.setSpacing(8)
-        list_title = QLabel("textRules")
+        list_title = QLabel("rules")
         list_title.setObjectName("sectionTitle")
         left_layout.addWidget(list_title)
         self.list = QListWidget()
@@ -82,7 +82,7 @@ class PatternPage(QWidget):
         splitter.setSizes([280, 640])
         outer.addWidget(splitter, 1)
 
-    # -- text ------------------------------------------------------------
+    # -- Notes ------------------------------------------------------------
     def set_data(self, view: AnalysisView | None) -> None:
         if view is None:
             return
@@ -91,9 +91,8 @@ class PatternPage(QWidget):
         for warning in self._warnings:
             counts[warning.severity] = counts.get(warning.severity, 0) + 1
         self.header.set_hint(
-            f"text {len(self._warnings)} text · text {counts['high']} · "
-            f"text {counts['medium']} · text {counts['low']}"
-            " · textRulestextConditiontextActual value，text"
+            f"{len(self._warnings)} findings · high {counts['high']} · "
+            f"medium {counts['medium']} · low {counts['low']}"
         )
         self._refresh_list()
 
@@ -108,7 +107,7 @@ class PatternPage(QWidget):
         self.list.clear()
         rows = self._visible()
         if not rows:
-            item = QListWidgetItem("textRules")
+            item = QListWidgetItem("No findings for this filter")
             item.setFlags(Qt.NoItemFlags)
             self.list.addItem(item)
             self.detail.show_warning(None)
@@ -119,11 +118,11 @@ class PatternPage(QWidget):
             item.setForeground(QColor("#c9d1d9"))
             item.setData(Qt.UserRole, warning)
             color = LEVEL_COLOR.get(warning.severity, "#8b949e")
-            item.setToolTip(f"{warning.message}\ntext：{warning.target or '—'}")
+            item.setToolTip(f"{warning.message}\nTarget: {warning.target or '—'}")
             self.list.addItem(item)
             item.setSizeHint(QSize(0, 52))
             if not warning.has_evidence:
-                item.setToolTip("text，Detailstext")
+                item.setToolTip("pending")
         self.list.setCurrentRow(0)
 
     def _show_detail(self, row: int) -> None:
@@ -135,7 +134,7 @@ class PatternPage(QWidget):
 
 
 class _DetailCard(Card):
-    """textRulestextDetails：Rulestext、Level、text、text。"""
+    """rules"""
 
     def __init__(self) -> None:
         super().__init__()
@@ -152,7 +151,7 @@ class _DetailCard(Card):
         head.addStretch(1)
         layout.addLayout(head)
 
-        self.message = QLabel("SelecttextRulestextDetails")
+        self.message = QLabel("Select a finding to review its evidence.")
         self.message.setObjectName("detailMessage")
         self.message.setWordWrap(True)
         layout.addWidget(self.message)
@@ -188,7 +187,7 @@ class _DetailCard(Card):
         if warning is None:
             self.title.setText("—")
             self.badge.setText("—")
-            self.message.setText("textRulestext")
+            self.message.setText("Select a finding to review its evidence.")
             for value in self._values.values():
                 value.setText("—")
             self.target.setText("")
@@ -201,15 +200,17 @@ class _DetailCard(Card):
         self.message.setText(warning.message)
         for _, key in _EVIDENCE_FIELDS:
             raw = getattr(warning, key) or ""
-            self._values[key].setText(raw or "Not provided by backend")
-        self.target.setText(f"text：{warning.target or '—'}")
+            self._values[key].setText(raw or "pending")
+        self.target.setText(f"Target: {warning.target or '—'}")
 
         missing = [label for label, key in _EVIDENCE_FIELDS if not getattr(warning, key)]
         if missing:
             self.pending.setText(
-                "text rules.py text：" + "、".join(missing)
-                + "（text gui/contract.py text Warning text）"
+                "Missing evidence: " + ", ".join(missing)
             )
             self.pending.setVisible(True)
         else:
             self.pending.setVisible(False)
+
+
+

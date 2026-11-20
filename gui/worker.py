@@ -1,10 +1,10 @@
-"""textanalyzetext worker。
+"""analysis worker。
 
-Qt text：text。text ``moveToThread`` text，
-text：text、Complete、failed。
+Qt Notes ``moveToThread`` Notes
+error
 
-analyzetext ``services.AnalysisService``（text）；
-``allow_synthetic=True`` textfailedtext，text。
+analysis ``services.AnalysisService``（Notes
+``allow_synthetic=True`` error
 """
 
 from __future__ import annotations
@@ -17,7 +17,7 @@ from .contract import AnalysisRequest
 
 
 class AnalysisWorker(QObject):
-    """textanalyze，text。"""
+    """analysis"""
 
     progress = Signal(int, str)
     finished = Signal(object)
@@ -50,8 +50,11 @@ class AnalysisWorker(QObject):
                 config,
                 on_progress=lambda percent, message: self.progress.emit(percent, message),
             )
-        except Exception as exc:  # text，text
+        except Exception as exc:  # Notes
             self.failed.emit(f"{type(exc).__name__}: {exc}")
             return
         self.finished.emit(view)
+
+
+
 

@@ -30,3 +30,6 @@ def test_non_git_directory_is_rejected(tmp_path: Path) -> None:
 
     assert exc_info.value.code == "not_a_git_repository"
 
+
+
+

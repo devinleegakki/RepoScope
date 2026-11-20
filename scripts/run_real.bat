@@ -31,3 +31,6 @@ if errorlevel 1 (
 echo [3/3] Analysing this repository with real git data ...
 ".venv\Scripts\python.exe" main.py --path "%CD%"
 if errorlevel 1 pause
+
+
+

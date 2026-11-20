@@ -1,11 +1,11 @@
-"""Commit Trendstext：text（text / text / text）+ GitHub text。
+"""commits / Notes / Notes+ GitHub Notes
 
-text：
-* **text**text"text"，text；
-* **text**text"text"，text。
+Notes
+* **Notes**Notes"Notes"，time
+* **Notes**Notes"Notes"，Notes
 
-text / text / text**text ``commit_calendar`` text**，text，
-text，text。
+Notes / Notes / Notes**Notes ``commit_calendar`` Notes**，Notes
+Notes
 """
 
 from __future__ import annotations
@@ -28,7 +28,7 @@ from .contract import AnalysisView
 from .plotting import TrendChart
 from .widgets import Card, PageHeader
 
-_WEEKDAYS = ("text", "text", "text", "text", "text", "text", "text")
+_WEEKDAYS = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
 _LEVEL_COLORS = ("#21262d", "#0e4429", "#006d32", "#26a641", "#39d353")
 _MAX_WEEKS = 60
 
@@ -57,12 +57,12 @@ def _parse(calendar: dict[str, int]) -> list[tuple[datetime, int]]:
 
 
 def aggregate(rows: list[tuple[datetime, int]], mode: str) -> list[tuple[datetime, int]]:
-    """textcommit counttext。``mode`` text ``text`` / ``text`` / ``text``。"""
-    if mode == "text":
+    """commits``mode`` Notes ``Notes`` / ``Notes`` / ``Notes``。"""
+    if mode == "Daily":
         return rows
     buckets: dict[datetime, int] = {}
     for moment, count in rows:
-        if mode == "text":
+        if mode == "Weekly":
             key = moment - timedelta(days=moment.weekday())
         else:
             key = moment.replace(day=1)
@@ -71,18 +71,18 @@ def aggregate(rows: list[tuple[datetime, int]], mode: str) -> list[tuple[datetim
 
 
 class HeatmapWidget(QWidget):
-    """GitHub textcommitstext：7 text（text）× N text（text）。
+    """GitHub commits7 Notes× N Notes
 
-    text ``QTableWidget`` text：
-    text QSS text ``::item`` text（text 15px text 23px），
-    text ``text × 15`` text；text
-    text，text，text。
-    ``paintEvent`` text，text。
+    Notes ``QTableWidget`` Notes
+    high QSS Notes ``::item`` Notes 15px Notes 23px），
+    Notes ``Notes × 15`` high
+    Notes
+    ``paintEvent`` Notes
     """
 
-    CELL = 11      # text
-    GAP = 2        # text
-    GUTTER = 22    # texttagstext
+    CELL = 11      # Notes
+    GAP = 2        # Notes
+    GUTTER = 22    # Notes
 
     def __init__(self) -> None:
         super().__init__()
@@ -119,7 +119,7 @@ class HeatmapWidget(QWidget):
         )
         self.update()
 
-    def paintEvent(self, event) -> None:  # noqa: N802 (Qt text)
+    def paintEvent(self, event) -> None:  # noqa: N802 (Qt Notes)
         if not self._weeks or self._start is None:
             return
         painter = QPainter(self)
@@ -165,11 +165,11 @@ class HeatmapWidget(QWidget):
         day = self._start + timedelta(days=column * 7 + row)
         if self._last is not None and day > self._last:
             return
-        self.setToolTip(f"{day.isoformat()} · {self._days.get(day, 0)} textcommits")
+        self.setToolTip(f"{day.isoformat()} · {self._days.get(day, 0)} commits")
 
 
 class TrendPage(QWidget):
-    """Commit Trendstext。"""
+    """commits"""
 
     def __init__(self) -> None:
         super().__init__()
@@ -180,11 +180,11 @@ class TrendPage(QWidget):
         outer.setSpacing(14)
 
         self.mode = QComboBox()
-        self.mode.addItems(["text", "text", "text"])
+        self.mode.addItems(["Daily", "Weekly", "Monthly"])
         self.mode.setCurrentIndex(1)
         self.mode.currentIndexChanged.connect(self._redraw)
 
-        self.header = PageHeader("Commit Trends", "No repository analyzed yet")
+        self.header = PageHeader("commits", "repository")
         self.header.add_right(self.mode)
         outer.addWidget(self.header)
 
@@ -222,13 +222,13 @@ class TrendPage(QWidget):
 
         legend = QHBoxLayout()
         legend.setSpacing(4)
-        legend.addWidget(QLabel("text"))
+        legend.addWidget(QLabel("Less activity"))
         for color in _LEVEL_COLORS:
             swatch = QLabel()
             swatch.setFixedSize(12, 12)
             swatch.setStyleSheet(f"background:{color}; border-radius:2px;")
             legend.addWidget(swatch)
-        legend.addWidget(QLabel("text"))
+        legend.addWidget(QLabel("More activity"))
         legend.addStretch(1)
         heat_layout.addLayout(legend)
         outer.addWidget(heat_card, 2)
@@ -240,11 +240,11 @@ class TrendPage(QWidget):
         self._rows = _parse(calendar)
         total = sum(calendar.values())
         self.header.set_hint(
-            f"text {total:,} textcommits · text {len(calendar)} text · "
-            f"text{self.mode.currentText().removeprefix('text')}text"
+            f"{total:,} commits · {len(calendar)} active days · "
+            f"View: {self.mode.currentText()}"
         )
         self.heat_hint.setText(
-            f"text，text {len(calendar)} text；textcommitstext"
+            f" days {len(calendar)} commits"
         )
         self.heatmap.set_calendar(calendar)
         self._redraw()
@@ -252,14 +252,17 @@ class TrendPage(QWidget):
     def _redraw(self) -> None:
         if not self._rows:
             return
-        mode = self.mode.currentText().removeprefix("text")
+        mode = self.mode.currentText()
         points = aggregate(self._rows, mode)
         self.chart.set_points(points)
         if points:
             peak_day, peak = max(points, key=lambda item: item[1])
-            label = "text" if mode == "text" else ("text" if mode == "text" else "text")
+            label = "day" if mode == "Daily" else ("week" if mode == "Weekly" else "month")
             self.chart_hint.setText(
-                f"text {len(points)} text{label} · text {peak} text"
+                f"{len(points)} {label}s · peak {peak} commits"
                 f"（{peak_day.strftime('%Y-%m-%d')}）· "
-                f"text {sum(c for _, c in points) / max(1, len(points)):.1f} text/{label}"
+                f"Average {sum(c for _, c in points) / max(1, len(points)):.1f} commits/{label}"
             )
+
+
+

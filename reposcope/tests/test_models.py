@@ -85,3 +85,6 @@ class TestWarning:
         m = RepositoryMetrics(recent_days=45, observation_days=90)
         assert m.to_dict()["recent_days"] == 45
 
+
+
+

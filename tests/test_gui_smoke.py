@@ -1,6 +1,6 @@
-"""GUI text：text、text、text、reporttext。
+"""GUI report
 
-text offscreen text，text，CI text：
+Notes offscreen displayCI Notes
 
     QT_QPA_PLATFORM=offscreen python -m unittest tests.test_gui_smoke
 """
@@ -19,9 +19,9 @@ if str(ROOT) not in sys.path:
 
 try:
     from PySide6.QtWidgets import QApplication  # noqa: E402
-except ImportError as exc:  # pragma: no cover - text GUI text
+except ImportError as exc:  # pragma: no cover - Notes GUI Notes
     raise unittest.SkipTest(
-        f"GUI text PySide6（pip install pyside6）：{exc}"
+        f"GUI test PySide6（pip install pyside6）：{exc}"
     ) from exc
 
 from gui import mock_data  # noqa: E402
@@ -57,17 +57,17 @@ class TestMockData(unittest.TestCase):
         self.assertEqual(seen[-1], 100)
 
     def test_warnings_carry_four_elements(self):
-        """Anti-pattern Centertext：text"text、text、text"。"""
+        """anti-patterns"Notes"。"""
         self.assertTrue(_VIEW.warnings)
         for warning in _VIEW.warnings:
-            self.assertTrue(warning.has_evidence, f"{warning.rule} Missingtext")
+            self.assertTrue(warning.has_evidence, f"{warning.rule} Notes")
             self.assertIn(warning.severity, {"high", "medium", "low"})
 
     def test_commit_hygiene_is_computed(self):
         hygiene = _VIEW.commit_hygiene
         self.assertEqual(hygiene.total, _VIEW.total_commits)
         self.assertTrue(0 <= hygiene.pass_rate <= 1)
-        # violations text 20 text，text"text"text"text"
+        # violations Notes 20 Notes"Notes"Notes"Notes"
         self.assertLessEqual(hygiene.passed + len(hygiene.violations), hygiene.total)
 
 
@@ -82,7 +82,7 @@ class TestMainWindow(unittest.TestCase):
         self.assertEqual(self.window.stack.count(), 9)
 
     def test_sidebar_has_group_headers_and_pages(self):
-        # 9 text + 3 text
+        # 9 Notes + 3 Notes
         self.assertEqual(self.window.sidebar.count(), 12)
         self.assertEqual(len(self.window._row_to_page), 9)
 
@@ -92,12 +92,12 @@ class TestMainWindow(unittest.TestCase):
             self.assertEqual(self.window.stack.currentIndex(), page_index)
 
     def test_group_header_does_not_switch_page(self):
-        self.window.goto("Analysis Settings")
+        self.window.goto("configuration")
         before = self.window.stack.currentIndex()
         header_row = 0
         self.assertEqual(self.window.sidebar.item(header_row).data(0x0100), "header")
         self.window.sidebar.setCurrentRow(header_row)
-        # text，text
+        # Notes
         self.assertEqual(self.window.stack.currentIndex(), before)
 
     def test_every_data_page_accepts_view(self):
@@ -147,8 +147,9 @@ class TestMainWindow(unittest.TestCase):
 class TestReport(unittest.TestCase):
     def test_markdown_covers_all_sections(self):
         markdown = build_markdown(_VIEW)
-        for keyword in ("Overall assessment", "Key metrics", "Author Contributions", "Commit activity",
-                        "Hot files", "Anti-pattern list", "Commit convention", "Reproduction"):
+        for keyword in ("Overview", "Repository summary", "authors", "commits",
+                        "Hotspot files", "anti-patterns", "Commit message quality",
+                        "Reproduce this report"):
             self.assertIn(keyword, markdown)
 
     def test_export_writes_three_formats(self):
@@ -166,3 +167,6 @@ class TestReport(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+

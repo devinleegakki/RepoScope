@@ -1,10 +1,10 @@
-"""Data Analysistext：Hot files、Large files、Stale filestext。
+"""files
 
-text ``QAbstractTableModel`` + ``QTableView``（text ``QTableWidget``）：
+Notes ``QAbstractTableModel`` + ``QTableView``（Notes ``QTableWidget``）：
 
-* text，text；
-* text ``QSortFilterProxyModel``，text"text n text m text"；
-* text Qt text Model/View text，reporttext，text QTableWidget text"text"。
+* Notes
+* Notes ``QSortFilterProxyModel``，Notes"Notes n Notes m Notes"；
+* Notes Qt Notes Model/View report QTableWidget Notes"Notes"。
 """
 
 from __future__ import annotations
@@ -30,7 +30,7 @@ from .widgets import Card, PageHeader
 
 
 def human_size(size_bytes: int) -> str:
-    """text，text ``1.4 MB``。"""
+    """size ``1.4 MB``。"""
     size = float(size_bytes)
     for unit in ("B", "KB", "MB", "GB"):
         if size < 1024 or unit == "GB":
@@ -41,23 +41,23 @@ def human_size(size_bytes: int) -> str:
 
 def human_lines(count: int) -> str:
     if count >= 10_000:
-        return f"{count / 1000:.1f}k text"
-    return f"{count:,} text"
+        return f"{count / 1000:.1f}k lines"
+    return f"{count:,} lines"
 
 
 _COLUMNS: dict[str, tuple[str, Callable[[FileStat], str]]] = {
     "path": ("files", lambda row: row.path),
-    "change_count": ("text", lambda row: str(row.change_count)),
-    "author_count": ("author count", lambda row: str(row.author_count)),
-    "changed_lines": ("text", lambda row: human_lines(row.changed_lines)),
-    "size": ("text", lambda row: human_size(row.size_bytes)),
-    "type": ("text", lambda row: row.file_type or "—"),
-    "days": ("text", lambda row: str(row.days_since_change)),
+    "change_count": ("Changes", lambda row: str(row.change_count)),
+    "author_count": ("authors", lambda row: str(row.author_count)),
+    "changed_lines": ("Changed lines", lambda row: human_lines(row.changed_lines)),
+    "size": ("size", lambda row: human_size(row.size_bytes)),
+    "type": ("type", lambda row: row.file_type or "—"),
+    "days": ("Days since change", lambda row: str(row.days_since_change)),
 }
 
 
 class FileTableModel(QAbstractTableModel):
-    """text ``FileStat`` text Qt text。text，text。"""
+    """Notes ``FileStat`` Notes Qt Notes"""
 
     def __init__(self, columns: Sequence[str], parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -82,7 +82,7 @@ class FileTableModel(QAbstractTableModel):
         if role == Qt.ForegroundRole and key == "days" and row.days_since_change >= 180:
             return QColor("#EF9F27")
         if role == Qt.ToolTipRole and key == "changed_lines" and row.changed_lines == 0:
-            return "textNot provided by backend（metrics.py text changed_lines）"
+            return "Changed-line data is unavailable"
         return None
 
     def headerData(self, section: int, orientation: Qt.Orientation, role: int = Qt.DisplayRole):
@@ -97,7 +97,7 @@ class FileTableModel(QAbstractTableModel):
 
 
 class _RankTab(QWidget):
-    """text = text + text + text。text。"""
+    """Notes = Notes + Notes + Notes"""
 
     def __init__(self, columns: Sequence[str], empty_hint: str) -> None:
         super().__init__()
@@ -108,14 +108,14 @@ class _RankTab(QWidget):
         self.model = FileTableModel(columns, self)
         self.proxy = QSortFilterProxyModel(self)
         self.proxy.setSourceModel(self.model)
-        self.proxy.setFilterKeyColumn(0)          # textfilesPathtext
+        self.proxy.setFilterKeyColumn(0)          # files
         self.proxy.setFilterCaseSensitivity(Qt.CaseInsensitive)
 
         self.view = QTableView()
         self.view.setModel(self.proxy)
         self.view.setSortingEnabled(True)
-        # text：QSS text，Qt defaulttext
-        # text V text，text bug。text。
+        # NotesQSS NotesQt default
+        # Notes V Notes bug。Notes
         self.view.horizontalHeader().setSortIndicatorShown(False)
         self.view.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.view.setSelectionBehavior(QAbstractItemView.SelectRows)
@@ -136,7 +136,7 @@ class _RankTab(QWidget):
 
 
 class FilesPage(QWidget):
-    """Data Analysistext：text + text。"""
+    """analysis + Notes"""
 
     def __init__(self) -> None:
         super().__init__()
@@ -145,10 +145,10 @@ class FilesPage(QWidget):
         outer.setSpacing(12)
 
         self.search = QLineEdit()
-        self.search.setPlaceholderText("textfilestext…")
+        self.search.setPlaceholderText("Filter files…")
         self.search.textChanged.connect(self._apply_filter)
 
-        self.header = PageHeader("Data Analysis", "No repository analyzed yet")
+        self.header = PageHeader("analysis", "repository")
         self.header.add_right(self.search)
         outer.addWidget(self.header)
 
@@ -158,7 +158,7 @@ class FilesPage(QWidget):
         card_layout.setSpacing(8)
 
         head = QHBoxLayout()
-        note = QLabel("text；textthresholdtext「Analysis Settings」text")
+        note = QLabel("configuration")
         note.setObjectName("pageHint")
         head.addWidget(note)
         head.addStretch(1)
@@ -166,12 +166,12 @@ class FilesPage(QWidget):
 
         self.tabs = QTabWidget()
         self.hot = _RankTab(["path", "change_count", "author_count", "changed_lines"],
-                            "textfilestextthreshold（textAnalysis Settingstext）")
+                            "Hotspot files")
         self.large = _RankTab(["path", "size", "type", "change_count"],
-                              "textfilestextLarge filesthreshold")
+                              "Large files")
         self.stale = _RankTab(["path", "days", "change_count", "size"],
-                              "textfilestextthreshold")
-        self.tabs.addTab(self.hot, "Hot files")
+                              "Stale files")
+        self.tabs.addTab(self.hot, "Hotspot files")
         self.tabs.addTab(self.large, "Large files")
         self.tabs.addTab(self.stale, "Stale files")
         card_layout.addWidget(self.tabs, 1)
@@ -184,13 +184,16 @@ class FilesPage(QWidget):
     def set_data(self, view: AnalysisView | None) -> None:
         if view is None:
             return
-        self.hot.set_rows(view.hotspot_files, "textfilestextthreshold（textAnalysis Settingstext）")
-        self.large.set_rows(view.large_files, "textfilestextLarge filesthreshold")
-        self.stale.set_rows(view.stale_files, "textfilestextthreshold")
-        self.tabs.setTabText(0, f"Hot files ({len(view.hotspot_files)})")
+        self.hot.set_rows(view.hotspot_files, "files")
+        self.large.set_rows(view.large_files, "files")
+        self.stale.set_rows(view.stale_files, "files")
+        self.tabs.setTabText(0, f"Hotspot files ({len(view.hotspot_files)})")
         self.tabs.setTabText(1, f"Large files ({len(view.large_files)})")
         self.tabs.setTabText(2, f"Stale files ({len(view.stale_files)})")
         self.header.set_hint(
-            f"text {len(view.hotspot_files)} · Large files {len(view.large_files)} · "
-            f"text {len(view.stale_files)} · text {view.file_count:,} textfilestext"
+            f"hotspot {len(view.hotspot_files)} · files {len(view.large_files)} · "
+            f"stale {len(view.stale_files)} · {view.file_count:,} tracked files"
         )
+
+
+

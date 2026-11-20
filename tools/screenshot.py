@@ -1,13 +1,12 @@
-"""text：text PNG，textreporttext。
+"""Capture screenshots of the main RepoScope pages.
 
-text：
-    python tools/screenshot.py            # text docs/screens/
-    python tools/screenshot.py out_dir
+Usage::
 
-text：
-* text QSS text；
-* reporttext PPT text，text；
-* text ``QT_QPA_PLATFORM=offscreen``，text（CI text）。
+    python tools/screenshot.py
+    python tools/screenshot.py output_directory
+
+The script uses the application stylesheet and the offscreen Qt platform so it
+can also run in CI environments.
 """
 
 from __future__ import annotations
@@ -27,15 +26,15 @@ from PySide6.QtWidgets import QApplication  # noqa: E402
 from gui.main_window import MainWindow  # noqa: E402
 
 _PAGES = (
-    ("01-Repository", "Repository"),
-    ("02-Analysis Settings", "Analysis Settings"),
-    ("03-Dashboard", "Dashboard"),
-    ("04-Commit Trends", "Commit Trends"),
-    ("05-Author Contributions", "Author Contributions"),
-    ("06-Data Analysis", "Data Analysis"),
-    ("07-Anti-pattern Center", "Anti-pattern Center"),
-    ("08-Reports", "Reports"),
-    ("09-Repository Comparison", "Repository Comparison"),
+    ("01-repository", "repository"),
+    ("02-configuration", "configuration"),
+    ("03-dashboard", "dashboard"),
+    ("04-commits", "commits"),
+    ("05-authors", "authors"),
+    ("06-analysis", "analysis"),
+    ("07-anti-patterns", "anti-patterns"),
+    ("08-report", "report"),
+    ("09-repository", "repository"),
 )
 
 
@@ -65,3 +64,6 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
+
+

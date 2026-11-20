@@ -56,3 +56,6 @@ def test_window_categories_and_snapshot_render(qapp):
 
     window.close()
 
+
+
+

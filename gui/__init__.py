@@ -1,9 +1,12 @@
-"""RepoScope text。
+"""RepoScope Notes
 
-text ``models.py``（text）text ``PySide6``。
-text ``gui.contract.AnalysisView`` text，textfilestext。
+Notes ``models.py``（Notes ``PySide6``。
+passed ``gui.contract.AnalysisView`` files
 """
 
 from .contract import AnalysisView
 
 __all__ = ["AnalysisView"]
+
+
+
