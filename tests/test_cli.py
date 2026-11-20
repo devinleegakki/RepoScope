@@ -39,8 +39,10 @@ def test_version_flag() -> None:
     assert "RepoScope" in (result.stdout + result.stderr)
 
 
-def test_missing_subcommand_exits_with_usage_error() -> None:
-    result = run_cli()
+def test_invalid_cli_argument_exits_with_usage_error() -> None:
+    # No arguments intentionally starts the GUI; use an invalid option to
+    # exercise argparse's CLI error path without opening a Qt event loop.
+    result = run_cli("--invalid-option")
     assert result.returncode != 0
     assert "usage" in (result.stdout + result.stderr).lower()
 

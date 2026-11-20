@@ -15,10 +15,12 @@ from typing import List, Optional
 
 import pytest
 
-# Allow running pytest from either the repo root or the package directory.
+# Allow running pytest from either the repository root or the package directory.
 PACKAGE_PARENT = Path(__file__).resolve().parents[1]
-if str(PACKAGE_PARENT) not in sys.path:
-    sys.path.insert(0, str(PACKAGE_PARENT))
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+for import_root in (PROJECT_ROOT, PACKAGE_PARENT):
+    if str(import_root) not in sys.path:
+        sys.path.insert(0, str(import_root))
 
 
 # ---- stand-in data classes (mirror LTY's models.py shape) -----------------
