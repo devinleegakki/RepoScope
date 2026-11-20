@@ -111,13 +111,54 @@ class TestMainWindow(unittest.TestCase):
         self.assertEqual(self.window.files_page.hot.model.rowCount(),
                          len(_VIEW.hotspot_files))
         self.assertEqual(self.window.patterns_page.list.count(), len(_VIEW.warnings))
+        self.assertEqual(self.window.patterns_page.filter.itemText(0),
+                         f"All levels ({len(_VIEW.warnings)})")
         self.assertTrue(self.window.report_page.preview.toPlainText())
+
+    def test_pattern_filters_show_each_severity(self):
+        page = self.window.patterns_page
+        page.set_data(_VIEW)
+        expected = {0: len(_VIEW.warnings), 1: 0, 2: 0, 3: 0}
+        for warning in _VIEW.warnings:
+            expected[{"high": 1, "medium": 2, "low": 3}[warning.severity]] += 1
+        for index, count in expected.items():
+            page.filter.setCurrentIndex(index)
+            actual = sum(
+                page.list.item(row).data(0x0100) is not None
+                for row in range(page.list.count())
+            )
+            self.assertEqual(actual, count)
+        page.filter.setCurrentIndex(0)
 
     def test_trend_mode_switch_keeps_chart_alive(self):
         self.window.trend_page.set_data(_VIEW)
         for index in range(self.window.trend_page.mode.count()):
             self.window.trend_page.mode.setCurrentIndex(index)
         self.assertTrue(self.window.trend_page.chart_hint.text())
+
+    def test_commit_heatmap_uses_large_centered_cells(self):
+        self.window.trend_page.set_data(_VIEW)
+        heatmap = self.window.trend_page.heatmap
+        self.assertGreaterEqual(heatmap.cell_size, heatmap.MIN_CELL)
+        self.assertGreater(heatmap.width(), heatmap.GUTTER)
+        self.assertEqual(heatmap.height(), 7 * (heatmap.cell_size + heatmap.GAP))
+        self.assertLessEqual(heatmap.cell_size, heatmap.MAX_CELL)
+        before = heatmap.cell_size
+        heatmap.resize(heatmap.width() + 240, heatmap.height())
+        self.assertGreaterEqual(heatmap.cell_size, before)
+
+    def test_commit_heatmap_renders_after_dynamic_scaling(self):
+        self.window.trend_page.set_data(_VIEW)
+        self.window.show()
+        self.window.trend_page.show()
+        self.window.trend_page.heatmap.show()
+        _APP.processEvents()
+        heatmap = self.window.trend_page.heatmap
+        self.assertTrue(heatmap.isVisible())
+        self.assertGreater(heatmap.width(), 0)
+        self.assertGreater(heatmap.height(), 0)
+        heatmap.repaint()
+        _APP.processEvents()
 
     def test_settings_produce_request(self):
         request = self.window.settings_page.to_request("/tmp/repo")

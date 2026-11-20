@@ -80,9 +80,10 @@ class HeatmapWidget(QWidget):
     ``paintEvent`` Notes
     """
 
-    CELL = 11      # Notes
-    GAP = 2        # Notes
-    GUTTER = 22    # Notes
+    MIN_CELL = 16
+    MAX_CELL = 44
+    GAP = 4
+    GUTTER = 34
 
     def __init__(self) -> None:
         super().__init__()
@@ -92,7 +93,26 @@ class HeatmapWidget(QWidget):
         self._start: date | None = None
         self._last: date | None = None
         self._weeks = 0
-        self.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        self._cell = self.MIN_CELL
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+
+    @property
+    def cell_size(self) -> int:
+        return self._cell
+
+    def _minimum_width(self) -> int:
+        return self.GUTTER + self._weeks * (self.MIN_CELL + self.GAP)
+
+    def _update_scale(self) -> None:
+        if not self._weeks:
+            return
+        usable = max(1, self.width() - self.GUTTER)
+        cell = int((usable - self._weeks * self.GAP) / self._weeks)
+        self._cell = max(self.MIN_CELL, min(self.MAX_CELL, cell))
+        height = 7 * (self._cell + self.GAP)
+        self.setMinimumHeight(height)
+        self.setMaximumHeight(height)
+        self.update()
 
     def set_calendar(self, calendar: dict[str, int]) -> None:
         days: dict[date, int] = {}
@@ -105,19 +125,25 @@ class HeatmapWidget(QWidget):
         if not days:
             self._start = self._last = None
             self._weeks = 0
-            self.setFixedSize(0, 0)
+            self.setMinimumSize(0, 0)
+            self.setMaximumHeight(16777215)
             return
 
         first = min(days)
         self._start = first - timedelta(days=first.weekday())
         self._last = max(days)
         self._weeks = min(_MAX_WEEKS, ((self._last - self._start).days // 7) + 1)
-        step = self.CELL + self.GAP
-        self.setFixedSize(
-            self.GUTTER + self._weeks * step,
-            7 * step,
-        )
+        self._cell = self.MIN_CELL
+        self.setMinimumWidth(self._minimum_width())
+        self.setMinimumHeight(7 * (self._cell + self.GAP))
+        self.setMaximumHeight(7 * (self.MAX_CELL + self.GAP))
+        self.updateGeometry()
+        self._update_scale()
         self.update()
+
+    def resizeEvent(self, event) -> None:  # noqa: N802
+        super().resizeEvent(event)
+        self._update_scale()
 
     def paintEvent(self, event) -> None:  # noqa: N802 (Qt Notes)
         if not self._weeks or self._start is None:
@@ -129,12 +155,12 @@ class HeatmapWidget(QWidget):
         font = painter.font()
         font.setPointSize(7)
         painter.setFont(font)
-        step = self.CELL + self.GAP
+        step = self._cell + self.GAP
 
         for row in range(7):
             painter.setPen(QColor("#6e7681"))
             painter.drawText(
-                0, row * step, self.GUTTER - 6, self.CELL,
+                0, row * step, self.GUTTER - 6, self._cell,
                 Qt.AlignCenter, _WEEKDAYS[row],
             )
             painter.setPen(Qt.NoPen)
@@ -145,14 +171,14 @@ class HeatmapWidget(QWidget):
                 color = _LEVEL_COLORS[_level(self._days.get(day, 0))]
                 painter.setBrush(QColor(color))
                 painter.drawRoundedRect(
-                    QRectF(self.GUTTER + column * step, row * step, self.CELL, self.CELL),
+                    QRectF(self.GUTTER + column * step, row * step, self._cell, self._cell),
                     2, 2,
                 )
 
     def mouseMoveEvent(self, event) -> None:  # noqa: N802
         if not self._weeks or self._start is None:
             return
-        step = self.CELL + self.GAP
+        step = self._cell + self.GAP
         x = event.position().x() - self.GUTTER
         y = event.position().y()
         if x < 0 or y < 0:
@@ -215,7 +241,7 @@ class TrendPage(QWidget):
         holder = QWidget()
         holder_layout = QVBoxLayout(holder)
         holder_layout.setContentsMargins(0, 0, 0, 0)
-        holder_layout.addWidget(self.heatmap, 0, Qt.AlignLeft)
+        holder_layout.addWidget(self.heatmap, 0, Qt.AlignTop)
         holder_layout.addStretch(1)
         scroll.setWidget(holder)
         heat_layout.addWidget(scroll, 1)
