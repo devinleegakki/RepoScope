@@ -67,12 +67,17 @@ class PatternPage(QWidget):
         left_layout = QVBoxLayout(left)
         left_layout.setContentsMargins(12, 12, 12, 12)
         left_layout.setSpacing(8)
-        list_title = QLabel("rules")
-        list_title.setObjectName("sectionTitle")
-        left_layout.addWidget(list_title)
+        self.list_title = QLabel("Findings")
+        self.list_title.setObjectName("sectionTitle")
+        left_layout.addWidget(self.list_title)
         self.list = QListWidget()
         self.list.setObjectName("patternList")
         self.list.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.list.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
+        self.list.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        self.list.setWordWrap(True)
+        self.list.setTextElideMode(Qt.ElideNone)
+        self.list.setMinimumHeight(220)
         self.list.currentRowChanged.connect(self._show_detail)
         left_layout.addWidget(self.list, 1)
         splitter.addWidget(left)
@@ -94,6 +99,11 @@ class PatternPage(QWidget):
             f"{len(self._warnings)} findings · high {counts['high']} · "
             f"medium {counts['medium']} · low {counts['low']}"
         )
+        self.list_title.setText(f"Findings ({len(self._warnings)})")
+        self.filter.setItemText(0, f"All levels ({len(self._warnings)})")
+        self.filter.setItemText(1, f"High ({counts['high']})")
+        self.filter.setItemText(2, f"Medium ({counts['medium']})")
+        self.filter.setItemText(3, f"Low ({counts['low']})")
         self._refresh_list()
 
     def _visible(self) -> list[Warning]:
@@ -120,7 +130,7 @@ class PatternPage(QWidget):
             color = LEVEL_COLOR.get(warning.severity, "#8b949e")
             item.setToolTip(f"{warning.message}\nTarget: {warning.target or '—'}")
             self.list.addItem(item)
-            item.setSizeHint(QSize(0, 52))
+            item.setSizeHint(QSize(0, 64))
             if not warning.has_evidence:
                 item.setToolTip("pending")
         self.list.setCurrentRow(0)

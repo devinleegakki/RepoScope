@@ -52,7 +52,7 @@ QLabel, QCheckBox, QRadioButton {
 }
 
 #sidebarLogo {
-    background: #bd93f9;
+    background: #58a6ff;
     color: #282c34;
     border-radius: 5px;
     font-size: 14px;
@@ -108,9 +108,9 @@ QLabel, QCheckBox, QRadioButton {
 }
 
 #sidebar::item:selected {
-    background: #3a334b;
+    background: #1f3b5c;
     color: #f8f8f2;
-    border-left: 3px solid #bd93f9;
+    border-left: 3px solid #58a6ff;
     font-weight: 600;
 }
 
@@ -207,7 +207,7 @@ QPushButton {
 
 QPushButton:hover {
     background: #4b5263;
-    border-color: #bd93f9;
+    border-color: #58a6ff;
 }
 
 QPushButton:pressed {
@@ -256,11 +256,11 @@ QLineEdit, QSpinBox, QComboBox {
     border-radius: 4px;
     padding: 5px 8px;
     color: #f8f8f2;
-    selection-background-color: #6d4fa3;
+    selection-background-color: #1f6feb;
 }
 
 QLineEdit:focus, QSpinBox:focus, QComboBox:focus {
-    border-color: #bd93f9;
+    border-color: #58a6ff;
 }
 
 QComboBox::drop-down {
@@ -271,7 +271,7 @@ QComboBox::drop-down {
 QComboBox QAbstractItemView {
     background: #21252b;
     border: 1px solid #3a3f4b;
-    selection-background-color: #6d4fa3;
+    selection-background-color: #1f6feb;
     color: #f8f8f2;
 }
 
@@ -296,7 +296,7 @@ QTableView {
     border: 1px solid #3a3f4b;
     border-radius: 6px;
     gridline-color: #2c313a;
-    selection-background-color: #6d4fa3;
+    selection-background-color: #1f6feb;
     selection-color: #ffffff;
 }
 
@@ -327,7 +327,7 @@ QListWidget::item {
 }
 
 QListWidget::item:selected {
-    background: #6d4fa3;
+    background: #1f6feb;
     color: #ffffff;
 }
 
