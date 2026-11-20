@@ -141,19 +141,10 @@ python -m pytest -q                   # 全部测试（没有 PySide6 时界面�
 
 ### CI/CD（GitHub Actions）
 
-仓库包含两条工作流：
+仓库包含一条 CI 工作流：
 
-- `.github/workflows/ci.yml`：对 `main` 的 push 和所有 Pull Request 自动运行，使用 Ubuntu 与 Windows、Python 3.11/3.12 共四个环境安装 `requirements-dev.txt`，执行源码编译检查和完整测试。
-- `.github/workflows/release.yml`：推送符合 `v*.*.*` 的 Git tag 后，先在 Python 3.12 上重新测试，再生成 `RepoScope-<版本>.zip` 源码包并创建 GitHub Release。
-
-发布一个版本：
-
-```powershell
-git tag v1.0.0
-git push origin v1.0.0
-```
-
-如果未来需要把 GUI 打包成 Windows `.exe`，可以在 `release.yml` 中增加 PyInstaller 步骤，并将生成的 `.exe` 一并上传到 Release；当前工作流先保证跨平台测试和可复现的源码交付。
+- `.github/workflows/ci.yml`：对 `main` 的 push 和所有 Pull Request 自动运行，使用 Windows、Python 3.11/3.12 两个环境安装 `requirements-dev.txt`，执行源码编译检查和完整测试。
+当前工作流只负责 Windows 环境下的自动测试；如需发布安装包，可以在此基础上另行增加 Windows 打包步骤。
 
 ### Windows：`python` 命令没有任何输出
 
