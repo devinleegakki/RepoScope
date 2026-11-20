@@ -40,7 +40,7 @@ QLabel, QCheckBox, QRadioButton {
     background: #21252b;
 }
 
-/* ---------- text ---------- */
+/* ---------- Sidebar navigation ---------- */
 #sidebarHost {
     background: #21252b;
     border-right: 1px solid #181a1f;
