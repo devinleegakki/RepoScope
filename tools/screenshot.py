@@ -21,6 +21,7 @@ ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from PySide6.QtGui import QFont, QFontDatabase  # noqa: E402
 from PySide6.QtWidgets import QApplication  # noqa: E402
 
 from gui.main_window import MainWindow  # noqa: E402
@@ -38,11 +39,41 @@ _PAGES = (
 )
 
 
+def _load_screenshot_font() -> str | None:
+    """Register a font with broad Unicode coverage for offscreen screenshots.
+
+    Headless Qt environments may expose no system font database. Registering
+    the Windows CJK fonts explicitly prevents labels and punctuation from
+    becoming tofu squares in generated images. The function is harmless on
+    non-Windows systems and falls back to the platform default font.
+    """
+    candidates = (
+        Path(r"C:\Windows\Fonts\msyh.ttc"),
+        Path(r"C:\Windows\Fonts\simhei.ttf"),
+        Path(r"/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc"),
+        Path(r"/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc"),
+    )
+    preferred: str | None = None
+    for font_path in candidates:
+        if not font_path.exists():
+            continue
+        font_id = QFontDatabase.addApplicationFont(str(font_path))
+        if font_id < 0:
+            continue
+        families = QFontDatabase.applicationFontFamilies(font_id)
+        if families and preferred is None:
+            preferred = "Microsoft YaHei UI" if "Microsoft YaHei UI" in families else families[0]
+    if preferred:
+        QApplication.setFont(QFont(preferred, 10))
+    return preferred
+
+
 def main() -> int:
     out = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "docs" / "screens"
     out.mkdir(parents=True, exist_ok=True)
 
     app = QApplication.instance() or QApplication([])
+    _load_screenshot_font()
     app.setApplicationName("RepoScope")
     window = MainWindow()
     window.resize(1240, 820)
