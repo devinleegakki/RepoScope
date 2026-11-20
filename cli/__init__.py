@@ -1,11 +1,11 @@
-"""RepoScope text。
+"""RepoScope Notes
 
-    python main.py analyze <repositorydirectory>
-    python main.py check   <repositorydirectory>
-    python main.py export  <repositorydirectory>
-    python main.py batch   <repositorydirectory...>
+    python main.py analyze <repository>
+    python main.py check   <repository>
+    python main.py export  <repository>
+    python main.py batch   <repository...>
 
-text ``cli.commands``，text。
+Notes ``cli.commands``，settings
 """
 
 from __future__ import annotations
@@ -13,3 +13,6 @@ from __future__ import annotations
 from .commands import build_parser, main
 
 __all__ = ["build_parser", "main"]
+
+
+

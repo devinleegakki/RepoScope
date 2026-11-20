@@ -1,10 +1,10 @@
-"""text：text（main.py）。
+"""Notesmain.py）。
 
-text：
-* analyze / check / batch text；
-* textrepositoryPath、configurationfiles、time range、text、output directorytext；
-* ErrortextNotice、text、text；
-* Batchanalyzesingle repositoryfailedtextrepository。
+Notes
+* analyze / check / batch Notes
+* repository
+* error
+* repository
 """
 
 import subprocess
@@ -50,14 +50,14 @@ def test_invalid_cli_argument_exits_with_usage_error() -> None:
 def test_check_valid_repository(repo: Path) -> None:
     result = run_cli("check", str(repo))
     assert result.returncode == 0
-    assert "valid" in result.stdout
+    assert "is a Git repository" in result.stdout
     assert repo.name in result.stdout
 
 
 def test_check_invalid_repository_is_readable(repo: Path, tmp_path: Path) -> None:
     result = run_cli("check", str(tmp_path / "missing"))
     assert result.returncode == 1
-    assert "checkfailed" in result.stderr
+    assert "failed" in result.stderr.lower()
     assert "Traceback" not in result.stderr + result.stdout
 
 
@@ -75,7 +75,7 @@ def test_analyze_exports_three_formats(repo: Path, tmp_path: Path) -> None:
     stem = repo.name
     for suffix in (".md", ".html", ".csv"):
         path = out / f"{stem}_report{suffix}"
-        assert path.exists(), f"Missingreportfiles：{path}"
+        assert path.exists(), f"files{path}"
         assert path.stat().st_size > 0
 
 
@@ -86,7 +86,7 @@ def test_export_defaults_to_all_formats(repo: Path, tmp_path: Path) -> None:
     stem = repo.name
     for suffix in (".md", ".html", ".csv"):
         path = out / f"{stem}_report{suffix}"
-        assert path.exists(), f"Missingreportfiles：{path}"
+        assert path.exists(), f"files{path}"
         assert path.stat().st_size > 0
 
 
@@ -97,7 +97,7 @@ def test_analyze_window_days_respects_time_range(repo: Path, tmp_path: Path) -> 
         "--format", "markdown", "--output", str(out),
     )
     assert result.returncode == 0, result.stderr
-    assert "commits 2" in result.stdout          # 400 textcommitstexttime rangetext
+    assert "Commits: 2" in result.stdout
 
 
 def test_analyze_config_file_and_override(repo: Path, tmp_path: Path) -> None:
@@ -106,17 +106,17 @@ def test_analyze_config_file_and_override(repo: Path, tmp_path: Path) -> None:
     out = tmp_path / "reports"
     result = run_cli(
         "analyze", str(repo), "--config", str(config),
-        "--window-days", "30",           # textconfigurationfiles
+           "--window-days", "30",
         "--format", "markdown", "--output", str(out),
     )
     assert result.returncode == 0, result.stderr
-    assert "commits 2" in result.stdout
+    assert "Commits: 2" in result.stdout
 
 
 def test_analyze_invalid_path_is_readable(tmp_path: Path) -> None:
     result = run_cli("analyze", str(tmp_path / "missing"), "--output", str(tmp_path / "out"))
     assert result.returncode == 1
-    assert "analyzefailed" in result.stderr
+    assert "Analysis failed" in result.stderr
     assert "Traceback" not in result.stderr + result.stdout
     assert not (tmp_path / "out").exists()
 
@@ -126,7 +126,7 @@ def test_analyze_invalid_config_is_readable(repo: Path, tmp_path: Path) -> None:
     config.write_text('{"stale_days": 0}', encoding="utf-8")
     result = run_cli("analyze", str(repo), "--config", str(config))
     assert result.returncode == 1
-    assert "configurationtext" in result.stderr
+    assert "Configuration error" in result.stderr
 
 
 def test_batch_isolates_failures_and_writes_summary(repo: Path, tmp_path: Path) -> None:
@@ -135,11 +135,11 @@ def test_batch_isolates_failures_and_writes_summary(repo: Path, tmp_path: Path) 
         "batch", str(repo), str(tmp_path / "missing"),
         "--format", "markdown", "--output", str(out), "--max-workers", "2",
     )
-    assert result.returncode == 1          # textfailedrepository → text
+    assert result.returncode == 1          # repository → Notes
     assert (out / f"{repo.name}_report.md").exists()
     assert (out / "batch_summary.md").exists()
     assert (out / "batch_summary.csv").exists()
-    assert "failed" in result.stderr
+    assert "error" in result.stderr
 
 
 def test_batch_all_success(repo: Path, tmp_path: Path) -> None:
@@ -150,4 +150,7 @@ def test_batch_all_success(repo: Path, tmp_path: Path) -> None:
     )
     assert result.returncode == 0, result.stderr
     summary = (out / "batch_summary.md").read_text(encoding="utf-8")
-    assert "success：2" in summary
+    assert "successful: 2" in summary
+
+
+

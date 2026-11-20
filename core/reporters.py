@@ -1,8 +1,8 @@
-"""reporttext：Markdown / HTML / CSV，text。
+"""reportMarkdown / HTML / CSV，Notes
 
-text PySide6，text、GUI textBatchanalyzetextreporttext。
-text ``AnalysisView``，text
-"textreporttext"（text 2.5 / text）。
+Notes PySide6，NotesGUI analysis
+Notes ``AnalysisView``，Notes
+"report"（Notes 2.5 / Notes
 """
 
 from __future__ import annotations
@@ -13,36 +13,36 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Sequence
 
-from gui.contract import AnalysisView  # text + models，text PySide6 text
+from gui.contract import AnalysisView  # Notes + models，Notes PySide6 Notes
 
 _SECTIONS = (
-    ("1. Overall assessment", "Overall assessment"),
-    ("2. Key metrics", "Key metrics"),
-    ("3. Author Contributions", "Author Contributions"),
-    ("4. Commit activity", "Commit activity"),
-    ("5. File hotspots", "Hot files"),
+    ("1. Overview", "Overview"),
+    ("2. Repository summary", "Repository summary"),
+    ("3. authors", "authors"),
+    ("4. commits", "commits"),
+    ("5. Hotspot files", "Hotspot files"),
     ("6. Large files", "Large files"),
     ("7. Stale files", "Stale files"),
-    ("8. Anti-pattern list", "Anti-pattern list"),
-    ("9. Commit convention", "Commit convention"),
-    ("10. Reproduction", "Reproduction"),
+    ("8. anti-patterns", "anti-patterns"),
+    ("9. commits", "commits"),
+    ("10. Dependencies and security", "Dependencies and security"),
 )
 
 CSV_COLUMNS = (
-    "text",
-    "text",
-    "commit count",
-    "text",
-    "text",
-    "text",
-    "text",
-    "text",
-    "text",
+    "Category",
+    "Name",
+    "commits",
+    "ratio",
+    "Insertions",
+    "Deletions",
+    "size",
+    "Notes",
+    "information",
 )
 
 
 def human_size(size_bytes: int) -> str:
-    """text（text：GUI textreporttext）。"""
+    """NotesGUI report"""
     units = ("B", "KB", "MB", "GB", "TB")
     value = float(max(size_bytes, 0))
     unit = units[0]
@@ -58,11 +58,11 @@ def human_size(size_bytes: int) -> str:
 
 
 def _severity_cn(severity: str) -> str:
-    return {"high": "High risk", "medium": "Medium risk", "low": "Notice"}.get(severity, severity)
+    return {"high": "High", "medium": "Medium", "low": "Low"}.get(severity, severity)
 
 
 def _risk_cn(risk_level: str) -> str:
-    return {"high": "High risk", "medium": "Medium risk", "low": "Good"}.get(risk_level, "—")
+    return {"high": "High", "medium": "Medium", "low": "Low"}.get(risk_level, "—")
 
 
 def _recent_total(calendar: dict[str, int], days: int) -> int:
@@ -80,12 +80,12 @@ def _calendar_summary(calendar: dict[str, int]) -> dict:
     busiest_day = max(calendar, key=lambda day: calendar[day])
     return {
         "active_days": len(calendar),
-        "busiest": f"{busiest_day}（{calendar[busiest_day]} text）",
+        "busiest": f"{busiest_day} ({calendar[busiest_day]} commits)",
     }
 
 
 def _md_cell(text: object) -> str:
-    """Markdown text：text、text。"""
+    """Markdown Notes"""
     return str(text).replace("|", "\\|").replace("\r", " ").replace("\n", " ")
 
 
@@ -93,53 +93,52 @@ def _md_cell(text: object) -> str:
 
 
 def render_markdown(view: AnalysisView) -> str:
-    """textanalyzetext Markdown。text ``view`` text，text。"""
+    """analysis Markdown。Notes ``view`` Notes"""
     snapshot = view.snapshot
     calendar = dict(view.commit_calendar)
     calendar_sum = _calendar_summary(calendar)
     hygiene = getattr(view, "commit_hygiene", None)
     risk_cn = _risk_cn(view.risk_level or "low")
-    level_desc = {"high": "High risk", "medium": "Medium risk", "low": "Good"}[
+    level_desc = {"high": "High risk", "medium": "Medium risk", "low": "Low risk"}[
         (view.risk_level or "low")
     ]
 
     lines: list[str] = [
-        f"# RepoScope analyzereport · {snapshot.repo_name}",
+        f"# RepoScope analysis · {snapshot.repo_name}",
         "",
-        f"- repositoryPath：`{snapshot.repo_path}`",
-        f"- branches：{', '.join(snapshot.branches) or '—'}",
-        f"- tags：{', '.join(snapshot.tags) or '—'}",
-        f"- text：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
-        f"- analyzeelapsed：{view.elapsed_seconds:.1f}s",
+        f"- Repository: `{snapshot.repo_path}`",
+        f"- Branches: {', '.join(snapshot.branches) or '—'}",
+        f"- Tags: {', '.join(snapshot.tags) or '—'}",
+        f"- Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+        f"- Duration: {view.elapsed_seconds:.1f}s",
         "",
-        "## 1. Overall assessment",
+        "## 1. Overview",
         "",
-        f"health score **{view.health_score:.0f} / 100**（{level_desc}），"
-        f"text {len(view.warnings)} textanti-patternsRules，"
-        f"RiskLevel：{risk_cn}。",
+        f"Health score: **{view.health_score:.0f} / 100** ({level_desc}); "
+        f"{len(view.warnings)} anti-patterns; overall risk: **{risk_cn}**.",
         "",
-        "## 2. Key metrics",
+        "## 2. Repository summary",
         "",
-        "| text | text |",
+        "| Metric | Value |",
         "| --- | --- |",
-        f"| commitstext | {view.total_commits:,} |",
-        f"| author count | {view.author_count} |",
-        f"| file count | {view.file_count:,} |",
-        f"| text | {calendar_sum['active_days']} |",
-        f"| RiskLevel | {risk_cn} |",
+        f"| commits | {view.total_commits:,} |",
+        f"| authors | {view.author_count} |",
+        f"| files | {view.file_count:,} |",
+        f"| Active days | {calendar_sum['active_days']} |",
+        f"| Risk level | {risk_cn} |",
     ]
     if hygiene is not None and hygiene.pass_rate >= 0:
         lines.append(
-            f"| Commit conventionpass rate | {hygiene.pass_rate:.0%}（{hygiene.passed}/{hygiene.total}） |"
+            f"| Commit quality | {hygiene.pass_rate:.0%} ({hygiene.passed}/{hygiene.total}) |"
         )
     else:
-        lines.append("| Commit conventionpass rate | Not provided by backend |")
+        lines.append("| Commit quality | Pending |")
     lines.append("")
 
     lines += [
-        "## 3. Author Contributions",
+        "## 3. authors",
         "",
-        "| authors | commit count | text | text | text | text 90 text |",
+        "| Author | Commits | Insertions | Deletions | Share | Recent 90-day share |",
         "| --- | --- | --- | --- | --- | --- |",
     ]
     for author in view.author_stats:
@@ -150,43 +149,43 @@ def render_markdown(view: AnalysisView) -> str:
         )
     lines.append("")
 
-    lines += ["## 4. Commit activity", ""]
+    lines += ["## 4. commits", ""]
     for days in (7, 30, 90):
-        lines.append(f"- text {days} text：{_recent_total(calendar, days)} textcommits")
-    lines.append(f"- text：{calendar_sum['busiest']}")
+        lines.append(f"- Last {days} days: {_recent_total(calendar, days)} commits")
+    lines.append(f"- Busiest day: {calendar_sum['busiest']}")
     lines.append("")
 
-    lines += ["## 5. File hotspots", "", "| files | text | text | text | text |",
+    lines += ["## 5. Hotspot files", "", "| File | Changes | Changed lines | Type | Binary |",
               "| --- | --- | --- | --- | --- |"]
     for row in list(view.hotspot_files)[:100]:
-        changed = f"{row.changed_lines:,} text" if row.changed_lines else "—"
-        binary = "text" if row.is_binary else "—"
+        changed = f"{row.changed_lines:,}" if row.changed_lines else "—"
+        binary = "Yes" if row.is_binary else "No"
         lines.append(f"| `{row.path}` | {row.change_count} | {changed} | {row.file_type or '—'} | {binary} |")
     if not view.hotspot_files:
-        lines.append("| （text） | — | — | — | — |")
+        lines.append("| No files | — | — | — | — |")
     lines.append("")
 
-    lines += ["## 6. Large files", "", "| files | text | text | text | text |",
+    lines += ["## 6. Large files", "", "| File | Size | Type | Binary | Changes |",
               "| --- | --- | --- | --- | --- |"]
     for row in list(view.large_files)[:100]:
-        binary = "text" if row.is_binary else "—"
+        binary = "Yes" if row.is_binary else "No"
         lines.append(
             f"| `{row.path}` | {human_size(row.size_bytes)} | {row.file_type or '—'} | "
             f"{binary} | {row.change_count} |"
         )
     if not view.large_files:
-        lines.append("| （text） | — | — | — | — |")
+        lines.append("| No files | — | — | — | — |")
     lines.append("")
 
-    lines += ["## 7. Stale files", "", "| files | text | text | text | text |",
+    lines += ["## 7. Stale files", "", "| File | Days since change | Size | Type | Changes |",
               "| --- | --- | --- | --- | --- |"]
     for row in list(view.stale_files)[:100]:
         lines.append(
-            f"| `{row.path}` | {row.days_since_change} text | "
+            f"| `{row.path}` | {row.days_since_change}  days | "
             f"{human_size(row.size_bytes)} | {row.file_type or '—'} | {row.change_count} |"
         )
     if not view.stale_files:
-        lines.append("| （text） | — | — | — | — |")
+        lines.append("| No files | — | — | — | — |")
     lines.append("")
 
     quality = getattr(view, "code_quality", None)
@@ -194,38 +193,38 @@ def render_markdown(view: AnalysisView) -> str:
     dependencies = getattr(view, "dependencies", None)
     findings = getattr(view, "security_findings", ())
     if quality is not None:
-        lines += ["## 8. text", "", "| text | text |", "| --- | --- |",
-                  f"| Python files | {quality.python_files} |", f"| text | {quality.lines:,} |",
-                  f"| text / text | {quality.functions} / {quality.classes} |",
-                  f"| textfilestext | {quality.test_ratio:.0%} |",
-                  f"| TODO/FIXME | {quality.todo_count} |", f"| text except | {quality.bare_except_count} |", ""]
+        lines += ["## 8. Code quality", "", "| Metric | Value |", "| --- | --- |",
+                  f"| Python files | {quality.python_files} |", f"| code | {quality.lines:,} |",
+                  f"| Functions / classes | {quality.functions} / {quality.classes} |",
+                  f"| Test file ratio | {quality.test_ratio:.0%} |",
+                  f"| TODO/FIXME | {quality.todo_count} |", f"| Bare except blocks | {quality.bare_except_count} |", ""]
     if ownership is not None:
-        lines += ["## 9. filestextRisk", "", f"High risktextauthorsfiles：{len(ownership.high_risk_files)}", ""]
-        lines += ["| files | text | author count | textauthors | text |", "| --- | --- | --- | --- | --- |"]
+        lines += ["## 9. Ownership risks", "", f"High-risk files: {len(ownership.high_risk_files)}", ""]
+        lines += ["| File | Changes | Authors | Top author | Top author share |", "| --- | --- | --- | --- | --- |"]
         for row in ownership.high_risk_files[:50]:
             lines.append(f"| `{row.path}` | {row.changes} | {row.author_count} | {_md_cell(row.top_author)} | {row.top_author_ratio:.0%} |")
         lines.append("")
     if dependencies is not None or findings:
-        lines += ["## 10. text", ""]
+        lines += ["## 10. Dependencies and security", ""]
         if dependencies is not None:
-            lines += [f"text：{len(dependencies.dependencies)}，text：{len(dependencies.unpinned)}，text：{len(dependencies.duplicates)}，textfiles：{len(dependencies.lockfiles)}。", ""]
-        lines.append(f"text：{len(findings)}。" if findings else "text。")
+            lines += [f"Dependencies: {len(dependencies.dependencies)}; unpinned: {len(dependencies.unpinned)}; duplicates: {len(dependencies.duplicates)}; lockfiles: {len(dependencies.lockfiles)}.", ""]
+        lines.append(f"Security findings: {len(findings)}." if findings else "No security findings.")
         lines.append("")
 
-    lines += ["## 11. Anti-pattern list", ""]
+    lines += ["## 11. anti-patterns", ""]
     if not view.warnings:
-        lines += ["textanti-patternsRules。", ""]
+        lines += ["No anti-patterns detected.", ""]
     else:
         for index, warning in enumerate(view.warnings, start=1):
             lines += _warning_block(index, warning)
 
-    lines += ["## 12. Commit convention", ""]
+    lines += ["## 12. Commit message quality", ""]
     if hygiene is None:
-        lines.append("Commit conventiontextNot provided by backend。")
+        lines.append("Commit quality data is unavailable.")
     elif hygiene.pass_rate < 0:
-        lines.append("Commit conventiontext。")
+        lines.append("Commit quality data is unavailable.")
     elif hygiene.violations:
-        lines += ["| commits | Information | text |", "| --- | --- | --- |"]
+        lines += ["| Commit | Message | Reason |", "| --- | --- | --- |"]
         for violation in hygiene.violations[:20]:
             lines.append(
                 f"| `{violation.commit_hash}` | {_md_cell(violation.message)} | "
@@ -233,20 +232,20 @@ def render_markdown(view: AnalysisView) -> str:
             )
         lines.append("")
         lines.append(
-            "> pass rate {pass_rate:.0%}（{passed}/{total}）".format(
+            "> passed {pass_rate:.0%}（{passed}/{total}）".format(
                 pass_rate=hygiene.pass_rate, passed=hygiene.passed, total=hygiene.total
             )
         )
         lines.append(
-            "> textcommitstext，text commit-msg hook textcommitstext。text："
-            f"`{hygiene.pattern or '（textconfiguration）'}`"
+            "> Commit messages are checked against the configured pattern "
+            f"`{hygiene.pattern or 'not configured'}`"
         )
     else:
-        lines.append(f"text {hygiene.total} textcommitstext。")
+        lines.append(f"All {hygiene.total} commits match the configured pattern.")
     lines.append("")
 
     lines += [
-        "## 13. Reproduction",
+        "## 13. Reproduce this report",
         "",
         "```bash",
         f"python main.py analyze {snapshot.repo_path}",
@@ -254,7 +253,7 @@ def render_markdown(view: AnalysisView) -> str:
         "",
         "---",
         "",
-        "*textreporttext RepoScope text。textlocaltext，text。*",
+        "*Generated locally by RepoScope.*",
         "",
     ]
     return "\n".join(lines)
@@ -262,17 +261,17 @@ def render_markdown(view: AnalysisView) -> str:
 
 def _warning_block(index: int, warning: Warning) -> list[str]:
     return [
-        f"### {index}. {warning.rule}（{_severity_cn(warning.severity)}）",
+        f"### {index}. {warning.rule} ({_severity_cn(warning.severity)})",
         "",
         warning.message or "—",
         "",
-        "| text | text |",
+        "| Evidence | Value |",
         "| --- | --- |",
-        f"| Condition | {warning.condition or 'Not provided by backend'} |",
-        f"| Actual value | {warning.actual or 'Not provided by backend'} |",
-        f"| Configured threshold | {warning.threshold or 'Not provided by backend'} |",
-        f"| Suggested action | {warning.action or 'Not provided by backend'} |",
-        f"| text | {warning.target or '—'} |",
+        f"| Condition | {warning.condition or 'Pending'} |",
+        f"| Observed value | {warning.actual or 'Pending'} |",
+        f"| Threshold | {warning.threshold or 'Pending'} |",
+        f"| Suggested action | {warning.action or 'Pending'} |",
+        f"| Target | {warning.target or '—'} |",
         "",
     ]
 
@@ -281,53 +280,53 @@ def _warning_block(index: int, warning: Warning) -> list[str]:
 
 
 def render_html(view: AnalysisView) -> str:
-    """textanalyzetext HTML report，text，text。"""
+    """analysis HTML report"""
     snapshot = view.snapshot
     calendar = dict(view.commit_calendar)
     calendar_sum = _calendar_summary(calendar)
     hygiene = getattr(view, "commit_hygiene", None)
     risk_cn = _risk_cn(view.risk_level or "low")
     level_key = (view.risk_level or "low")
-    level_desc = {"high": "High risk", "medium": "Medium risk", "low": "Good"}[level_key]
+    level_desc = {"high": "High risk", "medium": "Medium risk", "low": "Low risk"}[level_key]
     severity_css = {"high": "sev-high", "medium": "sev-medium", "low": "sev-low"}
 
     body: list[str] = []
-    body.append(f'<h1>RepoScope analyzereport · {_escape(snapshot.repo_name)}</h1>')
+    body.append(f'<h1>RepoScope analysis · {_escape(snapshot.repo_name)}</h1>')
     body.append(
-        f'<p class="meta"><strong>repositoryPath：</strong>{_escape(snapshot.repo_path)}<br>'
-        f'<strong>branches：</strong>{_escape(", ".join(snapshot.branches) or "—")}<br>'
-        f'<strong>tags：</strong>{_escape(", ".join(snapshot.tags) or "—")}<br>'
-        f'<strong>text：</strong>{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}<br>'
-        f'<strong>analyzeelapsed：</strong>{view.elapsed_seconds:.1f}text</p>'
+        f'<p class="meta"><strong>repository</strong>{_escape(snapshot.repo_path)}<br>'
+        f'<strong>branches</strong>{_escape(", ".join(snapshot.branches) or "—")}<br>'
+        f'<strong>tags</strong>{_escape(", ".join(snapshot.tags) or "—")}<br>'
+        f'<strong>time</strong>{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}<br>'
+        f'<strong>Duration</strong>{view.elapsed_seconds:.1f}s</p>'
     )
 
-    body.append('<section><h2>1. Overall assessment</h2>')
+    body.append('<section><h2>1. Overview</h2>')
     body.append(
-        f'<p>health score <strong>{view.health_score:.0f} / 100</strong>（{level_desc}），'
-        f'text <strong>{len(view.warnings)}</strong> textanti-patternsRules，'
-        f'RiskLevel：<span class="badge badge-{level_key}">{risk_cn}</span>。</p>'
+        f'<p>health <strong>{view.health_score:.0f} / 100</strong>（{level_desc}），'
+        f'medium <strong>{len(view.warnings)}</strong> rules'
+        f'risk<span class="badge badge-{level_key}">{risk_cn}</span>。</p>'
     )
     body.append("</section>")
 
-    body.append('<section><h2>2. Key metrics</h2><table>')
-    body.append("<tr><th>text</th><th>text</th></tr>")
-    body.append(f"<tr><td>commitstext</td><td>{view.total_commits:,}</td></tr>")
-    body.append(f"<tr><td>author count</td><td>{view.author_count}</td></tr>")
-    body.append(f"<tr><td>file count</td><td>{view.file_count:,}</td></tr>")
-    body.append(f"<tr><td>text</td><td>{calendar_sum['active_days']}</td></tr>")
-    body.append(f"<tr><td>RiskLevel</td><td>{risk_cn}</td></tr>")
+    body.append('<section><h2>2. Repository summary</h2><table>')
+    body.append("<tr><th>Metric</th><th>Value</th></tr>")
+    body.append(f"<tr><td>commits</td><td>{view.total_commits:,}</td></tr>")
+    body.append(f"<tr><td>authors</td><td>{view.author_count}</td></tr>")
+    body.append(f"<tr><td>files</td><td>{view.file_count:,}</td></tr>")
+    body.append(f"<tr><td> days</td><td>{calendar_sum['active_days']}</td></tr>")
+    body.append(f"<tr><td>risk</td><td>{risk_cn}</td></tr>")
     if hygiene is not None and hygiene.pass_rate >= 0:
         body.append(
-            f"<tr><td>Commit conventionpass rate</td><td>{hygiene.pass_rate:.0%} "
+            f"<tr><td>commits</td><td>{hygiene.pass_rate:.0%} "
             f"({hygiene.passed}/{hygiene.total})</td></tr>"
         )
     else:
-        body.append("<tr><td>Commit conventionpass rate</td><td>Not provided by backend</td></tr>")
+        body.append("<tr><td>commits</td><td>pending</td></tr>")
     body.append("</table></section>")
 
     body.append(_table_section(
-        "3. Author Contributions",
-        ["authors", "commit count", "text", "text", "text", "text 90 text"],
+        "3. authors",
+        ["Author", "Commits", "Insertions", "Deletions", "Share", "Recent 90-day share"],
         [
             [
                 _escape(author.name),
@@ -341,63 +340,63 @@ def render_html(view: AnalysisView) -> str:
         ],
     ))
 
-    body.append('<section><h2>4. Commit activity</h2><ul>')
+    body.append('<section><h2>4. commits</h2><ul>')
     for days in (7, 30, 90):
-        body.append(f"<li>text {days} text：{_recent_total(calendar, days)} textcommits</li>")
-    body.append(f"<li>text：{_escape(calendar_sum['busiest'])}</li>")
+        body.append(f"<li>recent {days}  days{_recent_total(calendar, days)} commits</li>")
+    body.append(f"<li>of{_escape(calendar_sum['busiest'])}</li>")
     body.append("</ul></section>")
 
     body.append(_table_section(
-        "5. File hotspots",
-        ["files", "text", "text", "text", "text"],
+        "5. Hotspot files",
+        ["File", "Changes", "Changed lines", "Type", "Binary"],
         [
             [
                 f"`{_escape(row.path)}`",
                 str(row.change_count),
-                f"{row.changed_lines:,} text" if row.changed_lines else "—",
+                f"{row.changed_lines:,}" if row.changed_lines else "—",
                 row.file_type or "—",
-                "text" if row.is_binary else "—",
+                "Yes" if row.is_binary else "No",
             ]
             for row in list(view.hotspot_files)[:100]
         ],
-        empty="（text）",
+        empty="（none",
     ))
 
     body.append(_table_section(
         "6. Large files",
-        ["files", "text", "text", "text", "text"],
+        ["File", "Size", "Type", "Binary", "Changes"],
         [
             [
                 f"`{_escape(row.path)}`",
                 human_size(row.size_bytes),
                 row.file_type or "—",
-                "text" if row.is_binary else "—",
+                "Yes" if row.is_binary else "No",
                 str(row.change_count),
             ]
             for row in list(view.large_files)[:100]
         ],
-        empty="（text）",
+        empty="（none",
     ))
 
     body.append(_table_section(
         "7. Stale files",
-        ["files", "text", "text", "text", "text"],
+        ["File", "Days since change", "Size", "Type", "Changes"],
         [
             [
                 f"`{_escape(row.path)}`",
-                f"{row.days_since_change} text",
+                f"{row.days_since_change}  days",
                 human_size(row.size_bytes),
                 row.file_type or "—",
                 str(row.change_count),
             ]
             for row in list(view.stale_files)[:100]
         ],
-        empty="（text）",
+        empty="（none",
     ))
 
-    body.append('<section><h2>8. Anti-pattern list</h2>')
+    body.append('<section><h2>8. anti-patterns</h2>')
     if not view.warnings:
-        body.append("<p>textanti-patternsRules。</p>")
+        body.append("<p>No anti-patterns detected.</p>")
     else:
         for index, warning in enumerate(view.warnings, start=1):
             cls = severity_css.get(warning.severity, "sev-low")
@@ -406,22 +405,22 @@ def render_html(view: AnalysisView) -> str:
                 f'<strong>{index}. {_escape(warning.rule)}</strong> '
                 f'<span class="badge">{_severity_cn(warning.severity)}</span>'
                 f'<p>{_escape(warning.message or "—")}</p>'
-                f"<table><tr><th>Condition</th><td>{_escape(warning.condition or 'Not provided by backend')}</td></tr>"
-                f"<tr><th>Actual value</th><td>{_escape(warning.actual or 'Not provided by backend')}</td></tr>"
-                f"<tr><th>Configured threshold</th><td>{_escape(warning.threshold or 'Not provided by backend')}</td></tr>"
-                f"<tr><th>Suggested action</th><td>{_escape(warning.action or 'Not provided by backend')}</td></tr>"
-                f"<tr><th>text</th><td>{_escape(warning.target or '—')}</td></tr></table>"
+                f"<table><tr><th> items</th><td>{_escape(warning.condition or 'pending')}</td></tr>"
+                f"<tr><th>value</th><td>{_escape(warning.actual or 'pending')}</td></tr>"
+                f"<tr><th>configuration</th><td>{_escape(warning.threshold or 'pending')}</td></tr>"
+                f"<tr><th>Suggested action</th><td>{_escape(warning.action or 'Pending')}</td></tr>"
+                f"<tr><th>Target</th><td>{_escape(warning.target or '—')}</td></tr></table>"
                 f"</div>"
             )
     body.append("</section>")
 
-    body.append('<section><h2>9. Commit convention</h2>')
+    body.append('<section><h2>9. commits</h2>')
     if hygiene is None:
-        body.append("<p>Commit conventiontextNot provided by backend。</p>")
+        body.append("<p>Commit quality data is unavailable.</p>")
     elif hygiene.pass_rate < 0:
-        body.append("<p>Commit conventiontext。</p>")
+        body.append("<p>Commit quality data is unavailable.</p>")
     elif hygiene.violations:
-        body.append("<table><tr><th>commits</th><th>Information</th><th>text</th></tr>")
+        body.append("<table><tr><th>Commit</th><th>Message</th><th>Reason</th></tr>")
         for violation in hygiene.violations[:20]:
             body.append(
                 f"<tr><td>`{violation.commit_hash}`</td>"
@@ -430,21 +429,21 @@ def render_html(view: AnalysisView) -> str:
             )
         body.append("</table>")
         body.append(
-            f"<p>pass rate <strong>{hygiene.pass_rate:.0%}</strong> "
+            f"<p>passed <strong>{hygiene.pass_rate:.0%}</strong> "
             f"({hygiene.passed}/{hygiene.total})，"
-            f"text：<code>{_escape(hygiene.pattern or '（textconfiguration）')}</code>"
+            f"Pattern: <code>{_escape(hygiene.pattern or 'not configured')}</code>"
         )
         body.append(
-            "<br>textcommitstext，text commit-msg hook textcommitstext。</p>"
+            "<br>commits commit-msg hook commits</p>"
         )
     else:
-        body.append(f"<p>text {hygiene.total} textcommitstext。</p>")
+        body.append(f"<p>All {hygiene.total} commits match the configured pattern.</p>")
     body.append("</section>")
 
-    body.append('<section><h2>10. Reproduction</h2>')
+    body.append('<section><h2>10. Reproduce this report</h2>')
     body.append(
         f'<pre><code>python main.py analyze {_escape(snapshot.repo_path)}</code></pre>'
-        '<hr><p><small>textreporttext RepoScope text。textlocaltext，text。</small></p>'
+        '<hr><p><small>Generated locally by RepoScope.</small></p>'
     )
     body.append("</section>")
 
@@ -476,14 +475,14 @@ def render_html(view: AnalysisView) -> str:
     small { color: #6b7280; }
     """
     return (
-        "<!DOCTYPE html><html lang=\"zh-CN\"><head><meta charset=\"utf-8\">"
+        "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"utf-8\">"
         f"<title>RepoScope - {snapshot.repo_name}</title>"
         f"<style>{css}</style></head><body>{''.join(body)}</body></html>"
     )
 
 
 def _table_section(title: str, headers: Sequence[str], rows: Sequence[Sequence[str]],
-                   empty: str = "（text）") -> str:
+                   empty: str = "（none") -> str:
     cells = "".join(f"<th>{html_mod.escape(h)}</th>" for h in headers)
     if not rows:
         colspan = len(headers)
@@ -506,7 +505,7 @@ def _escape(text: str) -> str:
 
 
 def render_csv(view: AnalysisView) -> str:
-    """textanalyzetext CSV，text Excel / text。"""
+    """analysis CSV，Notes Excel / Notes"""
 
     def author_rows():
         out = []
@@ -530,7 +529,7 @@ def render_csv(view: AnalysisView) -> str:
     def file_rows(kind: str, rows: Sequence):
         out = []
         for row in rows:
-            binary_suffix = " · text" if row.is_binary else ""
+            binary_suffix = " · binary" if row.is_binary else ""
             out.append(
                 (
                     kind,
@@ -548,20 +547,20 @@ def render_csv(view: AnalysisView) -> str:
 
     out_rows: list[tuple] = []
     out_rows += author_rows()
-    out_rows += file_rows("Hot files", view.hotspot_files)
-    out_rows += file_rows("Large files", view.large_files)
-    out_rows += file_rows("Stale files", view.stale_files)
+    out_rows += file_rows("files", view.hotspot_files)
+    out_rows += file_rows("files", view.large_files)
+    out_rows += file_rows("files", view.stale_files)
     for index, warning in enumerate(view.warnings, start=1):
         out_rows.append(
-            ("anti-patternstext", f"{index}. {warning.rule}", "—", "—", "—", "—",
+            ("anti-patterns", f"{index}. {warning.rule}", "—", "—", "—", "—",
              "—", "—",
-             f"{warning.severity} · {warning.message or '—'} | text：{warning.condition or '—'} | "
-             f"Actual value：{warning.actual or '—'} | threshold：{warning.threshold or '—'} | "
-             f"text：{warning.action or '—'}"),
+             f"{warning.severity} · {warning.message or '—'} |  items{warning.condition or '—'} | "
+             f"value{warning.actual or '—'} | value{warning.threshold or '—'} | "
+             f"Action: {warning.action or '—'}"),
         )
     out_rows.append(
-        ("text", "health score", f"{view.health_score:.0f}", "—", "—", "—", "—", "—",
-         f"Risk：{_risk_cn(view.risk_level or 'low')} · commits {view.total_commits} · authors {view.author_count}")
+        ("Summary", "health", f"{view.health_score:.0f}", "—", "—", "—", "—", "—",
+         f"Risk: {_risk_cn(view.risk_level or 'low')} · commits {view.total_commits} · authors {view.author_count}")
     )
 
     lines = [",".join(_csv_field(c) for c in CSV_COLUMNS)]
@@ -577,12 +576,12 @@ def _csv_field(value: str) -> str:
     return value
 
 
-# --- text -----------------------------------------------------------------
+# --- Notes -----------------------------------------------------------------
 
 
 def write_report(view: AnalysisView, formats: Sequence[str], output_dir: str | Path,
                  *, stem: str | None = None) -> list[Path]:
-    """textreporttextdirectory，textfilesPathtext。"""
+    """files"""
     folder = Path(output_dir)
     folder.mkdir(parents=True, exist_ok=True)
     if stem is None:
@@ -600,7 +599,7 @@ def write_report(view: AnalysisView, formats: Sequence[str], output_dir: str | P
     for fmt in formats:
         key = fmt.lower()
         if key not in renderer:
-            raise ValueError(f"textreporttext：{fmt}（text：markdown、html、csv）")
+            raise ValueError(f"Unsupported report format: {fmt} (use markdown, html, or csv)")
         ext = {"markdown": ".md", "md": ".md", "html": ".html", "csv": ".csv"}[key]
         content = renderer[key](view)
         path = folder / f"{stem}{ext}"
@@ -610,19 +609,19 @@ def write_report(view: AnalysisView, formats: Sequence[str], output_dir: str | P
     return written
 
 
-# --- Batchtext -------------------------------------------------------------
+# --- Notes -------------------------------------------------------------
 
 
 def render_summary_markdown(summaries: Sequence, failures: Sequence = (),
                             generated_at: datetime | None = None) -> str:
-    """Repository Comparisontext：textrepository，failedtextrepositorytext。"""
+    """repository"""
     lines: list[str] = [
-        "# RepoScope Batchanalyzetext",
+        "# RepoScope analysis",
         "",
-        f"- text：{(generated_at or datetime.now()).strftime('%Y-%m-%d %H:%M:%S')}",
-        f"- repositorytext：{len(summaries) + len(failures)}，success：{len(summaries)}，failed：{len(failures)}",
+        f"- time{(generated_at or datetime.now()).strftime('%Y-%m-%d %H:%M:%S')}",
+        f"- Repositories: {len(summaries) + len(failures)}; successful: {len(summaries)}; failed: {len(failures)}",
         "",
-        "| repository | Path | commit count | author count | health score | Hot files | Stale files | RiskLevel |",
+        "| repository | path | commits | authors | health | files | files | risk |",
         "| --- | --- | --- | --- | --- | --- | --- | --- |",
     ]
     for summary in summaries:
@@ -634,7 +633,7 @@ def render_summary_markdown(summaries: Sequence, failures: Sequence = (),
         )
     lines.append("")
     if failures:
-        lines.append("| analyzefailedtextrepository | text |")
+        lines.append("| Repository | Error |")
         lines.append("| --- | --- |")
         for failure in failures:
             name = getattr(failure, "repo_name", failure.path)
@@ -643,18 +642,18 @@ def render_summary_markdown(summaries: Sequence, failures: Sequence = (),
     lines += [
         "---",
         "",
-        "*text RepoScope text。textlocaltext，text。*",
+        "*This summary was generated locally by RepoScope.*",
         "",
     ]
     return "\n".join(lines)
 
 
 def render_summary_csv(rows: Sequence) -> str:
-    """textrepositorytext CSV；text repo_name / path / commits / authors /
+    """repository CSV；Notes repo_name / path / commits / authors /
     health_score / hotspot_count / stale_count / risk_level。"""
     lines = [
         ",".join(_csv_field(c) for c in (
-            "repository", "Path", "commit count", "author count", "health score", "Hot files", "Stale files", "RiskLevel",
+            "repository", "path", "commits", "authors", "health", "files", "files", "risk",
         ))
     ]
     for row in rows:
@@ -663,3 +662,6 @@ def render_summary_csv(rows: Sequence) -> str:
             "hotspot_count", "stale_count", "risk_level",
         )))
     return "\n".join(lines) + "\n"
+
+
+

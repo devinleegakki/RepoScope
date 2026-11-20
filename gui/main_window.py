@@ -1,15 +1,15 @@
-"""text：text、text、text、text。
+"""Notes
 
-text：
-    QMainWindow（text） + QListWidget（text） + QStackedWidget（text）
-text ``currentRowChanged`` text ``_row_to_page`` text ``QStackedWidget`` text，
-text，text——text"text"。
+Notes
+    QMainWindow（Notes + QListWidget（Notes + QStackedWidget（Notes
+Notes ``currentRowChanged`` passed ``_row_to_page`` Notes ``QStackedWidget`` Notes
+Notes"Notes"。
 
-text：
-    Setup    → Repository、Analysis Settings
-    Results → Dashboard、Commit Trends、Author Contributions、Data Analysis、Anti-pattern Center、Reports
-    Batch    → Repository Comparison
-（text"text"text，text。）
+Notes
+    Notes    → repository
+    analysis → commits
+    Notes    → repository
+（Notes"Notes"Notes
 """
 
 from __future__ import annotations
@@ -48,21 +48,21 @@ from .trends import TrendPage
 from .worker import AnalysisWorker
 
 _NAV_GROUPS = (
-    ("Setup", ("Repository", "Analysis Settings")),
-    ("Results", ("Dashboard", "Commit Trends", "Author Contributions", "Data Analysis", "Anti-pattern Center", "Reports")),
-    ("Batch", ("Repository Comparison",)),
+    ("Setup", ("repository", "configuration")),
+    ("Results", ("dashboard", "commits", "authors", "analysis", "anti-patterns", "report")),
+    ("Batch", ("batch",)),
 )
 
 _NAV_ICONS = {
-    "Repository": "cil-folder-open.png",
-    "Analysis Settings": "cil-settings.png",
-    "Dashboard": "cil-speedometer.png",
-    "Commit Trends": "cil-chart-line.png",
-    "Author Contributions": "cil-people.png",
-    "Data Analysis": "cil-file.png",
-    "Anti-pattern Center": "cil-task.png",
-    "Reports": "cil-description.png",
-    "Repository Comparison": "cil-layers.png",
+    "repository": "cil-folder-open.png",
+    "configuration": "cil-settings.png",
+    "dashboard": "cil-speedometer.png",
+    "commits": "cil-chart-line.png",
+    "authors": "cil-people.png",
+    "analysis": "cil-file.png",
+    "anti-patterns": "cil-task.png",
+    "report": "cil-description.png",
+    "batch": "cil-layers.png",
 }
 
 
@@ -78,11 +78,11 @@ class _LegacyNavigation:
 
 
 class MainWindow(QMainWindow):
-    """text。"""
+    """Main application window."""
 
     def __init__(self) -> None:
         super().__init__()
-        self.setWindowTitle("RepoScope — local Git repository health analysis")
+        self.setWindowTitle("RepoScope — Git repository analysis")
         self.resize(1240, 820)
 
         self._thread: QThread | None = None
@@ -99,9 +99,9 @@ class MainWindow(QMainWindow):
 
         self._build_ui()
         self._apply_stylesheet()
-        self.statusBar().showMessage("Ready · text「Repository」textlocal Git repository")
+        self.statusBar().showMessage("Ready · select a Git repository")
 
-    # -- text --------------------------------------------------------
+    # -- Notes --------------------------------------------------------
     def _build_ui(self) -> None:
         root = QWidget()
         self.setCentralWidget(root)
@@ -111,7 +111,7 @@ class MainWindow(QMainWindow):
 
         outer.addWidget(self._build_topbar())
         self._progress_host = self._build_progress_bar()
-        self._progress_host.setVisible(False)   # textanalyzetext，text
+        self._progress_host.setVisible(False)   # analysis
         outer.addWidget(self._progress_host)
 
         body = QHBoxLayout()
@@ -145,9 +145,9 @@ class MainWindow(QMainWindow):
             self.stack.addWidget(page)
 
         self.select_page.analyze_requested.connect(self._start_analysis)
-        self.dashboard_page.open_patterns.connect(lambda: self.goto("Anti-pattern Center"))
+        self.dashboard_page.open_patterns.connect(lambda: self.goto("anti-patterns"))
         self.sidebar.currentRowChanged.connect(self._on_nav_changed)
-        self.sidebar.setCurrentRow(self._name_to_row["Repository"])
+        self.sidebar.setCurrentRow(self._name_to_row["repository"])
         self.navigation = _LegacyNavigation(self.stack)
         self.pages = self.stack
         self.overview_values = {"repo_name": QLabel("—")}
@@ -201,7 +201,7 @@ class MainWindow(QMainWindow):
         self.sidebar_toggle = QToolButton()
         self.sidebar_toggle.setObjectName("sidebarToggle")
         self.sidebar_toggle.setIcon(self._icon("cil-menu.png"))
-        self.sidebar_toggle.setToolTip("text")
+        self.sidebar_toggle.setToolTip("Collapse sidebar")
         self.sidebar_toggle.clicked.connect(self._toggle_sidebar)
         header_layout.addWidget(self.sidebar_toggle)
         host_layout.addWidget(header)
@@ -265,7 +265,7 @@ class MainWindow(QMainWindow):
             item = self.sidebar.item(row)
             if item.data(Qt.UserRole) == "header":
                 item.setHidden(not self._sidebar_expanded)
-        self.sidebar_toggle.setToolTip("text" if self._sidebar_expanded else "text")
+        self.sidebar_toggle.setToolTip("Collapse sidebar" if self._sidebar_expanded else "Expand sidebar")
 
     def _on_nav_changed(self, row: int) -> None:
         page = self._row_to_page.get(row)
@@ -273,7 +273,7 @@ class MainWindow(QMainWindow):
             self.stack.setCurrentIndex(page)
 
     def goto(self, name: str) -> None:
-        """text。text（textRisktext）text。"""
+        """Select a navigation page by its internal name."""
         row = self._name_to_row.get(name)
         if row is not None:
             self.sidebar.setCurrentRow(row)
@@ -290,11 +290,11 @@ class MainWindow(QMainWindow):
         mark.setObjectName("brand")
         layout.addWidget(mark)
 
-        self.repo_label = QLabel("textSelectrepository")
+        self.repo_label = QLabel("No repository selected")
         self.repo_label.setObjectName("topbarRepo")
         layout.addWidget(self.repo_label, 1)
 
-        self.analyze_btn = QPushButton("Re-analyze")
+        self.analyze_btn = QPushButton("Analyze")
         self.analyze_btn.setObjectName("primary")
         self.analyze_btn.setEnabled(False)
         self.analyze_btn.clicked.connect(self._analyze_current)
@@ -302,7 +302,7 @@ class MainWindow(QMainWindow):
 
         self.export_btn = QPushButton("Export report")
         self.export_btn.setEnabled(False)
-        self.export_btn.clicked.connect(lambda: self.goto("Reports"))
+        self.export_btn.clicked.connect(lambda: self.goto("report"))
         layout.addWidget(self.export_btn)
         return bar
 
@@ -316,19 +316,19 @@ class MainWindow(QMainWindow):
         self.progress.setRange(0, 100)
         self.progress.setValue(0)
         self.progress.setTextVisible(False)
-        self.progress_label = QLabel("Pending analysis")
+        self.progress_label = QLabel("Preparing analysis…")
         self.progress_label.setObjectName("pageHint")
         self.progress_label.setMinimumWidth(240)
         layout.addWidget(self.progress, 1)
         layout.addWidget(self.progress_label)
         return host
 
-    # -- text ------------------------------------------------------------
+    # -- Notes ------------------------------------------------------------
     def _analyze_current(self) -> None:
         path = self.current_path()
         if not path:
-            self.goto("Repository")
-            self.statusBar().showMessage("Please firsttext「Repository」textlocal Git repository")
+            self.goto("repository")
+            self.statusBar().showMessage("Select a Git repository first")
             return
         self._start_analysis(path)
 
@@ -337,27 +337,27 @@ class MainWindow(QMainWindow):
 
     def _start_analysis(self, path: str) -> None:
         if self._thread is not None:
-            dialogs.show_info(self, "Analyzing", "text，Please wait。")
+            dialogs.show_info(self, "analysis", "please wait")
             return
 
         if not path:
-            dialogs.show_error(self, "MissingrepositoryPath", "Please firsttext「Repository」textSelecttextlocal Git repositorydirectory。")
+            dialogs.show_error(self, "Repository", "Please select a Git repository.")
             return
         if not Path(path).is_dir():
-            dialogs.show_error(self, "Pathdoes not exist", f"Cannot findtextdirectory：\n{path}")
+            dialogs.show_error(self, "path", f"directory\n{path}")
             return
         if not (Path(path) / ".git").exists():
             dialogs.show_error(
-                self, "Not a Git repository",
-                f"directorytext .git filestext：\n{path}\n\ntextSelectrepositoryroot directory，textsubdirectory。",
+                self, "Git repository required",
+                f"No .git directory was found at:\n{path}",
             )
             return
         if not self.settings_page.pattern_is_valid():
             dialogs.show_error(
-                self, "Commit conventionregextext",
-                "「Analysis Settings」textcommitsInformationtextvalidregex，Please firsttextanalyze。",
+                self, "Invalid commit pattern",
+                "The commit message pattern is not valid.",
             )
-            self.goto("Analysis Settings")
+            self.goto("configuration")
             return
 
         request: AnalysisRequest = self.settings_page.to_request(path)
@@ -366,9 +366,9 @@ class MainWindow(QMainWindow):
         self.analyze_btn.setEnabled(False)
         self.export_btn.setEnabled(False)
         self.progress.setValue(0)
-        self.progress_label.setText("Preparing…")
+        self.progress_label.setText("Preparing analysis…")
         self._progress_host.setVisible(True)
-        self.statusBar().showMessage(f"Analyzing {Path(path).name} …")
+        self.statusBar().showMessage(f"analysis {Path(path).name} …")
 
         self._thread = QThread(self)
         self._worker = AnalysisWorker(request)
@@ -395,22 +395,22 @@ class MainWindow(QMainWindow):
             page.set_data(view)
 
         self.progress.setValue(100)
-        self.progress_label.setText(f"Complete · elapsed {view.elapsed_seconds:.1f}s")
-        self._progress_host.setVisible(False)   # Completetext，elapsedInformationtext
+        self.progress_label.setText(f"complete · elapsed {view.elapsed_seconds:.1f}s")
+        self._progress_host.setVisible(False)   # complete
         self.analyze_btn.setEnabled(True)
         self.export_btn.setEnabled(True)
         self.statusBar().showMessage(
-            f"{view.snapshot.repo_name} · {view.total_commits} textcommits · "
-            f"{view.author_count} textauthors · health score {view.health_score:.0f} · "
-            f"{len(view.warnings)} textanti-patterns · elapsed {view.elapsed_seconds:.1f}s"
+            f"{view.snapshot.repo_name} · {view.total_commits} commits · "
+            f"{view.author_count} authors · health {view.health_score:.0f} · "
+            f"{len(view.warnings)} anti-patterns · elapsed {view.elapsed_seconds:.1f}s"
         )
-        self.goto("Dashboard")
+        self.goto("dashboard")
 
     def _on_failed(self, message: str) -> None:
-        self.progress_label.setText("analyzefailed")
+        self.progress_label.setText("Analysis failed")
         self._progress_host.setVisible(False)
-        self.statusBar().showMessage("analyzefailed")
-        dialogs.show_error(self, "analyzefailed", message)
+        self.statusBar().showMessage("analysis")
+        dialogs.show_error(self, "analysis", message)
 
     def _cleanup(self) -> None:
         if self._thread is not None:
@@ -418,38 +418,38 @@ class MainWindow(QMainWindow):
         self._thread = None
         self._worker = None
 
-    # -- text ------------------------------------------------------
+    # -- Notes ------------------------------------------------------
     def open_repo(self, path: str) -> None:
-        """textanalyzetextrepository，text ``--path`` text。
+        """repository ``--path`` Notes
 
-        textdirectory：text，text，text"text"
-        text。text show() text，text。
+        start"Notes"
+        Notes show() Notes
         """
         resolved = str(Path(path).resolve())
         self.select_page.path_edit.setText(resolved)
         if not Path(resolved).is_dir():
-            dialogs.show_error(self, "Pathdoes not exist", f"Cannot findtextdirectory：\n{resolved}")
+            dialogs.show_error(self, "path", f"directory\n{resolved}")
             return
         self._start_analysis(resolved)
 
-    # -- text --------------------------------------------------------
+    # -- Notes --------------------------------------------------------
     def load_demo(self) -> None:
-        """text，text。
+        """Notes
 
-        textrepositorytext（textrepositorytextcommits），text。
-        ``python main.py --demo`` text，text。
+        repository
+        ``python main.py --demo`` Notes
         """
         from . import mock_data
 
         view = mock_data.build("demo/workspace", force_synthetic=True)
-        self.repo_label.setText("text · 160 textcommits · 4 textauthors")
+        self.repo_label.setText("Demo workspace · 160 commits · 4 authors")
         self._on_finished(view)
-        self.analyze_btn.setEnabled(False)   # textPathtext
+        self.analyze_btn.setEnabled(False)   # path
         self.statusBar().showMessage(
-            "text · text，text metrics.py textResults"
+            "Demo data loaded · ready to explore"
         )
 
-    # -- text ------------------------------------------------------------
+    # -- Notes ------------------------------------------------------------
     def _apply_stylesheet(self) -> None:
         qss = Path(__file__).with_name("style.qss")
         if qss.exists():
@@ -465,10 +465,13 @@ def main(demo: bool = False, repo: str | None = None) -> int:
         window.load_demo()
     window.show()
     if repo and not demo:
-        # textanalyze：text，text"text git"text
+        # analysis"Notes git"Notes
         QTimer.singleShot(150, lambda: window.open_repo(repo))
     return app.exec()
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
+
+

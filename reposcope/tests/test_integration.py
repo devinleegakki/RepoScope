@@ -41,3 +41,6 @@ def test_config_change_produces_different_warnings(base_snapshot, as_of):
     assert "High-frequency change hotspot" in w_lenient
     assert "High-frequency change hotspot" not in w_strict
 
+
+
+

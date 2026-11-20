@@ -84,3 +84,6 @@ class GitReaderErrorInfo:
     message: str
     command: Tuple[str, ...] = field(default_factory=tuple)
     details: Optional[str] = None
+
+
+

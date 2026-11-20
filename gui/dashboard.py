@@ -1,7 +1,7 @@
-"""Dashboard：health score + textKey metrics + Risktext。
+"""health + Notes + risk
 
-text**text**，text，text「Anti-pattern Center」。
-text：text"textrepositorytext"，text。
+Notes**Notes**，anti-patterns
+Notes"repository"，Notes
 """
 
 from __future__ import annotations
@@ -24,7 +24,7 @@ from .widgets import LEVEL_COLOR, LEVEL_TEXT, SEVERITY_TEXT, Badge, Card, Metric
 
 
 class HealthCard(Card):
-    """health scoretext：text + Level + text。"""
+    """health + Notes + Notes"""
 
     def __init__(self) -> None:
         super().__init__()
@@ -33,11 +33,11 @@ class HealthCard(Card):
         layout.setContentsMargins(18, 14, 18, 16)
         layout.setSpacing(6)
 
-        label = QLabel("repositoryhealth score")
+        label = QLabel("Repository health")
         label.setObjectName("metricLabel")
         self._value = QLabel("—")
         self._value.setObjectName("healthValue")
-        self._badge = Badge("Pending analysis", "low")
+        self._badge = Badge("Low risk", "low")
 
         row = QHBoxLayout()
         row.setSpacing(8)
@@ -51,7 +51,7 @@ class HealthCard(Card):
         self._bar.setTextVisible(False)
         self._bar.setFixedHeight(6)
 
-        self._hint = QLabel("text 100 · textRulestext")
+        self._hint = QLabel("Based on configured checks")
         self._hint.setObjectName("metricHint")
 
         layout.addWidget(label)
@@ -68,7 +68,7 @@ class HealthCard(Card):
 
 
 class DashboardPage(QWidget):
-    """text。text ``AnalysisView``，text。"""
+    """Notes ``AnalysisView``，Notes"""
 
     open_patterns = Signal()
 
@@ -78,7 +78,7 @@ class DashboardPage(QWidget):
         outer.setContentsMargins(24, 20, 24, 20)
         outer.setSpacing(14)
 
-        self.header = PageHeader("Dashboard", "No repository analyzed yet")
+        self.header = PageHeader("Dashboard", "Repository overview")
         outer.addWidget(self.header)
 
         top = QHBoxLayout()
@@ -86,10 +86,10 @@ class DashboardPage(QWidget):
         self.health = HealthCard()
         top.addWidget(self.health, 0)
 
-        self.commits = MetricCard("commitstext")
-        self.authors = MetricCard("author count")
-        self.files = MetricCard("file count")
-        self.hygiene = MetricCard("Commit conventionpass rate")
+        self.commits = MetricCard("commits")
+        self.authors = MetricCard("authors")
+        self.files = MetricCard("Files")
+        self.hygiene = MetricCard("Commit quality")
         for card in (self.commits, self.authors, self.files, self.hygiene):
             top.addWidget(card, 1)
         outer.addLayout(top)
@@ -104,7 +104,7 @@ class DashboardPage(QWidget):
         activity_chart_layout = QVBoxLayout(self.activity_chart)
         activity_chart_layout.setContentsMargins(12, 10, 12, 10)
         activity_chart_layout.setSpacing(4)
-        activity_chart_layout.addWidget(QLabel("Commit Trends"))
+        activity_chart_layout.addWidget(QLabel("commits"))
         self.trend_chart = TrendChart()
         self.trend_chart.setMinimumHeight(115)
         activity_chart_layout.addWidget(self.trend_chart, 1)
@@ -122,11 +122,11 @@ class DashboardPage(QWidget):
         risk_layout.setSpacing(8)
 
         head = QHBoxLayout()
-        title = QLabel("Risktext")
+        title = QLabel("risk")
         title.setObjectName("sectionTitle")
         self.risk_count = QLabel("")
         self.risk_count.setObjectName("pageHint")
-        jump = QPushButton("textAnti-pattern Center →")
+        jump = QPushButton("anti-patterns →")
         jump.setObjectName("link")
         jump.clicked.connect(self.open_patterns.emit)
         head.addWidget(title)
@@ -145,7 +145,7 @@ class DashboardPage(QWidget):
         activity_layout = QVBoxLayout(activity_card)
         activity_layout.setContentsMargins(16, 12, 16, 12)
         activity_layout.setSpacing(8)
-        activity_title = QLabel("text")
+        activity_title = QLabel("Recent activity")
         activity_title.setObjectName("sectionTitle")
         activity_layout.addWidget(activity_title)
 
@@ -157,37 +157,37 @@ class DashboardPage(QWidget):
 
         outer.addLayout(bottom, 1)
 
-    # -- text ------------------------------------------------------------
+    # -- Notes ------------------------------------------------------------
     def set_data(self, view: AnalysisView | None) -> None:
         if view is None:
             return
         snapshot = view.snapshot
         self.header.set_hint(
             f"{snapshot.repo_name} · {snapshot.repo_path} · "
-            f"{len(snapshot.branches)} textbranches · elapsed {view.elapsed_seconds:.1f}s"
+            f"{len(snapshot.branches)} branches · elapsed {view.elapsed_seconds:.1f}s"
         )
 
         level = getattr(view, "risk_level", "low")
         self.health.set_score(view.health_score, level)
 
         active_days = len(view.commit_calendar)
-        self.commits.set_value(f"{view.total_commits:,}", f"text {active_days} text")
+        self.commits.set_value(f"{view.total_commits:,}", f"{active_days} active days")
         self.authors.set_value(str(view.author_count),
                                self._concentration(view))
         self.files.set_value(f"{view.file_count:,}",
-                             f"text {len(view.hotspot_files)} · text {len(view.stale_files)}")
+                             f"hotspot {len(view.hotspot_files)} · stale {len(view.stale_files)}")
 
         hygiene = getattr(view, "commit_hygiene", None)
         if hygiene is not None and hygiene.pass_rate >= 0:
             self.hygiene.set_value(
                 f"{hygiene.pass_rate:.0%}",
-                f"{hygiene.passed}/{hygiene.total} text",
+                f"{hygiene.passed}/{hygiene.total}  items",
             )
             tone = "low" if hygiene.pass_rate >= 0.8 else (
                 "medium" if hygiene.pass_rate >= 0.6 else "high")
             self.hygiene.set_tone(tone)
         else:
-            self.hygiene.set_value("—", "Not provided by backend")
+            self.hygiene.set_value("—", "pending")
 
         self._fill_risks(view)
         self._fill_recent(view)
@@ -207,8 +207,8 @@ class DashboardPage(QWidget):
     def _concentration(view: AnalysisView) -> str:
         stats = list(view.author_stats)
         if not stats:
-            return "textauthor counttext"
-        return f"text {stats[0].share:.0%}"
+            return "authors"
+        return f"high {stats[0].share:.0%}"
 
     def _clear(self, layout: QVBoxLayout) -> None:
         while layout.count():
@@ -220,9 +220,9 @@ class DashboardPage(QWidget):
     def _fill_risks(self, view: AnalysisView) -> None:
         self._clear(self.risk_list)
         warnings = list(view.warnings)
-        self.risk_count.setText(f"text {len(warnings)} text" if warnings else "text")
+        self.risk_count.setText(f"{len(warnings)} findings" if warnings else "No findings")
         if not warnings:
-            ok = QLabel("textanti-patternsRules")
+            ok = QLabel("No anti-patterns detected")
             ok.setObjectName("pageHint")
             self.risk_list.addWidget(ok)
             return
@@ -237,7 +237,7 @@ class DashboardPage(QWidget):
             row.setObjectName("riskRow")
             self.risk_list.addWidget(row)
         if len(warnings) > 3:
-            more = QLabel(f"text {len(warnings) - 3} text，text「Anti-pattern Center」")
+            more = QLabel(f"{len(warnings) - 3} more anti-patterns")
             more.setObjectName("pageHint")
             self.risk_list.addWidget(more)
 
@@ -245,7 +245,7 @@ class DashboardPage(QWidget):
         self._clear(self.recent_rows)
         calendar = dict(view.commit_calendar)
         if not calendar:
-            empty = QLabel("textcommitstext")
+            empty = QLabel("No recent commit activity")
             empty.setObjectName("pageHint")
             self.recent_rows.addWidget(empty)
             return
@@ -258,9 +258,12 @@ class DashboardPage(QWidget):
                 count for day, count in calendar.items()
                 if start.strftime("%Y-%m-%d") <= day <= last
             )
-            row = QLabel(f"text {days} text · {total} textcommits")
+            row = QLabel(f"Last {days} days · {total} commits")
             row.setObjectName("riskRow")
             self.recent_rows.addWidget(row)
-        last_day = QLabel(f"textcommits：{last}")
+        last_day = QLabel(f"Latest activity: {last}")
         last_day.setObjectName("metricHint")
         self.recent_rows.addWidget(last_day)
+
+
+

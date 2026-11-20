@@ -22,7 +22,7 @@ class SnapshotWorker(QObject):
 
     @Slot()
     def run(self) -> None:
-        self.progress.emit("textcheckrepository…")
+        self.progress.emit("repository")
         try:
             snapshot = GitReader(self.repo_path).read_snapshot(max_commits=self.max_commits)
         except GitReaderError as error:
@@ -30,6 +30,9 @@ class SnapshotWorker(QObject):
         except Exception as error:  # GUI boundary: keep unexpected errors visible.
             self.failed.emit(error)
         else:
-            self.progress.emit("Scan complete")
+            self.progress.emit("complete")
             self.finished.emit(snapshot)
+
+
+
 

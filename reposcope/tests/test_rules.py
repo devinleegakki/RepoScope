@@ -118,3 +118,6 @@ class TestDetectAll:
         w = detect_stale_files(m, cfg)
         assert w.level == "high"
 
+
+
+

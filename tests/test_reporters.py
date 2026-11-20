@@ -1,7 +1,7 @@
-"""text：reporttext（reporters.py）。
+"""reportreporters.py）。
 
-text："Markdown、HTML、CSV report"text，text"textreporttext"
-—— text AnalysisView text，text。
+Notes"Markdown、HTML、CSV report"Notes"report"
+—— Notes AnalysisView Notes
 """
 
 from pathlib import Path
@@ -17,7 +17,7 @@ from core import reporters
 
 @pytest.fixture(scope="module")
 def view():
-    # text Git repository，text（text）
+    # Notes Git repository
     return mock_data.build("demo/workspace", force_synthetic=True)
 
 
@@ -30,12 +30,13 @@ def test_human_size_units() -> None:
 def test_markdown_covers_all_sections(view) -> None:
     markdown = reporters.render_markdown(view)
     for keyword in (
-        "Overall assessment", "Key metrics", "Author Contributions", "Commit activity", "File hotspots",
-        "Large files", "Stale files", "Anti-pattern list", "Commit convention", "Reproduction",
+        "Overview", "Repository summary", "Author", "commits", "Hotspot files",
+        "Large files", "Stale files", "anti-patterns", "Commit message quality",
+        "Reproduce this report",
     ):
         assert keyword in markdown
     assert view.snapshot.repo_name in markdown
-    assert f"health score **{view.health_score:.0f} / 100**" in markdown
+    assert f"Health score: **{view.health_score:.0f} / 100**" in markdown
 
 
 def test_html_is_standalone_document(view) -> None:
@@ -49,14 +50,14 @@ def test_html_is_standalone_document(view) -> None:
 def test_csv_contains_all_sections(view) -> None:
     content = reporters.render_csv(view)
     header = content.splitlines()[0]
-    assert header.startswith("text,text,commit count,text")
+    assert header.startswith("Category,Name,commits,ratio")
     assert "authors" in content
-    assert "anti-patternstext" in content
-    assert "text" in content
+    assert "anti-patterns" in content
+    assert "anti-patterns" in content
 
 
 def test_three_formats_share_the_same_numbers(view) -> None:
-    """textreporttext：texthealth scoretextanti-patternsRulestext。"""
+    """report"""
     markdown = reporters.render_markdown(view)
     page = reporters.render_html(view)
     sheet = reporters.render_csv(view)
@@ -108,4 +109,7 @@ def test_summary_reports_include_rows_and_failures() -> None:
     lines = sheet.strip().splitlines()
     assert len(lines) == 3
     assert "alpha" in lines[1] and "beta" in lines[2]
+
+
+
 

@@ -1,7 +1,7 @@
-"""textcheck。
+"""Notes
 
-text“InvalidtextNotice”，text——
-text QMessageBox，text。
+none
+Notes QMessageBox，Notes
 """
 
 from __future__ import annotations
@@ -21,19 +21,19 @@ from PySide6.QtWidgets import (
 
 
 def ask_repository(parent: QWidget) -> str | None:
-    """textdirectory，textchecktextNot a Git repository。
+    """Notes Git repository
 
-    textPath；textcancelledtextdirectorytext ``None``，text。
+    path ``None``，Notes
     """
-    selected = QFileDialog.getExistingDirectory(parent, "Selectlocal Git repository")
+    selected = QFileDialog.getExistingDirectory(parent, "select Git repository")
     if not selected:
         return None
     if not (Path(selected) / ".git").exists():
         show_error(
             parent,
-            "Not a Git repository",
-            f"directorytext .git filestext：\n{selected}\n\n"
-            "textSelectrepositorytextroot directory，textfilestext。",
+            "Choose a Git repository",
+            f"no .git files\n{selected}\n\n"
+            "repository",
         )
         return None
     return selected
@@ -48,18 +48,18 @@ def show_info(parent: QWidget, title: str, message: str) -> None:
 
 
 class ExportDialog(QDialog):
-    """textSelect。
+    """select
 
-    textSelecttext；textfilestext Wyh text reporters textComplete。
+    files Wyh Notes reporters complete
     """
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
-        self.setWindowTitle("Export analysis report")
+        self.setWindowTitle("analysis")
         self.setMinimumWidth(320)
 
         layout = QVBoxLayout(self)
-        layout.addWidget(QLabel("Select output formats："))
+        layout.addWidget(QLabel("select"))
 
         self.markdown = QCheckBox("Markdown (.md)")
         self.html = QCheckBox("HTML (.html)")
@@ -74,7 +74,7 @@ class ExportDialog(QDialog):
         layout.addWidget(buttons)
 
     def selected_formats(self) -> list[str]:
-        """text，text ``["markdown"]``。"""
+        """medium ``["markdown"]``。"""
         formats = []
         if self.markdown.isChecked():
             formats.append("markdown")
@@ -83,3 +83,6 @@ class ExportDialog(QDialog):
         if self.csv.isChecked():
             formats.append("csv")
         return formats
+
+
+

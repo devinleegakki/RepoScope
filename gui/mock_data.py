@@ -1,14 +1,14 @@
-"""text。
+"""Notes
 
-text：text LTY / TYB / Wyh text，text。
-text ``build()`` textanalyzetext，text。
+Notes LTY / TYB / Wyh display
+Notes ``build()`` analysis
 
-text：text ``git_reader.GitReader`` text，textrepositorytextcommitstext，
-text——text。
+Notes ``git_reader.GitReader`` repository
+Notes
 
-**textfilestext**，text ``TEMP``。
-TYB text ``metrics.py`` text，text ``from metrics import analyse``，
-text。
+**files**，Notes ``TEMP``。
+TYB Notes ``metrics.py`` Notes ``from metrics import analyse``，
+Notes
 """
 
 from __future__ import annotations
@@ -40,7 +40,7 @@ _BINARY_SUFFIXES = {".png", ".jpg", ".jpeg", ".gif", ".ico", ".pdf", ".zip", ".w
 
 @dataclass
 class MockView:
-    """text ``AnalysisView`` text。"""
+    """Notes ``AnalysisView`` Notes"""
 
     snapshot: RepositorySnapshot
     health_score: float = 0.0
@@ -69,25 +69,25 @@ def build(
     commit_pattern: str = r"^(feat|fix|docs|refactor|test|chore)(\(.+\))?: ",
     force_synthetic: bool = False,
 ) -> MockView:
-    """textanalyze，text。
+    """analysis
 
-    text，text；TYB text ``metrics.py`` text，
-    text ``_compute`` text。
+    NotesTYB Notes ``metrics.py`` Notes
+    Notes ``_compute`` Notes
 
-    ``force_synthetic=True`` text：textrepositorytext，text
-    160 textcommit counttext。textrepositorytext（textrepositorytext 10 textcommits），
-    text，text。
+    ``force_synthetic=True`` repository
+    160 repository 10 commits
+    Notes
     """
     report = on_progress or (lambda percent, message: None)
     started = datetime.now()
 
-    report(5, "checkrepositoryPath")
+    report(5, "repository")
     snapshot = None if force_synthetic else _read_real_snapshot(repo_path, report)
     if snapshot is None:
-        report(20, "text" if force_synthetic else "textfailed，text")
+        report(20, "Preparing demo data" if force_synthetic else "Loading repository")
         snapshot = _synthetic_snapshot(repo_path)
 
-    report(60, "Compute metrics")
+    report(60, "Computing metrics")
     view = _compute(
         snapshot,
         stale_days=stale_days,
@@ -96,14 +96,14 @@ def build(
         commit_pattern=commit_pattern,
     )
 
-    report(95, "text")
+    report(95, "Preparing dashboard")
     view.elapsed_seconds = (datetime.now() - started).total_seconds()
-    report(100, "Complete")
+    report(100, "complete")
     return view
 
 
 # --------------------------------------------------------------------------
-# text（failedtext None，text）
+# error None，Notes
 # --------------------------------------------------------------------------
 def _read_real_snapshot(repo_path: str, report: ProgressCallback) -> RepositorySnapshot | None:
     try:
@@ -111,20 +111,20 @@ def _read_real_snapshot(repo_path: str, report: ProgressCallback) -> RepositoryS
     except ImportError:
         return None
     try:
-        report(15, "textcommitstext")
+        report(15, "commits")
         reader = GitReader(repo_path)
         reader.validate()
-        report(40, "textfilestext")
+        report(40, "files")
         return reader.read_snapshot()
-    except Exception:  # text：textfailedtext，text
+    except Exception:  # error
         return None
 
 
 # --------------------------------------------------------------------------
-# TEMP: text。TYB text metrics.py text。
+# TEMP: NotesTYB Notes metrics.py remove
 # --------------------------------------------------------------------------
 def _naive(value: datetime | None) -> datetime | None:
-    """text，text TypeError。"""
+    """time TypeError。"""
     if value is None:
         return None
     return value.replace(tzinfo=None) if value.tzinfo else value
@@ -146,7 +146,7 @@ def _compute(
     for commit in commits:
         calendar[_naive(commit.authored_at).strftime("%Y-%m-%d")] += 1
 
-    # -- Author Contributions ------------------------------------------------------
+    # -- authors ------------------------------------------------------
     per_author: Counter[str] = Counter()
     insertions: Counter[str] = Counter()
     deletions: Counter[str] = Counter()
@@ -172,14 +172,14 @@ def _compute(
         for name, count in per_author.most_common(12)
     ]
 
-    # -- filestext ------------------------------------------------------
+    # -- files ------------------------------------------------------
     changes: Counter[str] = Counter()
     for commit in commits:
         for path in commit.files_changed:
             changes[path] += 1
 
-    # TEMP: textfilestext（git log --numstat text TYB text），
-    # text"text × text 12 text"text，text。
+    # TEMP: filesgit log --numstat Notes TYB Notes
+    # Notes"Notes × Notes 12 Notes"Notes
     def _changed_lines(path: str) -> int:
         return changes[path] * 12
 
@@ -221,7 +221,7 @@ def _compute(
         if _naive(f.modified_at) and (now - _naive(f.modified_at)).days >= stale_days
     ][:50]
 
-    # -- commitsInformationconvention --------------------------------------------------
+    # -- commits --------------------------------------------------
     pattern = re.compile(commit_pattern) if commit_pattern else None
     violations: list[Violation] = []
     passed = 0
@@ -233,7 +233,7 @@ def _compute(
                 Violation(
                     commit_hash=commit.hash[:8],
                     message=commit.message.splitlines()[0][:60] if commit.message else "",
-                    reason="text（Missing feat/fix/docs text）",
+                    reason="Commit messages should follow the configured pattern",
                 )
             )
     hygiene = CommitHygiene(
@@ -244,68 +244,68 @@ def _compute(
         violations=tuple(violations[:20]),
     )
 
-    # -- anti-patternstext（text） --------------------------------------
+    # -- anti-patterns --------------------------------------
     warnings: list[Warning] = []
     top_share = author_stats[0].share if author_stats else 0.0
     top_name = author_stats[0].name if author_stats else "—"
 
     if top_share >= 0.7:
         warnings.append(Warning(
-            rule="textauthorstext",
+            rule="authors",
             severity="high",
-            message=f"{top_name} text {top_share:.0%} textcommits，text",
+            message=f"{top_name} accounts for {top_share:.0%} of commits",
             target=top_name,
-            condition="textauthorscommitstext ≥ 70%",
-            actual=f"{top_share:.0%}（{author_stats[0].commits} text）",
+            condition="commits ≥ 70%",
+            actual=f"{top_share:.0%}（{author_stats[0].commits}  times",
             threshold="70%",
-            action="text，text PR text code review text",
+            action="Spread ownership across the team and review pull requests",
         ))
     if len(stale) >= 3:
         warnings.append(Warning(
-            rule="Stale filestext",
+            rule="files",
             severity="medium",
-            message=f"{len(stale)} textfilestext {stale_days} text，text",
+            message=f"{len(stale)} files {stale_days} change",
             target=stale[0].path,
-            condition=f"textfilestextcommits ≥ {stale_days} text",
-            actual=f"{len(stale)} textfiles（text {stale[0].days_since_change} text）",
-            threshold=f"{stale_days} text",
-            action="text：text，text README",
+            condition=f"commits ≥ {stale_days}  days",
+            actual=f"{len(stale)} files {stale[0].days_since_change}  days",
+            threshold=f"{stale_days}  days",
+            action="remove README",
         ))
     if large:
         warnings.append(Warning(
-            rule="Large filestext",
+            rule="files",
             severity="medium",
-            message=f"{len(large)} textfilestext {large_file_mb}MB，repositorytext",
+            message=f"{len(large)} files {large_file_mb}MB，repository",
             target=large[0].path,
-            condition=f"textfilestext ≥ {large_file_mb}MB",
-            actual=f"{len(large)} textfiles（text {large[0].size_bytes / 1048576:.1f}MB）",
+            condition=f"files ≥ {large_file_mb}MB",
+            actual=f"{len(large)} files {large[0].size_bytes / 1048576:.1f}MB）",
             threshold=f"{large_file_mb} MB",
-            action="textrepositorytext Git LFS，text .gitignore textRules",
+            action="Use Git LFS for large assets and update .gitignore rules",
         ))
     if hotspots and hotspots[0].change_count >= max(hotspot_changes * 2, 20):
         warnings.append(Warning(
-            rule="Hot filestext",
+            rule="files",
             severity="low",
-            message=f"{hotspots[0].path} text {hotspots[0].change_count} text，text",
+            message=f"{hotspots[0].path} change {hotspots[0].change_count} is",
             target=hotspots[0].path,
-            condition=f"textfilestext ≥ {hotspot_changes} text",
-            actual=f"{hotspots[0].change_count} text",
-            threshold=f"{hotspot_changes} text",
-            action="text，text",
+            condition=f"files ≥ {hotspot_changes}  times",
+            actual=f"{hotspots[0].change_count}  times",
+            threshold=f"{hotspot_changes}  times",
+            action="Review frequently changed files and split responsibilities",
         ))
     if hygiene.pass_rate >= 0 and hygiene.pass_rate < 0.6:
         warnings.append(Warning(
-            rule="commitsInformationtextconvention",
+            rule="commits",
             severity="low",
-            message=f"text {hygiene.pass_rate:.0%} textcommitstext",
+            message=f"{hygiene.pass_rate:.0%} of commits match the pattern",
             target="git log",
-            condition="text pattern textcommitstext < 60%",
+            condition="Commit-pattern compliance < 60%",
             actual=f"{hygiene.pass_rate:.0%}（{hygiene.passed}/{hygiene.total}）",
             threshold="60%",
-            action="text commit-msg hook text，textcommitstext",
+            action="Add a commit-msg hook and document the convention",
         ))
 
-    # -- health score --------------------------------------------------------
+    # -- health --------------------------------------------------------
     penalty = {"high": 12, "medium": 6, "low": 3}
     health = 100.0
     for warning in warnings:
@@ -324,11 +324,11 @@ def _compute(
                                        if start.strftime("%Y-%m-%d") <= day <= last_date)
     warning_counts = Counter(warning.target for warning in warnings)
     dimensions = (
-        HealthDimension("Git text", min(100.0, len(calendar) / 90 * 100), "low" if len(calendar) >= 30 else "medium", 0, f"{len(calendar)} text"),
-        HealthDimension("text", max(0.0, 100 - warning_counts.get(top_name, 0) * 20), "high" if top_share >= 0.8 else ("medium" if top_share >= 0.7 else "low"), int(top_share >= 0.7), f"textauthorstext {top_share:.0%}"),
-        HealthDimension("text", 100.0, "low", 0, "text"),
-        HealthDimension("text", 100.0, "low", 0, "localRulestext"),
-        HealthDimension("Commit convention", hygiene.pass_rate * 100 if hygiene.pass_rate >= 0 else 0, "low" if hygiene.pass_rate >= .8 else "medium", hygiene.total - hygiene.passed, f"pass rate {hygiene.pass_rate:.0%}"),
+        HealthDimension("Git activity", min(100.0, len(calendar) / 90 * 100), "low" if len(calendar) >= 30 else "medium", 0, f"{len(calendar)} active days"),
+        HealthDimension("Ownership balance", max(0.0, 100 - warning_counts.get(top_name, 0) * 20), "high" if top_share >= 0.8 else ("medium" if top_share >= 0.7 else "low"), int(top_share >= 0.7), f"Top author: {top_share:.0%}"),
+        HealthDimension("Code quality", 100.0, "low", 0, "No issues"),
+        HealthDimension("Dependencies", 100.0, "low", 0, "No issues"),
+        HealthDimension("commits", hygiene.pass_rate * 100 if hygiene.pass_rate >= 0 else 0, "low" if hygiene.pass_rate >= .8 else "medium", hygiene.total - hygiene.passed, f"passed {hygiene.pass_rate:.0%}"),
     )
     return MockView(
         snapshot=snapshot,
@@ -349,7 +349,7 @@ def _compute(
 
 
 # --------------------------------------------------------------------------
-# text（repositorytext，text GUI text）
+# repository GUI Notes
 # --------------------------------------------------------------------------
 def _synthetic_snapshot(repo_path: str = "demo/repo") -> RepositorySnapshot:
     random.seed(20261124)
@@ -361,8 +361,8 @@ def _synthetic_snapshot(repo_path: str = "demo/repo") -> RepositorySnapshot:
 
     today = datetime.now()
     commits: list[Commit] = []
-    # text"text"：textrepositorytext，
-    # text"textauthorstext"text high Rulestext。textrepositorytext。
+    # Notes"Notes"：repository
+    # Notes"authors"Notes high repository
     weights = [10, 2, 1, 1]
     for index in range(160):
         name, email = random.choices(authors, weights=weights, k=1)[0]
@@ -399,4 +399,7 @@ def _synthetic_snapshot(repo_path: str = "demo/repo") -> RepositorySnapshot:
         tags=("v0.1.0",),
         scanned_at=today,
     )
+
+
+
 

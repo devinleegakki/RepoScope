@@ -1,22 +1,22 @@
-"""textanalyzetext：GUI text CLI textanalyzetext。
+"""analysisGUI Notes CLI analysis
 
-text（text"text"）：
+Notes"Notes"）：
 
-* **text**：``AnalysisService.analyze()`` textanalyzetext。
-  GUI text ``gui/worker.py``、text ``main.py analyze``、Batchanalyze
-  ``BatchAnalyzer`` text，text"CLI text GUI textanalyzetext"。
-* **textconfiguration**：``AnalysisConfig`` textthreshold、textCommit conventionregex，
-  text JSON configurationfilestext，text。
-* **failedtext**：Batchanalyzetext ``ThreadPoolExecutor`` textrepository，
-  single repositoryfailedtextrepositorytext，text。
-* **textcancelled**：text ``cancel_event``（``threading.Event``）text，cancelledtext
-  commitstext，textcommitstext，text"textcancelled"。
+* **Notes**：``AnalysisService.analyze()`` analysis
+  GUI Notes ``gui/worker.py``、Notes ``main.py analyze``、analysis
+  ``BatchAnalyzer`` Notes"CLI Notes GUI analysis"。
+* **configuration**：``AnalysisConfig`` commits
+  Notes JSON files
+* **error**：analysis ``ThreadPoolExecutor`` repository
+  repository
+* **cancel**：Notes ``cancel_event``（``threading.Event``）cancel
+  commits"cancel"。
 
-text：``_select_engine()``。
+Notes``_select_engine()``。
 
-* TYB text ``metrics.py`` text，text；
-* text ``gui/mock_data.py`` text（``TEMP`` text），
-  text CLI text、text，text。
+* TYB Notes ``metrics.py`` Notes
+* Notes ``gui/mock_data.py`` Notes``TEMP`` Notes
+  Notes CLI Notes
 """
 
 from __future__ import annotations
@@ -40,10 +40,10 @@ DEFAULT_COMMIT_PATTERN = r"^(feat|fix|docs|refactor|test|chore)(\(.+\))?: "
 
 @dataclass(frozen=True)
 class AnalysisConfig:
-    """textanalyzetext。
+    """analysis
 
-    text `README` textdefaultRulestext；GUI text"Analysis Settings"text、text
-    ``--stale-days`` text、JSON configurationfilestext。
+    Notes `README` rulesGUI Notes"configuration"Notes
+    ``--stale-days`` settingsJSON files
     """
 
     stale_days: int = 180
@@ -51,7 +51,7 @@ class AnalysisConfig:
     hotspot_changes: int = 10
     release_stale_days: int = 365
     single_maintainer_ratio: float = 0.70
-    window_days: int = 0            # 0 = text；30 / 90 / 365
+    window_days: int = 0            # 0 = Notes30 / 90 / 365
     commit_pattern: str = DEFAULT_COMMIT_PATTERN
     max_function_lines: int = 80
     max_file_lines: int = 500
@@ -61,43 +61,43 @@ class AnalysisConfig:
     enable_secret_scan: bool = True
 
     def validate(self) -> None:
-        """text Git textErrortext，ErrorInformationtext。"""
+        """Notes Git error"""
         if self.stale_days <= 0:
-            raise ValueError("stale_days text")
+            raise ValueError("stale_days must be greater than zero")
         if self.large_file_mb <= 0:
-            raise ValueError("large_file_mb text")
+            raise ValueError("large_file_mb must be greater than zero")
         if self.hotspot_changes <= 0:
-            raise ValueError("hotspot_changes text")
+            raise ValueError("hotspot_changes must be greater than zero")
         if self.release_stale_days <= 0:
-            raise ValueError("release_stale_days text")
+            raise ValueError("release_stale_days must be greater than zero")
         if not 0 < self.single_maintainer_ratio <= 1:
-            raise ValueError("single_maintainer_ratio text (0, 1] text")
+            raise ValueError("single_maintainer_ratio must be in the range (0, 1]")
         if self.window_days < 0:
-            raise ValueError("window_days text")
+            raise ValueError("window_days must be zero or greater")
         if self.max_function_lines < 0 or self.max_file_lines < 0:
-            raise ValueError("textthresholdtext")
+            raise ValueError("size")
         if not 0 <= self.min_test_ratio <= 1 or not 0 <= self.ownership_ratio <= 1:
-            raise ValueError("textthresholdtext [0, 1] text")
+            raise ValueError("test_ratio must be between 0 and 1")
         if self.commit_pattern:
             import re
 
             try:
                 re.compile(self.commit_pattern)
             except re.error as exc:
-                raise ValueError(f"commit_pattern textvalidregex：{exc}") from exc
+                raise ValueError(f"commit_pattern valid{exc}") from exc
 
     def to_dict(self) -> dict:
         return asdict(self)
 
     @classmethod
     def from_dict(cls, data: Mapping[str, object]) -> "AnalysisConfig":
-        """text JSON textconfiguration；text，text。"""
+        """Notes JSON configuration"""
         if not isinstance(data, Mapping):
-            raise ValueError("configurationtext JSON text")
+            raise ValueError("configuration JSON Notes")
         known = {f for f in cls.__dataclass_fields__}
         unknown = sorted(set(data) - known)
         if unknown:
-            raise ValueError(f"configurationtext：{', '.join(unknown)}")
+            raise ValueError(f"configuration{', '.join(unknown)}")
         config = cls(**{key: data[key] for key in known if key in data})
         config.validate()
         return config
@@ -108,7 +108,7 @@ class AnalysisConfig:
         try:
             data = json.loads(raw)
         except json.JSONDecodeError as exc:
-            raise ValueError(f"configurationfilestextvalid JSON：{path}（{exc}）") from exc
+            raise ValueError(f"files JSON：{path}（{exc}）") from exc
         return cls.from_dict(data)
 
     def save_json(self, path: str | Path) -> Path:
@@ -122,11 +122,11 @@ class AnalysisConfig:
 
 DEFAULT_CONFIG = AnalysisConfig()
 
-# --- text ------------------------------------------------------------------
+# --- Notes ------------------------------------------------------------------
 
 
 class AnalysisError(RuntimeError):
-    """text ``code`` textanalyzefailed，CLI textErrortext。"""
+    """Notes ``code`` analysisCLI error"""
 
     def __init__(self, code: str, message: str, *, details: Optional[str] = None) -> None:
         self.code = code
@@ -134,20 +134,20 @@ class AnalysisError(RuntimeError):
         self.details = details
         super().__init__(message)
 
-    def __str__(self) -> str:  # pragma: no cover - text
+    def __str__(self) -> str:  # pragma: no cover - Notes
         return self.message
 
 
-# --- text ------------------------------------------------------------------
+# --- Notes ------------------------------------------------------------------
 
 
-def _noop(percent: int, message: str) -> None:  # pragma: no cover - text
+def _noop(percent: int, message: str) -> None:  # pragma: no cover - Notes
     pass
 
 
 @dataclass(frozen=True)
 class RepoCheck:
-    """``check`` text：repositorytextanalyzetext。"""
+    """``check`` repository"""
 
     path: str
     repo_name: str
@@ -158,19 +158,19 @@ class RepoCheck:
 
 
 class AnalysisService:
-    """textanalyzetextrepository，text ``AnalysisService().analyze(path)``。
+    """repository ``AnalysisService().analyze(path)``。
 
     ``allow_synthetic``：
-        * GUI text ``True`` —— textfailedtext，text；
-        * CLI text ``False``（default）—— textfailedtext，textreport。
+        * GUI Notes ``True`` —— error
+        * CLI Notes ``False``（default report
     """
 
     def __init__(self, *, allow_synthetic: bool = False) -> None:
         self.allow_synthetic = allow_synthetic
 
-    # -- textrepository ----------------------------------------------------------
+    # -- repository ----------------------------------------------------------
     def check(self, repo_path: str | Path) -> RepoCheck:
-        """checkrepositorytextanalyze，textInformation（textfiles）。"""
+        """repository"""
         reader = self._reader(repo_path)
         snapshot = self._snapshot(reader)
         return RepoCheck(
@@ -188,7 +188,7 @@ class AnalysisService:
         config: AnalysisConfig | None = None,
         on_progress: ProgressCallback | None = None,
     ) -> AnalysisView:
-        """analyzetextrepository，text ``AnalysisView`` text。"""
+        """repository ``AnalysisView`` Notes"""
         config = config or DEFAULT_CONFIG
         config.validate()
         report = on_progress or _noop
@@ -197,19 +197,19 @@ class AnalysisService:
         if self.allow_synthetic:
             return self._analyze_with_fallback(repo_path, config, report)
 
-        report(5, "checkrepository")
+        report(5, "Loading repository")
         snapshot = self._snapshot(self._reader(repo_path))
         snapshot = self._apply_window(snapshot, config)
-        report(60, "Compute metrics")
+        report(60, "Collecting repository metrics")
         view = self._compute(snapshot, config, report)
         view.elapsed_seconds = time.monotonic() - started
-        report(100, "Complete")
+        report(100, "complete")
         return view
 
-    # -- text ------------------------------------------------------------
+    # -- Notes ------------------------------------------------------------
     @staticmethod
     def _apply_window(snapshot, config: AnalysisConfig):
-        """``window_days > 0`` textcommits（configurationtext"time range"text）。"""
+        """``window_days > 0`` commits"time"settings"""
         if config.window_days <= 0 or not snapshot.commits:
             return snapshot
         from dataclasses import replace
@@ -239,12 +239,12 @@ class AnalysisService:
         except GitReaderError as exc:
             raise AnalysisError(exc.code, exc.details or str(exc)) from exc
         except OSError as exc:
-            raise AnalysisError("io_error", f"textrepositoryfailed：{exc}") from exc
+            raise AnalysisError("io_error", f"repository{exc}") from exc
 
     def _analyze_with_fallback(
         self, repo_path: str | Path, config: AnalysisConfig, report: ProgressCallback
     ) -> AnalysisView:
-        """GUI Path：failedtext，text。"""
+        """GUI path"""
         from gui import mock_data
 
         return mock_data.build(
@@ -257,10 +257,10 @@ class AnalysisService:
         )
 
     def _compute(self, snapshot, config: AnalysisConfig, report: ProgressCallback) -> AnalysisView:
-        """textPath：text TYB text metrics.py，textReadytext。
+        """path TYB Notes metrics.py，Notes
 
-        text —— metrics.py text，text ``_select_engine``
-        text，``analyze()`` text。
+        Notes —— metrics.py Notes ``_select_engine``
+        Notes``analyze()`` Notes
         """
         try:
             from reposcope.metrics import compute_metrics
@@ -269,14 +269,14 @@ class AnalysisService:
             metrics = compute_metrics(snapshot, _analysis_config(config))
             metrics.warnings = detect_all(metrics, _analysis_config(config)) if hasattr(metrics, "warnings") else detect_all(metrics, _analysis_config(config))
             view = adapt(metrics, snapshot)
-            report(90, "Static quality, collaboration, and security analysis")
+            report(90, "analysis")
             return view
         except (ImportError, TypeError, ValueError) as exc:
-            report(70, f"textanalyzetext，text：{exc}")
+            report(70, f"Analysis fallback: {exc}")
 
-        from gui.mock_data import _compute as legacy_compute  # TEMP text，TYB text
+        from gui.mock_data import _compute as legacy_compute  # TEMP NotesTYB remove
 
-        report(80, "text（text metrics.py）")
+        report(80, "Computing repository metrics")
         return legacy_compute(
             snapshot,
             stale_days=config.stale_days,
@@ -302,9 +302,9 @@ def _analysis_config(config: AnalysisConfig):
 
 
 def _select_engine():
-    """text ``fn(snapshot, config) -> AnalysisResult``，text ``None``。
+    """Notes ``fn(snapshot, config) -> AnalysisResult``，none ``None``。
 
-    text：``metrics.analyse(snapshot, config)``。TYB text。
+    Notes``metrics.analyse(snapshot, config)``。TYB Notes
     """
     try:
         import metrics as metrics_module  # type: ignore
@@ -317,12 +317,12 @@ def _select_engine():
     return None
 
 
-# --- Batchanalyze ---------------------------------------------------------------
+# --- analysis ---------------------------------------------------------------
 
 
 @dataclass
 class BatchResult:
-    """textrepositoryanalyzetextrepositorytext。failedtext，text。"""
+    """repository"""
 
     path: str
     repo_name: str = ""
@@ -334,7 +334,7 @@ class BatchResult:
 
 
 def summarize_view(view: AnalysisView) -> RepoSummary:
-    """textanalyzetextRepository Comparisontext。"""
+    """repository"""
     return RepoSummary(
         repo_name=view.snapshot.repo_name,
         path=view.snapshot.repo_path,
@@ -348,11 +348,11 @@ def summarize_view(view: AnalysisView) -> RepoSummary:
 
 
 class BatchAnalyzer:
-    """textanalyzetextrepository：textfailedtext，textcancelled。"""
+    """repository"""
 
     def __init__(self, *, max_workers: int = 4, service: AnalysisService | None = None) -> None:
         if max_workers < 1:
-            raise ValueError("max_workers text 1")
+            raise ValueError("max_workers Notes 1")
         self.max_workers = max_workers
         self.service = service or AnalysisService(allow_synthetic=False)
 
@@ -364,10 +364,10 @@ class BatchAnalyzer:
         on_progress: Callable[[BatchResult, int, int], None] | None = None,
         cancel_event: threading.Event | None = None,
     ) -> list[BatchResult]:
-        """text，text。
+        """Notes
 
-        ``on_progress(result, done, total)`` textCompletetextrepositorytext，
-        CLI text、GUI Batchtext。
+        ``on_progress(result, done, total)`` repository
+        CLI NotesGUI Notes
         """
         config = config or DEFAULT_CONFIG
         config.validate()
@@ -397,19 +397,19 @@ class BatchAnalyzer:
                 finished, _ = wait(pending.keys(), return_when=FIRST_COMPLETED)
                 for future in finished:
                     index = pending.pop(future)
-                    result = future.result()  # _run_one text
+                    result = future.result()  # _run_one Notes
                     results[index] = result
                     done += 1
                     notify(result, done, total)
 
-            # cancelledtextcommitstextrepository：text，text
+            # repository
             while next_index < total:
                 results[next_index] = BatchResult(
-                    path=paths[next_index], cancelled=True, error="textcancelled"
+                    path=paths[next_index], cancelled=True, error="cancel"
                 )
                 next_index += 1
         finally:
-            # cancelledtext；wait=True text
+            # cancelwait=True Notes
             pool.shutdown(wait=True, cancel_futures=True)
 
         return [results[i] for i in range(total)]
@@ -426,7 +426,7 @@ class BatchAnalyzer:
                 error=f"{exc.code}: {exc.message}",
                 elapsed_seconds=time.monotonic() - started,
             )
-        except Exception as exc:  # text：textrepositorytext
+        except Exception as exc:  # repository
             return BatchResult(
                 path=path,
                 repo_name=Path(path).name,
@@ -441,4 +441,7 @@ class BatchAnalyzer:
             view=view,
             elapsed_seconds=time.monotonic() - started,
         )
+
+
+
 

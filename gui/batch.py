@@ -1,10 +1,10 @@
-"""Repository Comparisontext：textrepositorytexthealth score。
+"""repository
 
-textrepositoryanalyzetext"textrepositorytext"，Repository Comparisontext"textrepositorytext"。
-text：textrepositorytext，text，texthealth scoretext。
+repository"repository"，repository"repository"。
+repository
 
-TODO(Wyh): ``services.batch`` / ``cli.py`` textBatchtext，
-text ``run_all()`` text；text。
+TODO(Wyh): ``services.batch`` / ``cli.py`` Notes
+Notes ``run_all()`` Notes
 """
 
 from __future__ import annotations
@@ -32,12 +32,12 @@ from .widgets import LEVEL_COLOR, LEVEL_TEXT, Card, PageHeader
 
 _COLUMNS = (
     ("repository", lambda row: row.repo_name, Qt.AlignLeft | Qt.AlignVCenter),
-    ("commit count", lambda row: f"{row.commits:,}", Qt.AlignCenter),
-    ("author count", lambda row: str(row.authors), Qt.AlignCenter),
-    ("health score", lambda row: f"{row.health_score:.0f}", Qt.AlignCenter),
-    ("Hot files", lambda row: str(row.hotspot_count), Qt.AlignCenter),
+    ("commits", lambda row: f"{row.commits:,}", Qt.AlignCenter),
+    ("authors", lambda row: str(row.authors), Qt.AlignCenter),
+    ("health", lambda row: f"{row.health_score:.0f}", Qt.AlignCenter),
+    ("Hotspots", lambda row: str(row.hotspot_count), Qt.AlignCenter),
     ("Stale files", lambda row: str(row.stale_count), Qt.AlignCenter),
-    ("Level", lambda row: LEVEL_TEXT.get(row.risk_level, row.risk_level), Qt.AlignCenter),
+    ("Risk", lambda row: LEVEL_TEXT.get(row.risk_level, row.risk_level), Qt.AlignCenter),
 )
 
 
@@ -82,7 +82,7 @@ class SummaryModel(QAbstractTableModel):
 
 
 class BatchPage(QWidget):
-    """Queue + text。"""
+    """queue + Notes"""
 
     def __init__(self) -> None:
         super().__init__()
@@ -91,8 +91,8 @@ class BatchPage(QWidget):
         outer.setSpacing(12)
 
         self.header = PageHeader(
-            "Repository Comparison",
-            "textrepositorytextQueue，textanalyzetext，texthealth scoretext。",
+            "Repository comparison",
+            "Analyze multiple repositories side by side",
         )
         outer.addWidget(self.header)
 
@@ -103,7 +103,7 @@ class BatchPage(QWidget):
         queue_layout = QVBoxLayout(queue_card)
         queue_layout.setContentsMargins(12, 12, 12, 12)
         queue_layout.setSpacing(8)
-        title = QLabel("repositoryQueue")
+        title = QLabel("Repository queue")
         title.setObjectName("sectionTitle")
         queue_layout.addWidget(title)
 
@@ -112,7 +112,7 @@ class BatchPage(QWidget):
         queue_layout.addWidget(self.queue, 1)
 
         buttons = QHBoxLayout()
-        add = QPushButton("Add…")
+        add = QPushButton("Add")
         add.clicked.connect(self._add)
         remove = QPushButton("Remove")
         remove.clicked.connect(self._remove)
@@ -122,7 +122,7 @@ class BatchPage(QWidget):
             buttons.addWidget(button)
         queue_layout.addLayout(buttons)
 
-        self.run_btn = QPushButton("Start batch analysis")
+        self.run_btn = QPushButton("Compare repositories")
         self.run_btn.setObjectName("primary")
         self.run_btn.clicked.connect(self.run_all)
         queue_layout.addWidget(self.run_btn)
@@ -135,7 +135,7 @@ class BatchPage(QWidget):
         head = QHBoxLayout()
         table_title = QLabel("Comparison results")
         table_title.setObjectName("sectionTitle")
-        self.status = QLabel("Queue is empty")
+        self.status = QLabel("No results yet")
         self.status.setObjectName("pageHint")
         head.addWidget(table_title)
         head.addWidget(self.status)
@@ -146,7 +146,7 @@ class BatchPage(QWidget):
         self.table = QTableView()
         self.table.setModel(self.model)
         self.table.setSortingEnabled(True)
-        self.table.horizontalHeader().setSortIndicatorShown(False)   # text：text V
+        self.table.horizontalHeader().setSortIndicatorShown(False)   # Notes V
         self.table.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.table.verticalHeader().setVisible(False)
@@ -155,7 +155,7 @@ class BatchPage(QWidget):
         table_layout.addWidget(self.table, 1)
 
         self.empty = QLabel(
-            "textrepository。\ntext「Add…」textlocal Git repository，text，text「Start batch analysis」。"
+            "Add Git repositories\nUse the Add button to build a comparison queue"
         )
         self.empty.setObjectName("emptyState")
         self.empty.setAlignment(Qt.AlignCenter)
@@ -165,13 +165,13 @@ class BatchPage(QWidget):
 
         outer.addLayout(body, 1)
 
-    # -- Queue ------------------------------------------------------------
+    # -- queue ------------------------------------------------------------
     def _add(self) -> None:
         selected = dialogs.ask_repository(self)
         if not selected:
             return
         if self.queue.findItems(selected, Qt.MatchExactly):
-            dialogs.show_info(self, "textQueuetext", selected)
+            dialogs.show_info(self, "queue", selected)
             return
         self.queue.addItem(selected)
 
@@ -182,20 +182,20 @@ class BatchPage(QWidget):
     def paths(self) -> list[str]:
         return [self.queue.item(i).text() for i in range(self.queue.count())]
 
-    # -- Batchanalyze --------------------------------------------------------
+    # -- analysis --------------------------------------------------------
     def run_all(self) -> None:
-        """textrepositorytextanalyze，text。
+        """repository
 
-        TODO(Wyh): text ``batch.analyse(paths)``，text QThread text。
-        textrepositorytext；repositorytext，
-        text 20 text，textNotice。
+        TODO(Wyh): Notes ``batch.analyse(paths)``，Notes QThread Notes
+        repository
+        Notes 20 information
         """
         paths = self.paths()
         if not paths:
-            dialogs.show_info(self, "Queue is empty", "Please firstAddtextrepository。")
+            dialogs.show_info(self, "Repository queue", "Add at least one repository first.")
             return
         if len(paths) > 20:
-            dialogs.show_error(self, "Queue is too long", "textanalyze 20 textrepository。")
+            dialogs.show_error(self, "Repository queue", "You can compare at most 20 repositories.")
             return
 
         summaries: list[RepoSummary] = []
@@ -203,7 +203,7 @@ class BatchPage(QWidget):
         for path in paths:
             if not (Path(path) / ".git").exists():
                 summaries.append(RepoSummary(
-                    repo_name=f"{Path(path).name}（Unreadable）",
+                    repo_name=f"{Path(path).name} (missing .git)",
                     path=path,
                     risk_level="high",
                 ))
@@ -211,9 +211,9 @@ class BatchPage(QWidget):
                 continue
             try:
                 view = mock_data.build(path)
-            except Exception:  # textfailedtextrepository
+            except Exception:  # repository
                 summaries.append(RepoSummary(
-                    repo_name=f"{Path(path).name}（Unreadable）",
+                    repo_name=f"{Path(path).name} (analysis failed)",
                     path=path,
                     risk_level="high",
                 ))
@@ -234,15 +234,18 @@ class BatchPage(QWidget):
         self.model.set_rows(summaries)
         self._sync_empty()
         worst = summaries[0] if summaries else None
-        message = f"textanalyze {len(summaries)} textrepository"
+        message = f"Compared {len(summaries)} repositories"
         if worst is not None and not failed:
-            message += f" · text {worst.repo_name}（{worst.health_score:.0f} text）"
+            message += f" · lowest health: {worst.repo_name} ({worst.health_score:.0f})"
         if failed:
-            message += f" · {len(failed)} textUnreadable：{', '.join(failed)}"
+            message += f" · {len(failed)} failed: {', '.join(failed)}"
         self.status.setText(message)
 
     def _sync_empty(self) -> None:
-        """text，text，text。"""
+        """information"""
         has_rows = self.model.rowCount() > 0
         self.table.setVisible(has_rows)
         self.empty.setVisible(not has_rows)
+
+
+

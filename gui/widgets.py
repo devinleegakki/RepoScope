@@ -1,8 +1,8 @@
-"""text。
+"""Notes
 
-text：text、text、Leveltext，
-text"text 13px、textreporttext 14px"text，
-text。
+medium
+Notes"Notes 13px、report 14px"low
+Notes
 """
 
 from __future__ import annotations
@@ -17,7 +17,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-# Level → text。text，text。
+# Notes → Notes
 LEVEL_COLOR = {
     "high": "#F09595",
     "medium": "#EF9F27",
@@ -25,20 +25,20 @@ LEVEL_COLOR = {
 }
 
 LEVEL_TEXT = {
-    "high": "High risk",
-    "medium": "Medium risk",
-    "low": "Good",
+    "high": "risk",
+    "medium": "risk",
+    "low": "Low",
 }
 
 SEVERITY_TEXT = {
-    "high": "text",
-    "medium": "text",
-    "low": "text",
+    "high": "high",
+    "medium": "medium",
+    "low": "low",
 }
 
 
 class Card(QFrame):
-    """text。"""
+    """Notes"""
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -46,7 +46,7 @@ class Card(QFrame):
 
 
 class MetricCard(Card):
-    """text：text，text，textNotice。"""
+    """information"""
 
     def __init__(self, title: str, hint: str = "") -> None:
         super().__init__()
@@ -73,13 +73,13 @@ class MetricCard(Card):
             self._hint.setText(hint)
 
     def set_tone(self, level: str) -> None:
-        """textLeveltext（high / medium / low）。"""
+        """Noteshigh / medium / low）。"""
         color = LEVEL_COLOR.get(level)
         self._value.setStyleSheet(f"color: {color};" if color else "")
 
 
 class Badge(QLabel):
-    """texttags：RiskLevel、text。"""
+    """risk"""
 
     def __init__(self, text: str = "", level: str = "low") -> None:
         super().__init__(text)
@@ -96,7 +96,7 @@ class Badge(QLabel):
 
 
 class PageHeader(QWidget):
-    """text：text + text。text（text、text）。"""
+    """Notes + information"""
 
     def __init__(self, title: str, hint: str = "") -> None:
         super().__init__()
@@ -127,10 +127,13 @@ class PageHeader(QWidget):
 
 
 class EmptyState(QLabel):
-    """textNotice：text"text"，text。"""
+    """information"Notes"，Notes"""
 
-    def __init__(self, text: str = "No repository analyzed yet") -> None:
+    def __init__(self, text: str = "repository") -> None:
         super().__init__(text)
         self.setObjectName("emptyState")
         self.setAlignment(Qt.AlignCenter)
         self.setWordWrap(True)
+
+
+

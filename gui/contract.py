@@ -1,25 +1,25 @@
-"""GUI text。
+"""GUI Notes
 
-textfilestext：**GUI text，text。**
-text ``AnalysisView`` text，text；text，text，
-text ``adapt()`` text。
+files**GUI type**
+Notes ``AnalysisView`` Notes
+Notes ``adapt()`` Notes
 
-textRules（text code review text）：
+rules code review Notes
 
-* ``gui/`` text import text、``models.py`` text ``PySide6``。
-* text ``from core.git_reader import ...``、``from metrics import ...``。
-  text，text。
-* text ``AnalysisView``，text。
+* ``gui/`` Notes import Notes``models.py`` Notes ``PySide6``。
+* Notes ``from core.git_reader import ...``、``from metrics import ...``。
+  Notes
+* Notes ``AnalysisView``，Notes
 
-text（text ``docs/GUI_INTERFACE.md``）::
+Notes ``docs/GUI_INTERFACE.md``）::
 
     snapshot / health_score / total_commits ...   LTY(git_reader) + TYB(metrics)
     commit_hygiene                                TYB(metrics + rules)
-    warnings[...].condition/actual/threshold/action   TYB(rules)   ← text
-    RepoSummary                                   Wyh(batch)   ← text
+    warnings[...].condition/actual/threshold/action   TYB(rules)   ← pending
+    RepoSummary                                   Wyh(batch)   ← pending
 
-text ``# TODO(TYB)`` text，text、text。
-text，text（"Not provided by backend"），text。
+Notes ``# TODO(TYB)`` Notes
+display"pending"），Notes
 """
 
 from __future__ import annotations
@@ -29,14 +29,14 @@ from typing import Callable, Mapping, Protocol, Sequence, Tuple, runtime_checkab
 
 from core.models import RepositorySnapshot
 
-# text，text"—"text 0，
-# text"text 0 textanalyzesuccess"text。
-PENDING = "Not provided by backend"
+# display"—"Notes 0，
+# Notes"Notes 0 analysis"Notes
+PENDING = "pending"
 
 
 @dataclass(frozen=True)
 class FileStat:
-    """textfilestext（text / Large files / Stale filestext）。"""
+    """files / files / files"""
 
     path: str
     change_count: int = 0
@@ -44,15 +44,15 @@ class FileStat:
     size_bytes: int = 0
     days_since_change: int = 0
 
-    # --- TODO(TYB): metrics.py text，Data Analysistext ---
-    changed_lines: int = 0          # textfilestext
-    file_type: str = ""             # text，text
-    is_binary: bool = False         # textfilestextLarge filestext
+    # --- TODO(TYB): metrics.py analysis ---
+    changed_lines: int = 0          # files
+    file_type: str = ""             # type
+    is_binary: bool = False         # files
 
 
 @dataclass(frozen=True)
 class AuthorStat:
-    """textauthorstextrepositorytext。"""
+    """repository"""
 
     name: str
     commits: int
@@ -60,14 +60,14 @@ class AuthorStat:
     deletions: int = 0
     share: float = 0.0
 
-    # --- TODO(TYB): text 90 textcommitstext，text"text"text ---
-    # text -1.0 text，text "—"。
+    # --- TODO(TYB): current 90 commits"high"Notes ---
+    # Notes -1.0 display "—"。
     recent_90d_share: float = -1.0
 
 
 @dataclass(frozen=True)
 class Violation:
-    """textcommitsInformationtext，Reportstextauthorstext。"""
+    """commits"""
 
     commit_hash: str
     message: str
@@ -76,9 +76,9 @@ class Violation:
 
 @dataclass(frozen=True)
 class CommitHygiene:
-    """commitsInformationconventiontext（text 4.6）。"""
+    """commits 4.6）。"""
 
-    pass_rate: float = -1.0         # 0~1，-1 text
+    pass_rate: float = -1.0         # 0~1，-1 Notes
     total: int = 0
     passed: int = 0
     pattern: str = ""
@@ -107,10 +107,10 @@ class DashboardStats:
 
 @dataclass(frozen=True)
 class Warning:
-    """textanti-patternsRulestext。
+    """rules
 
-    text，text"text、text、text"，
-    text（text 4.2 Anti-pattern Center）。
+    display"Notes"，
+    Notes 4.2 anti-patterns
     """
 
     rule: str
@@ -118,21 +118,21 @@ class Warning:
     message: str
     target: str = ""
 
-    # --- TODO(TYB): rules.py text，textAnti-pattern Centertext ---
-    condition: str = ""             # Condition，text"textauthorscommitstext ≥ 70%"
-    actual: str = ""                # Actual value，text"82%"
-    threshold: str = ""             # Configured threshold，text"70%"
-    action: str = ""                # Suggested action，text"text code review text"
+    # --- TODO(TYB): rules.py anti-patterns ---
+    condition: str = ""             # Notes"commits ≥ 70%"
+    actual: str = ""                # Notes"82%"
+    threshold: str = ""             # configuration"70%"
+    action: str = ""                # Notes"Notes code review Notes"
 
     @property
     def has_evidence(self) -> bool:
-        """text。textNotice"text"。"""
+        """information"pending"。"""
         return all((self.condition, self.actual, self.threshold, self.action))
 
 
 @dataclass(frozen=True)
 class RepoSummary:
-    """Repository Comparisontext（text 4.8）。"""
+    """repository 4.8）。"""
 
     repo_name: str
     path: str = ""
@@ -146,10 +146,10 @@ class RepoSummary:
 
 @runtime_checkable
 class AnalysisView(Protocol):
-    """text。TYB text ``AnalysisResult`` text。
+    """NotesTYB Notes ``AnalysisResult`` Notes
 
-    text：text，
-    text，text。text ``docs/GUI_INTERFACE.md``。
+    Notes
+    Notes ``docs/GUI_INTERFACE.md``。
     """
 
     snapshot: RepositorySnapshot
@@ -166,8 +166,8 @@ class AnalysisView(Protocol):
     elapsed_seconds: float
 
     # --- TODO(TYB) / TODO(Wyh) ---
-    commit_hygiene: CommitHygiene   # text"Commit conventionpass rate"
-    risk_level: str                 # textLeveltext
+    commit_hygiene: CommitHygiene   # Notes"commits"
+    risk_level: str                 # Notes
     dashboard_stats: DashboardStats
 
 
@@ -176,10 +176,10 @@ ProgressCallback = Callable[[int, str], None]
 
 @dataclass(frozen=True)
 class AnalysisRequest:
-    """Start analysistext GUI text。
+    """analysis GUI settings
 
-    text TYB text ``AnalysisConfig`` text，text，
-    text——text。
+    Notes TYB Notes ``AnalysisConfig`` Notes
+    Notes
     """
 
     repo_path: str
@@ -188,7 +188,7 @@ class AnalysisRequest:
     hotspot_changes: int = 10
     release_stale_days: int = 365
     single_maintainer_ratio: float = 0.70
-    window_days: int = 0            # 0 = text；30 / 90 / 365
+    window_days: int = 0            # 0 = Notes30 / 90 / 365
     commit_pattern: str = r"^(feat|fix|docs|refactor|test|chore)(\(.+\))?: "
     max_function_lines: int = 80
     max_file_lines: int = 500
@@ -199,7 +199,7 @@ class AnalysisRequest:
 
 
 def risk_of(score: float) -> str:
-    """texthealth scoretextLevel。thresholdtextRules，text。"""
+    """rules"""
     if score >= 80:
         return "low"
     if score >= 60:
@@ -208,29 +208,29 @@ def risk_of(score: float) -> str:
 
 
 def adapt(result: object, snapshot: RepositorySnapshot | None = None) -> AnalysisView:
-    """text TYB text ``AnalysisResult`` text ``AnalysisView``。
+    """Notes TYB Notes ``AnalysisResult`` Notes ``AnalysisView``。
 
-    TODO(text): text ``metrics.py`` text，text。
-    text::
+    TODO(Notes): Notes ``metrics.py`` Notes
+    Notes::
 
         result.metrics.health_score      -> health_score
         result.metrics.total_commits     -> total_commits
         result.metrics.commit_calendar   -> commit_calendar
-        result.metrics.author_stats      -> author_stats   (text)
+        result.metrics.author_stats      -> author_stats   (Notes)
         result.metrics.hotspot_files     -> hotspot_files
         result.metrics.large_files       -> large_files
         result.metrics.stale_files       -> stale_files
         result.metrics.warnings          -> warnings
         result.metrics.commit_hygiene    -> commit_hygiene
 
-    text，text，text 0 textanalyzesuccess。
+    display 0 analysis
     """
     from dataclasses import dataclass
     from types import SimpleNamespace
     metrics = getattr(result, "metrics", result)
     snap = snapshot or getattr(result, "snapshot", None)
     if snap is None:
-        raise TypeError("adapt text snapshot")
+        raise TypeError("adapt Notes snapshot")
     authors = []
     for a in getattr(metrics, "author_contributions", []):
         authors.append(AuthorStat(a.author, a.commits, 0, 0, a.ratio, a.recent_ratio))
@@ -258,11 +258,11 @@ def adapt(result: object, snapshot: RepositorySnapshot | None = None) -> Analysi
                       getattr(q, "bare_except_count", 0)) if q else 0
     security_issues = len(findings) + (len(getattr(dep, "unpinned", [])) + len(getattr(dep, "duplicates", [])) if dep else 0)
     dimensions = (
-        HealthDimension("Git text", min(100.0, len(metrics.commit_trend) / 30 * 100), "low" if len(metrics.commit_trend) >= 30 else "medium", 0, f"{len(metrics.commit_trend)} text"),
-        HealthDimension("text", max(0.0, 100 - len(getattr(own, "high_risk_files", [])) * 10), "high" if getattr(own, "high_risk_files", []) else "low", len(getattr(own, "high_risk_files", [])), f"{len(getattr(own, 'high_risk_files', []))} textHigh riskfiles"),
-        HealthDimension("text", max(0.0, 100 - quality_issues * 8), "high" if quality_issues >= 5 else ("medium" if quality_issues else "low"), quality_issues, f"{quality_issues} textRulestext"),
-        HealthDimension("text", max(0.0, 100 - security_issues * 15), "high" if findings else ("medium" if security_issues else "low"), security_issues, f"{security_issues} text/text"),
-        HealthDimension("Commit convention", hygiene.pass_rate * 100 if hygiene and hygiene.pass_rate >= 0 else 0, "low" if hygiene and hygiene.pass_rate >= .8 else "medium", (hygiene.total - hygiene.passed) if hygiene else 0, f"pass rate {hygiene.pass_rate:.0%}" if hygiene else "Not provided"),
+        HealthDimension("Git activity", min(100.0, len(metrics.commit_trend) / 30 * 100), "low" if len(metrics.commit_trend) >= 30 else "medium", 0, f"{len(metrics.commit_trend)} active days"),
+        HealthDimension("Ownership balance", max(0.0, 100 - len(getattr(own, "high_risk_files", [])) * 10), "high" if getattr(own, "high_risk_files", []) else "low", len(getattr(own, "high_risk_files", [])), f"{len(getattr(own, 'high_risk_files', []))} files"),
+        HealthDimension("Code quality", max(0.0, 100 - quality_issues * 8), "high" if quality_issues >= 5 else ("medium" if quality_issues else "low"), quality_issues, f"{quality_issues} issues"),
+        HealthDimension("Dependencies and security", max(0.0, 100 - security_issues * 15), "high" if findings else ("medium" if security_issues else "low"), security_issues, f"{security_issues} issues"),
+        HealthDimension("commits", hygiene.pass_rate * 100 if hygiene and hygiene.pass_rate >= 0 else 0, "low" if hygiene and hygiene.pass_rate >= .8 else "medium", (hygiene.total - hygiene.passed) if hygiene else 0, f"passed {hygiene.pass_rate:.0%}" if hygiene else "pending"),
     )
     recent = {}
     calendar = dict(metrics.commit_trend)
@@ -276,4 +276,7 @@ def adapt(result: object, snapshot: RepositorySnapshot | None = None) -> Analysi
         large_files=tuple(files(metrics.large_files)), stale_files=tuple(files(metrics.stale_files)),
         warnings=tuple(warnings), elapsed_seconds=0.0, commit_hygiene=hygiene,
         risk_level=risk_of(max(0.0, 100.0 - 10.0 * len(warnings))), dashboard_stats=stats, **extra)
+
+
+
 
