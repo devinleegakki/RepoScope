@@ -1,11 +1,11 @@
-"""集成测试：统一分析服务（services.py）。
+"""text：textanalyzetext（services.py）。
 
-覆盖验收要求里"CLI 与 GUI 使用同一分析服务"和"单个仓库失败不影响其他任务"：
+text"CLI text GUI textanalyzetext"text"single repositoryfailedtext"：
 
-* 真仓库能读出真数据；
-* 无效路径、非 Git 目录、非法配置都有可读错误码；
-* 时间范围（window_days）真的会过滤提交；
-* 批量分析并发执行、失败隔离、可取消。
+* textrepositorytext；
+* InvalidPath、text Git directory、textconfigurationtextErrortext；
+* time range（window_days）textcommits；
+* Batchanalyzetext、failedtext、textcancelled。
 """
 
 import json
@@ -17,7 +17,7 @@ from pathlib import Path
 import pytest
 
 from gui.contract import AnalysisView
-from services import (
+from core.services import (
     AnalysisConfig,
     AnalysisError,
     AnalysisService,
@@ -52,14 +52,14 @@ def make_repo(root: Path, name: str = "health repo") -> Path:
     run_git(repo, "commit", "-m", "feat: initial app")
     run_git(repo, "tag", "v0.1.0")
 
-    # 第二个作者提交一次，验证作者统计不是"全部同一人"
+    # textauthorscommitstext，textauthorstext"text"
     run_git(repo, "config", "user.name", "Bob")
     run_git(repo, "config", "user.email", "bob@example.com")
     (repo / "app.py").write_text("print('hello world')\n", encoding="utf-8")
     run_git(repo, "add", "-A")
     run_git(repo, "commit", "-m", "fix: greet properly")
 
-    # 一条历史很早的提交，用于验证 window_days 过滤
+    # textcommits，text window_days text
     old_date = (datetime.now() - timedelta(days=400)).isoformat()
     (repo / "legacy.py").write_text("old\n", encoding="utf-8")
     run_git(repo, "add", "-A")
@@ -80,7 +80,7 @@ def test_analyze_reads_real_repository(repo: Path) -> None:
 
     assert isinstance(view, AnalysisView)
     assert view.snapshot.repo_name == repo.name
-    assert view.total_commits == 3          # 老提交也在全部历史里
+    assert view.total_commits == 3          # textcommitstext
     assert view.author_count == 2
     assert view.commit_calendar
     assert 0 <= view.health_score <= 100
@@ -118,7 +118,7 @@ def test_analyze_rejects_invalid_commit_pattern(repo: Path) -> None:
 
 
 def test_gui_mode_falls_back_to_synthetic_data(tmp_path: Path) -> None:
-    """GUI 用的 allow_synthetic=True：坏路径也不许抛错、不许白屏。"""
+    """GUI text allow_synthetic=True：textPathtext、text。"""
     view = AnalysisService(allow_synthetic=True).analyze(tmp_path / "nope")
     assert isinstance(view, AnalysisView)
     assert view.total_commits > 0
@@ -126,7 +126,7 @@ def test_gui_mode_falls_back_to_synthetic_data(tmp_path: Path) -> None:
 
 def test_window_days_filters_old_commits(repo: Path) -> None:
     view = AnalysisService().analyze(repo, AnalysisConfig(window_days=30))
-    assert view.total_commits == 2           # 400 天前那条被过滤
+    assert view.total_commits == 2           # 400 text
 
 
 def test_config_json_roundtrip(tmp_path: Path) -> None:
@@ -164,7 +164,7 @@ def test_batch_isolates_single_repository_failure(repo: Path, tmp_path: Path) ->
     assert results[0].ok and results[0].view is not None
     assert results[1].ok is False
     assert "path_not_found" in results[1].error
-    # 成功仓库不受失败仓库影响
+    # successrepositorytextfailedrepositorytext
     assert results[0].view.total_commits == 3
 
 
@@ -197,3 +197,4 @@ def test_summarize_view_maps_contract_fields(repo: Path) -> None:
     assert summary.authors == view.author_count
     assert summary.health_score == view.health_score
     assert summary.risk_level in {"low", "medium", "high"}
+

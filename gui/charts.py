@@ -1,8 +1,8 @@
-"""作者贡献页：横向条形图 + 明细表。
+"""Author Contributionstext：text + text。
 
-条形图看"谁多谁少"，明细表看"改了多少行、最近还在不在"。
-``recent_90d_share``（最近 90 天提交占比）是识别"历史贡献高但已经退出"的关键列，
-后端没提供时显示"—"，不猜。
+text"text"，text"text、text"。
+``recent_90d_share``（text 90 textcommitstext）text"text"text，
+text"—"，text。
 """
 
 from __future__ import annotations
@@ -25,13 +25,13 @@ from .plotting import AuthorBarChart
 from .widgets import Card, PageHeader
 
 _COLUMNS = (
-    ("作者", lambda row: row.name, Qt.AlignLeft | Qt.AlignVCenter),
-    ("提交数", lambda row: str(row.commits), Qt.AlignCenter),
-    ("新增行", lambda row: f"+{row.insertions:,}", Qt.AlignCenter),
-    ("删除行", lambda row: f"-{row.deletions:,}", Qt.AlignCenter),
-    ("提交占比", lambda row: f"{row.share:.0%}", Qt.AlignCenter),
+    ("authors", lambda row: row.name, Qt.AlignLeft | Qt.AlignVCenter),
+    ("commit count", lambda row: str(row.commits), Qt.AlignCenter),
+    ("text", lambda row: f"+{row.insertions:,}", Qt.AlignCenter),
+    ("text", lambda row: f"-{row.deletions:,}", Qt.AlignCenter),
+    ("commitstext", lambda row: f"{row.share:.0%}", Qt.AlignCenter),
     (
-        "近 90 天占比",
+        "text 90 text",
         lambda row: "—" if row.recent_90d_share < 0 else f"{row.recent_90d_share:.0%}",
         Qt.AlignCenter,
     ),
@@ -39,7 +39,7 @@ _COLUMNS = (
 
 
 class AuthorTableModel(QAbstractTableModel):
-    """``AuthorStat`` 列表 → Qt 模型。列定义在模块级，加列只改一处。"""
+    """``AuthorStat`` text → Qt text。text，text。"""
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -60,13 +60,13 @@ class AuthorTableModel(QAbstractTableModel):
             return getter(row)
         if role == Qt.TextAlignmentRole:
             return int(_COLUMNS[index.column()][2])
-        if role == Qt.ForegroundRole and title == "近 90 天占比":
+        if role == Qt.ForegroundRole and title == "text 90 text":
             if row.recent_90d_share < 0:
                 return QColor("#6e7681")
             if row.recent_90d_share < 0.2:
                 return QColor("#EF9F27")
-        if role == Qt.ToolTipRole and title == "近 90 天占比" and row.recent_90d_share < 0:
-            return "该字段待后端提供（metrics.py 的 recent_90d_share）"
+        if role == Qt.ToolTipRole and title == "text 90 text" and row.recent_90d_share < 0:
+            return "textNot provided by backend（metrics.py text recent_90d_share）"
         return None
 
     def headerData(self, section: int, orientation: Qt.Orientation, role: int = Qt.DisplayRole):
@@ -81,7 +81,7 @@ class AuthorTableModel(QAbstractTableModel):
 
 
 class AuthorsPage(QWidget):
-    """作者贡献页。"""
+    """Author Contributionstext。"""
 
     def __init__(self) -> None:
         super().__init__()
@@ -89,7 +89,7 @@ class AuthorsPage(QWidget):
         outer.setContentsMargins(24, 20, 24, 20)
         outer.setSpacing(14)
 
-        self.header = PageHeader("作者贡献", "尚未分析任何仓库")
+        self.header = PageHeader("Author Contributions", "No repository analyzed yet")
         outer.addWidget(self.header)
 
         chart_card = Card()
@@ -105,7 +105,7 @@ class AuthorsPage(QWidget):
         table_layout = QVBoxLayout(table_card)
         table_layout.setContentsMargins(12, 10, 12, 10)
         table_layout.setSpacing(6)
-        note = QLabel("按提交数排序；最后两列是判断“知识是否集中在少数人身上”的依据")
+        note = QLabel("textcommit counttext；text“text”text")
         note.setObjectName("pageHint")
         table_layout.addWidget(note)
 
@@ -129,13 +129,13 @@ class AuthorsPage(QWidget):
         self.chart.set_authors([(a.name, a.commits) for a in authors])
 
         if not authors:
-            self.header.set_hint("没有作者数据（仓库可能只有一个初始提交）")
+            self.header.set_hint("textauthor counttext（repositorytextcommits）")
             return
         top = authors[0]
         concentration = ", ".join(
             f"{a.name} {a.share:.0%}" for a in authors[:3]
         )
         self.header.set_hint(
-            f"{len(authors)} 位作者 · {top.name} 提交最多（{top.share:.0%}，{top.commits} 次）"
-            f" · 前三名：{concentration}"
+            f"{len(authors)} textauthors · {top.name} commitstext（{top.share:.0%}，{top.commits} text）"
+            f" · text：{concentration}"
         )

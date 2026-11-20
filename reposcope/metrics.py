@@ -27,7 +27,7 @@ try:  # works both as ``reposcope.metrics`` and as a top-level ``metrics``
         as_utc_datetime,
     )
 except ImportError:  # pragma: no cover - fallback when loaded without package context
-    from models_analysis import (  # type: ignore[no-redef]
+    from reposcope.models_analysis import (  # type: ignore[no-redef]
         AnalysisConfig,
         AuthorContribution,
         CommitCompliance,
@@ -342,4 +342,11 @@ def compute_metrics(
         pass_rate=compliance_valid / compliance_checked if compliance_checked else 1.0,
         violations=violations,
     )
+    try:
+        from .static_analysis import run_static_analysis
+    except ImportError:  # top-level import used by legacy test harness
+        from static_analysis import run_static_analysis  # type: ignore
+    (metrics.code_quality, metrics.ownership,
+     metrics.dependencies, metrics.security_findings) = run_static_analysis(snapshot, cfg)
     return metrics
+

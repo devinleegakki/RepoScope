@@ -1,19 +1,12 @@
-"""Launch the RepoScope GUI with ``python -m gui``."""
+"""Compatibility wrapper; the canonical entry is ``python main.py``."""
 
 from __future__ import annotations
 
-import sys
-
-from PySide6.QtWidgets import QApplication
-
-from .main_window import MainWindow
+from main import _run_gui
 
 
 def main() -> int:
-    app = QApplication.instance() or QApplication(sys.argv)
-    window = MainWindow()
-    window.show()
-    return app.exec()
+    return _run_gui([])
 
 
 if __name__ == "__main__":

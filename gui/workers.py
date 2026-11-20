@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from PySide6.QtCore import QObject, Signal, Slot
 
-from git_reader import GitReader, GitReaderError
-from models import RepositorySnapshot
+from core.git_reader import GitReader, GitReaderError
+from core.models import RepositorySnapshot
 
 
 class SnapshotWorker(QObject):
@@ -22,7 +22,7 @@ class SnapshotWorker(QObject):
 
     @Slot()
     def run(self) -> None:
-        self.progress.emit("正在校验仓库…")
+        self.progress.emit("textcheckrepository…")
         try:
             snapshot = GitReader(self.repo_path).read_snapshot(max_commits=self.max_commits)
         except GitReaderError as error:
@@ -30,5 +30,6 @@ class SnapshotWorker(QObject):
         except Exception as error:  # GUI boundary: keep unexpected errors visible.
             self.failed.emit(error)
         else:
-            self.progress.emit("扫描完成")
+            self.progress.emit("Scan complete")
             self.finished.emit(snapshot)
+

@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from git_reader import GitReader, GitReaderError
+from core.git_reader import GitReader, GitReaderError
 
 
 def test_missing_path_has_machine_readable_error(tmp_path: Path) -> None:
@@ -29,3 +29,4 @@ def test_non_git_directory_is_rejected(tmp_path: Path) -> None:
         GitReader(tmp_path).validate()
 
     assert exc_info.value.code == "not_a_git_repository"
+

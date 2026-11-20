@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 
 import pytest
 
-from models_analysis import (
+from reposcope.models_analysis import (
     AnalysisConfig,
     RepositoryMetrics,
     Warning,
@@ -84,3 +84,4 @@ class TestWarning:
     def test_metrics_to_dict_references_config_window(self):
         m = RepositoryMetrics(recent_days=45, observation_days=90)
         assert m.to_dict()["recent_days"] == 45
+

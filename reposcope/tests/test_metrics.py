@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import timedelta
 
 from metrics import compute_metrics
-from models_analysis import AnalysisConfig
+from reposcope.models_analysis import AnalysisConfig
 
 
 class TestComputeMetrics:
@@ -108,3 +108,4 @@ class TestComputeMetrics:
         assert m.maintainer_concentration == 0.0
         assert m.commit_compliance.pass_rate == 1.0
         assert m.days_since_last_tag is None
+

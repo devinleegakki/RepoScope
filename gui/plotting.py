@@ -1,17 +1,17 @@
-"""图表封装：提交趋势折线 + 作者贡献条形。
+"""text：Commit Trendstext + Author Contributionstext。
 
-为什么用 ``PySide6.QtCharts`` 而不是 pyqtgraph / matplotlib：
+text ``PySide6.QtCharts`` text pyqtgraph / matplotlib：
 
-* QtCharts 随 ``pip install pyside6`` 一起装好，**requirements.txt 里不用多写一行**，
-  评卷老师在自己的机器上装完 PySide6 就能跑，不会出现"少了图表库直接白屏"。
-* matplotlib 嵌 Qt 要额外适配层，而且中文标签乱码是经典坑，演示前排查这个不值当。
-* pyqtgraph 是独立包，同样是多一个安装风险。
+* QtCharts text ``pip install pyside6`` text，**requirements.txt text**，
+  text PySide6 text，text"text"。
+* matplotlib text Qt text，texttagstext，text。
+* pyqtgraph text，textRisk。
 
-热力图不用图表库：它是 7×52 的色块矩阵，用 ``QTableWidget`` 染色二十行就够，
-用图表库反而绕。
+text：text 7×52 text，text ``QTableWidget`` text，
+text。
 
-**降级**：万一运行环境里 QtCharts 被裁掉（PySide6-Essentials 单独安装），
-这里的 ``CHARTS_AVAILABLE`` 会变成 False，趋势图退化成表格，界面不会崩。
+**text**：text QtCharts text（PySide6-Essentials text），
+text ``CHARTS_AVAILABLE`` text False，text，text。
 """
 
 from __future__ import annotations
@@ -27,11 +27,13 @@ from PySide6.QtWidgets import (
     QTableWidgetItem,
     QVBoxLayout,
     QWidget,
+    QProgressBar,
+    QHBoxLayout,
 )
 
-from .widgets import Card
+from .widgets import Card, LEVEL_COLOR
 
-try:  # pragma: no cover - 取决于安装的 PySide6 发行包
+try:  # pragma: no cover - text PySide6 text
     from PySide6.QtCharts import (
         QBarCategoryAxis,
         QBarSet,
@@ -60,7 +62,7 @@ def _axis_font() -> QFont:
 
 
 class TrendChart(QWidget):
-    """提交趋势折线图：横轴时间，纵轴提交次数，线下带淡色填充。"""
+    """Commit Trendstext：text，textcommitstext，text。"""
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -69,7 +71,7 @@ class TrendChart(QWidget):
         layout.setSpacing(0)
 
         if not CHARTS_AVAILABLE:
-            self._fallback = _FallbackTable("未检测到 QtCharts，趋势已降级为表格")
+            self._fallback = _FallbackTable("text QtCharts，text")
             layout.addWidget(self._fallback)
             self._chart = None
             return
@@ -87,11 +89,11 @@ class TrendChart(QWidget):
         self._view.setStyleSheet("background: transparent;")
         layout.addWidget(self._view)
 
-    def set_points(self, points: list[tuple[datetime, int]], unit: str = "提交") -> None:
-        """``points`` 必须按时间升序，由调用方保证（聚合时顺手排序）。"""
+    def set_points(self, points: list[tuple[datetime, int]], unit: str = "commits") -> None:
+        """``points`` text，text（text）。"""
         if self._chart is None:
             self._fallback.set_rows([(d.strftime("%Y-%m-%d"), str(c)) for d, c in points],
-                                    ("时间", unit))
+                                    ("text", unit))
             return
 
         chart = self._chart
@@ -111,8 +113,8 @@ class TrendChart(QWidget):
             line.append(int(moment.timestamp() * 1000), count)
 
         axis_x = QDateTimeAxis()
-        # 注意：这里要 Qt 的日期格式（yyyy / MM / dd），不是 strftime 的 %Y-%m。
-        # 写成 %Y-%m 会被当成普通文字原样画在坐标轴上。
+        # text：text Qt text（yyyy / MM / dd），text strftime text %Y-%m。
+        # text %Y-%m text。
         axis_x.setFormat("MM-dd" if (points[-1][0] - points[0][0]).days <= 120 else "yyyy-MM")
         axis_x.setTickCount(min(7, max(2, len(points))))
         axis_x.setLabelsColor(QColor(TEXT_COLOR))
@@ -138,7 +140,7 @@ class TrendChart(QWidget):
 
 
 class AuthorBarChart(QWidget):
-    """作者贡献横向条形图。名字太长时用表格而不是图表更清楚，所以这里限 10 人。"""
+    """Author Contributionstext。text，text 10 text。"""
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -147,7 +149,7 @@ class AuthorBarChart(QWidget):
         layout.setSpacing(0)
 
         if not CHARTS_AVAILABLE:
-            self._fallback = _FallbackTable("未检测到 QtCharts，条形图已降级为表格")
+            self._fallback = _FallbackTable("text QtCharts，text")
             layout.addWidget(self._fallback)
             self._chart = None
             return
@@ -166,7 +168,7 @@ class AuthorBarChart(QWidget):
 
     def set_authors(self, rows: list[tuple[str, int]]) -> None:
         if self._chart is None:
-            self._fallback.set_rows([(n, str(c)) for n, c in rows], ("作者", "提交数"))
+            self._fallback.set_rows([(n, str(c)) for n, c in rows], ("authors", "commit count"))
             return
 
         chart = self._chart
@@ -177,7 +179,7 @@ class AuthorBarChart(QWidget):
             return
 
         rows = rows[:10]
-        bar_set = QBarSet("提交数")
+        bar_set = QBarSet("commit count")
         bar_set.setColor(QColor(LINE_COLOR))
         bar_set.setBorderColor(QColor(LINE_COLOR))
         for _, count in rows:
@@ -187,7 +189,7 @@ class AuthorBarChart(QWidget):
         series.append(bar_set)
         series.setLabelsVisible(True)
         series.setLabelsPosition(QHorizontalBarSeries.LabelsInsideEnd)
-        # 标签的颜色和字体属于 QBarSet；QBarSeries 只有位置/格式/精度这几个开关
+        # tagstext QBarSet；QBarSeries text/text/text
         bar_set.setLabelColor(QColor("#0d1117"))
         bar_set.setLabelFont(_axis_font())
 
@@ -213,7 +215,7 @@ class AuthorBarChart(QWidget):
 
 
 class _FallbackTable(Card):
-    """QtCharts 不可用时的兜底：一张两列表格，功能不丢，只是不好看。"""
+    """QtCharts textelapsedtext：text，text，text。"""
 
     def __init__(self, note: str) -> None:
         super().__init__()
@@ -238,3 +240,48 @@ class _FallbackTable(Card):
             item.setTextAlignment(Qt.AlignCenter)
             self.table.setItem(index, 1, item)
         self.table.horizontalHeader().setStretchLastSection(True)
+
+
+class HealthDimensionChart(Card):
+    """Compact score bars for the dashboard health dimensions."""
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self._layout = QVBoxLayout(self)
+        self._layout.setContentsMargins(12, 10, 12, 10)
+        self._layout.setSpacing(5)
+        title = QLabel("text"); title.setObjectName("sectionTitle"); self._layout.addWidget(title)
+        self._rows = QVBoxLayout()
+        self._layout.addLayout(self._rows)
+
+    def set_dimensions(self, dimensions) -> None:
+        while self._rows.count():
+            item = self._rows.takeAt(0)
+            if item.widget(): item.widget().deleteLater()
+        for dimension in dimensions:
+            row = QWidget(); layout = QHBoxLayout(row); layout.setContentsMargins(0, 0, 0, 0); layout.setSpacing(6)
+            label = QLabel(dimension.name); label.setMinimumWidth(76); label.setObjectName("metricHint")
+            bar = QProgressBar(); bar.setRange(0, 100); bar.setValue(round(max(0, min(100, dimension.score)))); bar.setTextVisible(False); bar.setFixedHeight(8)
+            bar.setStyleSheet(f"QProgressBar::chunk {{ background: {LEVEL_COLOR.get(dimension.level, LINE_COLOR)}; border-radius: 4px; }}")
+            score = QLabel(f"{dimension.score:.0f}"); score.setMinimumWidth(28); score.setAlignment(Qt.AlignRight); score.setObjectName("metricHint")
+            label.setToolTip(dimension.hint); bar.setToolTip(dimension.hint)
+            layout.addWidget(label); layout.addWidget(bar, 1); layout.addWidget(score); self._rows.addWidget(row)
+
+
+class RiskDistributionChart(Card):
+    """Text-first risk distribution that remains legible without QtCharts."""
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(parent); self._layout = QVBoxLayout(self); self._layout.setContentsMargins(12, 10, 12, 10); self._layout.setSpacing(8)
+        title = QLabel("Risktext"); title.setObjectName("sectionTitle"); self._layout.addWidget(title)
+
+    def set_counts(self, counts) -> None:
+        while self._layout.count() > 1:
+            item = self._layout.takeAt(0)
+            if item.widget(): item.widget().deleteLater()
+        total = sum(counts.values())
+        for level, text in (("high", "High risk"), ("medium", "Medium risk"), ("low", "Low risk")):
+            count = counts.get(level, 0); ratio = f"{count / total:.0%}" if total else "0%"
+            row = QLabel(f"● {text}   {count} text   ({ratio})"); row.setObjectName("riskRow"); row.setStyleSheet(f"color:{LEVEL_COLOR[level]};")
+            self._layout.addWidget(row)
+        hint = QLabel(f"text {total} textRulestext" if total else "textMedium riskRules"); hint.setObjectName("metricHint"); self._layout.addWidget(hint)

@@ -1,13 +1,13 @@
-"""``main.py`` 背后的命令行实现：analyze / check / batch 三个子命令。
+"""``main.py`` text：analyze / check / batch text。
 
-设计要点（对应组长文档"CLI"与"批量分析"两栏）：
+text（text"CLI"text"Batchanalyze"text）：
 
-* **同一分析服务**：三个子命令全部走 ``services.AnalysisService``，
-  GUI 也走同一个入口，保证 CLI 与 GUI 的结果一致。
-* **同一份报告**：导出调用 ``reporters.write_report``，与 GUI 报告区同源。
-* **失败隔离**：``batch`` 用 ``BatchAnalyzer``（ThreadPoolExecutor），
-  单个仓库失败只影响它自己那一行。
-* **可读错误**：所有预期错误都变成一行中文提示 + 非零退出码，不打堆栈。
+* **textanalyzetext**：text ``services.AnalysisService``，
+  GUI text，text CLI text GUI text。
+* **textreport**：text ``reporters.write_report``，text GUI Reportstext。
+* **failedtext**：``batch`` text ``BatchAnalyzer``（ThreadPoolExecutor），
+  single repositoryfailedtext。
+* **textError**：textErrortextNotice + text，text。
 """
 
 from __future__ import annotations
@@ -20,8 +20,8 @@ import threading
 from pathlib import Path
 from typing import Sequence
 
-import reporters
-from services import (
+from core import reporters
+from core.services import (
     AnalysisConfig,
     AnalysisError,
     AnalysisService,
@@ -37,20 +37,20 @@ EXIT_INTERRUPTED = 130
 _FORMAT_CHOICES = ("markdown", "md", "html", "csv", "all")
 
 
-# --- 参数解析 ---------------------------------------------------------------
+# --- text ---------------------------------------------------------------
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="main.py",
-        description="RepoScope — 本地 Git 仓库健康分析（CLI）",
-        epilog="GUI 版本：python run_gui.py（或 run_gui.py --demo）",
+        description="RepoScope — local Git repository health analysis（CLI）",
+        epilog="GUI:：python main.py（text python main.py --demo）",
     )
     parser.add_argument(
         "--version",
         action="version",
         version="RepoScope 1.0",
-        help="显示版本号后退出",
+        help="show version and exit",
     )
 
     subparsers = parser.add_subparsers(dest="command", metavar="{analyze,check,export,batch}")
@@ -59,21 +59,21 @@ def build_parser() -> argparse.ArgumentParser:
     # analyze -------------------------------------------------------------
     analyze = subparsers.add_parser(
         "analyze",
-        help="分析一个本地 Git 仓库并导出报告",
-        description="分析单个仓库，打印健康摘要并生成 Markdown / HTML / CSV 报告。",
+        help="analyzetextlocal Git repositorytextExport report",
+        description="analyzesingle repository，text Markdown / HTML / CSV report。",
     )
-    analyze.add_argument("repo", metavar="仓库目录", help="本地 Git 仓库根目录")
+    analyze.add_argument("repo", metavar="repositorydirectory", help="local Git repositoryroot directory")
     analyze.add_argument(
-        "-c", "--config", metavar="配置文件.json",
-        help="JSON 配置文件（阈值、时间范围、提交格式）",
+        "-c", "--config", metavar="configurationfiles.json",
+        help="JSON configurationfiles（threshold、time range、commit format）",
     )
     analyze.add_argument(
         "-f", "--format", default="markdown", choices=_FORMAT_CHOICES,
-        help="报告格式（默认 markdown；all = 三种都导出）",
+        help="reporttext（default markdown；all = text）",
     )
     analyze.add_argument(
-        "-o", "--output", default="reports", metavar="输出目录",
-        help="报告输出目录（默认 ./reports）",
+        "-o", "--output", default="reports", metavar="output directory",
+        help="reportoutput directory（default ./reports）",
     )
     _add_config_overrides(analyze)
     analyze.set_defaults(handler=_handle_analyze)
@@ -81,21 +81,21 @@ def build_parser() -> argparse.ArgumentParser:
     # export --------------------------------------------------------------
     export = subparsers.add_parser(
         "export",
-        help="分析仓库并导出报告（默认三种格式全导出）",
-        description="与 analyze 同一套分析，默认把 Markdown / HTML / CSV 一次全导出。",
+        help="analyzerepositorytextExport report（defaulttext）",
+        description="text analyze textanalyze，defaulttext Markdown / HTML / CSV text。",
     )
-    export.add_argument("repo", metavar="仓库目录", help="本地 Git 仓库根目录")
+    export.add_argument("repo", metavar="repositorydirectory", help="local Git repositoryroot directory")
     export.add_argument(
-        "-c", "--config", metavar="配置文件.json",
-        help="JSON 配置文件（阈值、时间范围、提交格式）",
+        "-c", "--config", metavar="configurationfiles.json",
+        help="JSON configurationfiles（threshold、time range、commit format）",
     )
     export.add_argument(
         "-f", "--format", default="all", choices=_FORMAT_CHOICES,
-        help="报告格式（默认 all = 三种都导出）",
+        help="reporttext（default all = text）",
     )
     export.add_argument(
-        "-o", "--output", default="reports", metavar="输出目录",
-        help="报告输出目录（默认 ./reports）",
+        "-o", "--output", default="reports", metavar="output directory",
+        help="reportoutput directory（default ./reports）",
     )
     _add_config_overrides(export)
     export.set_defaults(handler=_handle_analyze)
@@ -103,37 +103,37 @@ def build_parser() -> argparse.ArgumentParser:
     # check ---------------------------------------------------------------
     check = subparsers.add_parser(
         "check",
-        help="校验仓库是否可分析（不写任何文件）",
-        description="确认路径是 Git 仓库根目录、Git 可用、仓库能读出提交历史。",
+        help="checkrepositorytextanalyze（textfiles）",
+        description="textPathtext Git repositoryroot directory、Git text、repositorytextcommitstext。",
     )
-    check.add_argument("repo", metavar="仓库目录", help="本地 Git 仓库根目录")
+    check.add_argument("repo", metavar="repositorydirectory", help="local Git repositoryroot directory")
     check.add_argument(
-        "--json", action="store_true", help="以 JSON 输出校验结果（便于脚本调用）",
+        "--json", action="store_true", help="text JSON textchecktext（text）",
     )
     check.set_defaults(handler=_handle_check)
 
     # batch ---------------------------------------------------------------
     batch = subparsers.add_parser(
         "batch",
-        help="并发分析多个仓库并生成对比汇总",
-        description="用线程池并发分析多个仓库；单个仓库失败不影响其它任务。",
+        help="analyze repositories concurrently and generate a comparison summary",
+        description="textanalyzetextrepository；single repositoryfailedtext。",
     )
-    batch.add_argument("repos", nargs="+", metavar="仓库目录", help="一个或多个本地 Git 仓库根目录")
+    batch.add_argument("repos", nargs="+", metavar="repositorydirectory", help="textlocal Git repositoryroot directory")
     batch.add_argument(
-        "-c", "--config", metavar="配置文件.json",
-        help="JSON 配置文件（阈值、时间范围、提交格式）",
+        "-c", "--config", metavar="configurationfiles.json",
+        help="JSON configurationfiles（threshold、time range、commit format）",
     )
     batch.add_argument(
         "-f", "--format", default="markdown", choices=_FORMAT_CHOICES,
-        help="每个仓库的报告格式（默认 markdown；all = 三种都导出）",
+        help="textrepositorytextreporttext（default markdown；all = text）",
     )
     batch.add_argument(
-        "-o", "--output", default="reports", metavar="输出目录",
-        help="报告输出目录（默认 ./reports）",
+        "-o", "--output", default="reports", metavar="output directory",
+        help="reportoutput directory（default ./reports）",
     )
     batch.add_argument(
         "-j", "--max-workers", type=int, default=4, metavar="N",
-        help="并发线程数（默认 4）",
+        help="text（default 4）",
     )
     _add_config_overrides(batch)
     batch.set_defaults(handler=_handle_batch)
@@ -142,25 +142,25 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def _add_config_overrides(parser: argparse.ArgumentParser) -> None:
-    group = parser.add_argument_group("配置覆盖（优先级高于 --config 文件）")
+    group = parser.add_argument_group("Configuration overrides (higher priority than --config file)")
     group.add_argument("--stale-days", type=int, default=None, metavar="N",
-                       help="陈旧文件阈值（天）")
+                       help="Stale filesthreshold（text）")
     group.add_argument("--large-file-mb", type=int, default=None, metavar="N",
-                       help="大文件阈值（MB）")
+                       help="Large filesthreshold（MB）")
     group.add_argument("--hotspot-changes", type=int, default=None, metavar="N",
-                       help="热点文件修改次数阈值")
+                       help="Hot filestextthreshold")
     group.add_argument("--release-stale-days", type=int, default=None, metavar="N",
-                       help="发布停滞阈值（天）")
+                       help="textthreshold（text）")
     group.add_argument("--single-maintainer-ratio", type=float, default=None, metavar="R",
-                       help="单一维护者占比阈值（0~1）")
+                       help="textthreshold（0~1）")
     group.add_argument("--window-days", type=int, default=None, metavar="N",
-                       help="只统计最近 N 天的提交（0 = 全部历史）")
-    group.add_argument("--commit-pattern", default=None, metavar="正则",
-                       help="提交信息规范的正则")
+                       help="text N textcommits（0 = text）")
+    group.add_argument("--commit-pattern", default=None, metavar="regex",
+                       help="commitsInformationconventiontextregex")
 
 
 def _resolve_config(args: argparse.Namespace) -> AnalysisConfig:
-    """配置文件打底，命令行参数覆盖，最后统一校验。"""
+    """configurationfilestext，text，textcheck。"""
     config = AnalysisConfig.from_json(args.config) if args.config else AnalysisConfig()
     overrides = {
         field: getattr(args, field)
@@ -184,21 +184,21 @@ def _resolve_formats(value: str) -> list[str]:
     return [value]
 
 
-# --- 子命令 -----------------------------------------------------------------
+# --- text -----------------------------------------------------------------
 
 
 def _handle_analyze(args: argparse.Namespace) -> int:
     try:
         config = _resolve_config(args)
     except (ValueError, OSError) as exc:
-        return _fail(f"配置有误：{exc}")
+        return _fail(f"configurationtext：{exc}")
 
     service = AnalysisService(allow_synthetic=False)
     progress = _progress_printer()
     try:
         view = service.analyze(args.repo, config, on_progress=progress)
     except AnalysisError as exc:
-        return _fail(f"分析失败（{exc.code}）：{exc.message}")
+        return _fail(f"analyzefailed（{exc.code}）：{exc.message}")
 
     _print_view_summary(view)
 
@@ -219,7 +219,7 @@ def _handle_check(args: argparse.Namespace) -> int:
             print(json.dumps({"ok": False, "code": exc.code, "message": exc.message},
                              ensure_ascii=False))
         else:
-            print(f"校验失败：{exc.message}", file=sys.stderr)
+            print(f"checkfailed：{exc.message}", file=sys.stderr)
         return EXIT_FAILURE
 
     if args.json:
@@ -237,12 +237,12 @@ def _handle_check(args: argparse.Namespace) -> int:
         ))
         return EXIT_OK
 
-    print(f"OK：{info.repo_name} 是有效的 Git 仓库")
-    print(f"  路径：{info.path}")
-    print(f"  提交：{info.commits} · 文件：{info.files}")
-    print(f"  分支：{', '.join(info.branches) or '—'}")
-    print(f"  标签：{', '.join(info.tags) or '—'}")
-    print("可以运行：python main.py analyze " + info.path)
+    print(f"OK：{info.repo_name} is a valid Git repository")
+    print(f"  Path：{info.path}")
+    print(f"  commits：{info.commits} · files：{info.files}")
+    print(f"  branches：{', '.join(info.branches) or '—'}")
+    print(f"  tags：{', '.join(info.tags) or '—'}")
+    print("You can run：python main.py analyze " + info.path)
     return EXIT_OK
 
 
@@ -250,23 +250,23 @@ def _handle_batch(args: argparse.Namespace) -> int:
     try:
         config = _resolve_config(args)
     except (ValueError, OSError) as exc:
-        return _fail(f"配置有误：{exc}")
+        return _fail(f"configurationtext：{exc}")
     if args.max_workers < 1:
-        return _fail("--max-workers 至少为 1")
+        return _fail("--max-workers text 1")
 
     analyzer = BatchAnalyzer(max_workers=args.max_workers)
     cancel_event = threading.Event()
 
-    def on_signal(signum, frame):  # noqa: ARG001 - 签名由 signal 规定
+    def on_signal(signum, frame):  # noqa: ARG001 - text signal text
         if cancel_event.is_set():
-            raise KeyboardInterrupt  # 第二次 Ctrl+C 直接退出
-        print("\n收到中断信号，正在等待已开始的仓库收尾（再按一次强制退出）…", file=sys.stderr)
+            raise KeyboardInterrupt  # text Ctrl+C text
+        print("\ntext，textrepositorytext（text）…", file=sys.stderr)
         cancel_event.set()
 
     previous = signal.signal(signal.SIGINT, on_signal)
 
     def on_progress(result: BatchResult, done: int, total: int) -> None:
-        status = "成功" if result.ok else ("已取消" if result.cancelled else "失败")
+        status = "success" if result.ok else ("textcancelled" if result.cancelled else "failed")
         name = result.repo_name or Path(result.path).name
         print(f"[{done}/{total}] {name}：{status}", file=sys.stderr)
 
@@ -307,12 +307,12 @@ def _handle_batch(args: argparse.Namespace) -> int:
     _print_written(written)
 
     if failures:
-        print(f"\n{len(failures)} 个仓库失败或已取消，详见汇总表。", file=sys.stderr)
+        print(f"\n{len(failures)} textrepositoryfailedtextcancelled，text。", file=sys.stderr)
         return EXIT_FAILURE
     return EXIT_OK
 
 
-# --- 输出辅助 ---------------------------------------------------------------
+# --- text ---------------------------------------------------------------
 
 
 def _fail(message: str) -> int:
@@ -334,38 +334,38 @@ def _progress_printer():
 
 def _print_view_summary(view) -> None:
     snapshot = view.snapshot
-    print(f"分析完成：{snapshot.repo_name}")
-    print(f"  仓库：{snapshot.repo_path}")
+    print(f"Analysis complete：{snapshot.repo_name}")
+    print(f"  repository：{snapshot.repo_path}")
     print(
-        f"  提交 {view.total_commits} · 作者 {view.author_count} · 文件 {view.file_count} · "
-        f"健康度 {view.health_score:.0f} · 反模式 {len(view.warnings)} 条 · "
-        f"用时 {view.elapsed_seconds:.1f}s"
+        f"  commits {view.total_commits} · authors {view.author_count} · files {view.file_count} · "
+        f"health score {view.health_score:.0f} · anti-patterns {len(view.warnings)} text · "
+        f"elapsed {view.elapsed_seconds:.1f}s"
     )
 
 
 def _print_batch_table(results: Sequence[BatchResult]) -> None:
-    print("\n批量分析结果：")
+    print("\nBatch analysis results：")
     for result in results:
         if result.ok and result.view is not None:
             view = result.view
             print(
-                f"  {view.snapshot.repo_name:<24} 提交 {view.total_commits:<5} "
-                f"健康度 {view.health_score:>5.0f}  反模式 {len(view.warnings)} 条"
+                f"  {view.snapshot.repo_name:<24} commits {view.total_commits:<5} "
+                f"health score {view.health_score:>5.0f}  anti-patterns {len(view.warnings)} text"
             )
         else:
             name = result.repo_name or Path(result.path).name
-            print(f"  {name:<24} 失败：{result.error}")
+            print(f"  {name:<24} failed：{result.error}")
 
 
 def _print_written(paths: Sequence[Path]) -> None:
     if not paths:
         return
-    print("\n报告已生成：")
+    print("\nReports generated：")
     for path in paths:
         print(f"  {path}")
 
 
-# --- 入口 -------------------------------------------------------------------
+# --- text -------------------------------------------------------------------
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -376,21 +376,22 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         return args.handler(args)
     except KeyboardInterrupt:
-        print("\n已中断。", file=sys.stderr)
+        print("\ntext。", file=sys.stderr)
         return EXIT_INTERRUPTED
     except AnalysisError as exc:
-        return _fail(f"错误（{exc.code}）：{exc.message}")
+        return _fail(f"Error（{exc.code}）：{exc.message}")
     except ValueError as exc:
-        return _fail(f"错误：{exc}")
+        return _fail(f"Error：{exc}")
 
 
 def _ensure_utf8_stdio() -> None:
-    """Windows 控制台默认 cp936，打印中文报告路径可能乱码；尽力切到 UTF-8。"""
+    """Windows textdefault cp936，textreportPathtext；text UTF-8。"""
     for stream_name in ("stdout", "stderr"):
         stream = getattr(sys, stream_name, None)
         if stream is None or not hasattr(stream, "reconfigure"):
             continue
         try:
             stream.reconfigure(encoding="utf-8", errors="replace")
-        except (ValueError, OSError):  # pragma: no cover - 某些被重定向的流不支持
+        except (ValueError, OSError):  # pragma: no cover - text
             pass
+

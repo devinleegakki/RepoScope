@@ -12,7 +12,7 @@ try:
                                   FileOwnershipStat, OwnershipMetrics, SecurityFinding,
                                   RepositorySnapshotLike, _first_attr, as_utc_datetime)
 except ImportError:
-    from models_analysis import (AnalysisConfig, CodeQualityMetrics, DependencyMetrics,
+    from reposcope.models_analysis import (AnalysisConfig, CodeQualityMetrics, DependencyMetrics,
                                  FileOwnershipStat, OwnershipMetrics, SecurityFinding,
                                  RepositorySnapshotLike, _first_attr, as_utc_datetime)  # type: ignore
 
@@ -150,3 +150,4 @@ def run_static_analysis(snapshot: RepositorySnapshotLike, config: AnalysisConfig
     quality = scan_code_quality(snapshot, config); ownership = scan_ownership(snapshot, config)
     dependencies = scan_dependencies(snapshot) if config.enable_dependency_scan else DependencyMetrics()
     return quality, ownership, dependencies, scan_secrets(snapshot, config)
+

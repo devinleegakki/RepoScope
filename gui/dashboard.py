@@ -1,7 +1,7 @@
-"""总览仪表板：健康度 + 五个关键指标 + 风险摘要。
+"""Dashboard：health score + textKey metrics + Risktext。
 
-这里**不列全部警告**，只给前三条和总数，完整四要素放在「反模式中心」。
-理由：总览页的职责是让人三秒内知道"这个仓库有没有病"，列长清单反而看不出重点。
+text**text**，text，text「Anti-pattern Center」。
+text：text"textrepositorytext"，text。
 """
 
 from __future__ import annotations
@@ -19,11 +19,12 @@ from PySide6.QtWidgets import (
 )
 
 from .contract import AnalysisView
+from .plotting import HealthDimensionChart, RiskDistributionChart, TrendChart
 from .widgets import LEVEL_COLOR, LEVEL_TEXT, SEVERITY_TEXT, Badge, Card, MetricCard, PageHeader
 
 
 class HealthCard(Card):
-    """健康度大卡：数字 + 等级 + 一条进度条。"""
+    """health scoretext：text + Level + text。"""
 
     def __init__(self) -> None:
         super().__init__()
@@ -32,11 +33,11 @@ class HealthCard(Card):
         layout.setContentsMargins(18, 14, 18, 16)
         layout.setSpacing(6)
 
-        label = QLabel("仓库健康度")
+        label = QLabel("repositoryhealth score")
         label.setObjectName("metricLabel")
         self._value = QLabel("—")
         self._value.setObjectName("healthValue")
-        self._badge = Badge("待分析", "low")
+        self._badge = Badge("Pending analysis", "low")
 
         row = QHBoxLayout()
         row.setSpacing(8)
@@ -50,7 +51,7 @@ class HealthCard(Card):
         self._bar.setTextVisible(False)
         self._bar.setFixedHeight(6)
 
-        self._hint = QLabel("满分 100 · 由命中规则的严重度扣分")
+        self._hint = QLabel("text 100 · textRulestext")
         self._hint.setObjectName("metricHint")
 
         layout.addWidget(label)
@@ -67,7 +68,7 @@ class HealthCard(Card):
 
 
 class DashboardPage(QWidget):
-    """总览页。所有数字都来自传入的 ``AnalysisView``，页面自己不做统计。"""
+    """text。text ``AnalysisView``，text。"""
 
     open_patterns = Signal()
 
@@ -77,7 +78,7 @@ class DashboardPage(QWidget):
         outer.setContentsMargins(24, 20, 24, 20)
         outer.setSpacing(14)
 
-        self.header = PageHeader("总览仪表板", "尚未分析任何仓库")
+        self.header = PageHeader("Dashboard", "No repository analyzed yet")
         outer.addWidget(self.header)
 
         top = QHBoxLayout()
@@ -85,13 +86,32 @@ class DashboardPage(QWidget):
         self.health = HealthCard()
         top.addWidget(self.health, 0)
 
-        self.commits = MetricCard("提交总数")
-        self.authors = MetricCard("作者数")
-        self.files = MetricCard("文件数")
-        self.hygiene = MetricCard("提交规范通过率")
+        self.commits = MetricCard("commitstext")
+        self.authors = MetricCard("author count")
+        self.files = MetricCard("file count")
+        self.hygiene = MetricCard("Commit conventionpass rate")
         for card in (self.commits, self.authors, self.files, self.hygiene):
             top.addWidget(card, 1)
         outer.addLayout(top)
+
+        visuals = QHBoxLayout()
+        visuals.setSpacing(12)
+        self.dimension_chart = HealthDimensionChart()
+        self.dimension_chart.setMinimumHeight(150)
+        self.risk_chart = RiskDistributionChart()
+        self.risk_chart.setMinimumHeight(150)
+        self.activity_chart = Card()
+        activity_chart_layout = QVBoxLayout(self.activity_chart)
+        activity_chart_layout.setContentsMargins(12, 10, 12, 10)
+        activity_chart_layout.setSpacing(4)
+        activity_chart_layout.addWidget(QLabel("Commit Trends"))
+        self.trend_chart = TrendChart()
+        self.trend_chart.setMinimumHeight(115)
+        activity_chart_layout.addWidget(self.trend_chart, 1)
+        visuals.addWidget(self.dimension_chart, 3)
+        visuals.addWidget(self.risk_chart, 2)
+        visuals.addWidget(self.activity_chart, 3)
+        outer.addLayout(visuals)
 
         bottom = QHBoxLayout()
         bottom.setSpacing(12)
@@ -102,11 +122,11 @@ class DashboardPage(QWidget):
         risk_layout.setSpacing(8)
 
         head = QHBoxLayout()
-        title = QLabel("风险摘要")
+        title = QLabel("Risktext")
         title.setObjectName("sectionTitle")
         self.risk_count = QLabel("")
         self.risk_count.setObjectName("pageHint")
-        jump = QPushButton("查看反模式中心 →")
+        jump = QPushButton("textAnti-pattern Center →")
         jump.setObjectName("link")
         jump.clicked.connect(self.open_patterns.emit)
         head.addWidget(title)
@@ -125,7 +145,7 @@ class DashboardPage(QWidget):
         activity_layout = QVBoxLayout(activity_card)
         activity_layout.setContentsMargins(16, 12, 16, 12)
         activity_layout.setSpacing(8)
-        activity_title = QLabel("近期活跃度")
+        activity_title = QLabel("text")
         activity_title.setObjectName("sectionTitle")
         activity_layout.addWidget(activity_title)
 
@@ -137,47 +157,58 @@ class DashboardPage(QWidget):
 
         outer.addLayout(bottom, 1)
 
-    # -- 数据 ------------------------------------------------------------
+    # -- text ------------------------------------------------------------
     def set_data(self, view: AnalysisView | None) -> None:
         if view is None:
             return
         snapshot = view.snapshot
         self.header.set_hint(
             f"{snapshot.repo_name} · {snapshot.repo_path} · "
-            f"{len(snapshot.branches)} 个分支 · 用时 {view.elapsed_seconds:.1f}s"
+            f"{len(snapshot.branches)} textbranches · elapsed {view.elapsed_seconds:.1f}s"
         )
 
         level = getattr(view, "risk_level", "low")
         self.health.set_score(view.health_score, level)
 
         active_days = len(view.commit_calendar)
-        self.commits.set_value(f"{view.total_commits:,}", f"覆盖 {active_days} 个活跃日")
+        self.commits.set_value(f"{view.total_commits:,}", f"text {active_days} text")
         self.authors.set_value(str(view.author_count),
                                self._concentration(view))
         self.files.set_value(f"{view.file_count:,}",
-                             f"热点 {len(view.hotspot_files)} · 陈旧 {len(view.stale_files)}")
+                             f"text {len(view.hotspot_files)} · text {len(view.stale_files)}")
 
         hygiene = getattr(view, "commit_hygiene", None)
         if hygiene is not None and hygiene.pass_rate >= 0:
             self.hygiene.set_value(
                 f"{hygiene.pass_rate:.0%}",
-                f"{hygiene.passed}/{hygiene.total} 条符合约定格式",
+                f"{hygiene.passed}/{hygiene.total} text",
             )
             tone = "low" if hygiene.pass_rate >= 0.8 else (
                 "medium" if hygiene.pass_rate >= 0.6 else "high")
             self.hygiene.set_tone(tone)
         else:
-            self.hygiene.set_value("—", "待后端提供")
+            self.hygiene.set_value("—", "Not provided by backend")
 
         self._fill_risks(view)
         self._fill_recent(view)
+        stats = getattr(view, "dashboard_stats", None)
+        if stats is not None:
+            self.dimension_chart.set_dimensions(stats.dimensions)
+            self.risk_chart.set_counts(stats.risk_counts)
+        points = []
+        for day, count in sorted(dict(view.commit_calendar).items()):
+            try:
+                points.append((datetime.strptime(day, "%Y-%m-%d"), count))
+            except ValueError:
+                continue
+        self.trend_chart.set_points(points[-90:])
 
     @staticmethod
     def _concentration(view: AnalysisView) -> str:
         stats = list(view.author_stats)
         if not stats:
-            return "无作者数据"
-        return f"最高占比 {stats[0].share:.0%}"
+            return "textauthor counttext"
+        return f"text {stats[0].share:.0%}"
 
     def _clear(self, layout: QVBoxLayout) -> None:
         while layout.count():
@@ -189,9 +220,9 @@ class DashboardPage(QWidget):
     def _fill_risks(self, view: AnalysisView) -> None:
         self._clear(self.risk_list)
         warnings = list(view.warnings)
-        self.risk_count.setText(f"共 {len(warnings)} 条" if warnings else "无")
+        self.risk_count.setText(f"text {len(warnings)} text" if warnings else "text")
         if not warnings:
-            ok = QLabel("没有命中任何反模式规则")
+            ok = QLabel("textanti-patternsRules")
             ok.setObjectName("pageHint")
             self.risk_list.addWidget(ok)
             return
@@ -206,7 +237,7 @@ class DashboardPage(QWidget):
             row.setObjectName("riskRow")
             self.risk_list.addWidget(row)
         if len(warnings) > 3:
-            more = QLabel(f"另有 {len(warnings) - 3} 条，见「反模式中心」")
+            more = QLabel(f"text {len(warnings) - 3} text，text「Anti-pattern Center」")
             more.setObjectName("pageHint")
             self.risk_list.addWidget(more)
 
@@ -214,7 +245,7 @@ class DashboardPage(QWidget):
         self._clear(self.recent_rows)
         calendar = dict(view.commit_calendar)
         if not calendar:
-            empty = QLabel("没有提交记录")
+            empty = QLabel("textcommitstext")
             empty.setObjectName("pageHint")
             self.recent_rows.addWidget(empty)
             return
@@ -227,9 +258,9 @@ class DashboardPage(QWidget):
                 count for day, count in calendar.items()
                 if start.strftime("%Y-%m-%d") <= day <= last
             )
-            row = QLabel(f"最近 {days} 天 · {total} 次提交")
+            row = QLabel(f"text {days} text · {total} textcommits")
             row.setObjectName("riskRow")
             self.recent_rows.addWidget(row)
-        last_day = QLabel(f"最后一次提交：{last}")
+        last_day = QLabel(f"textcommits：{last}")
         last_day.setObjectName("metricHint")
         self.recent_rows.addWidget(last_day)

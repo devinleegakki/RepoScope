@@ -1,15 +1,15 @@
-"""主窗口：外壳、侧边栏导航、页面容器、后台线程调度。
+"""text：text、text、text、text。
 
-骨架只有三样东西：
-    QMainWindow（壳） + QListWidget（导航） + QStackedWidget（一叠页面）
-导航的 ``currentRowChanged`` 通过 ``_row_to_page`` 映射到 ``QStackedWidget`` 的页索引，
-切页不销毁页面，所以来回切是瞬间的——这一条直接对应验收标准里的"切换页面不卡顿"。
+text：
+    QMainWindow（text） + QListWidget（text） + QStackedWidget（text）
+text ``currentRowChanged`` text ``_row_to_page`` text ``QStackedWidget`` text，
+text，text——text"text"。
 
-导航按组长文档的八个区域组织：
-    准备    → 仓库选择、分析配置
-    分析结果 → 总览仪表板、提交趋势、作者贡献、数据分析、反模式中心、报告区
-    批量    → 多仓库对比
-（第八个区域"进度反馈"是常驻的进度条，不是一页。）
+text：
+    Setup    → Repository、Analysis Settings
+    Results → Dashboard、Commit Trends、Author Contributions、Data Analysis、Anti-pattern Center、Reports
+    Batch    → Repository Comparison
+（text"text"text，text。）
 """
 
 from __future__ import annotations
@@ -48,21 +48,21 @@ from .trends import TrendPage
 from .worker import AnalysisWorker
 
 _NAV_GROUPS = (
-    ("准备", ("仓库选择", "分析配置")),
-    ("分析结果", ("总览仪表板", "提交趋势", "作者贡献", "数据分析", "反模式中心", "报告区")),
-    ("批量", ("多仓库对比",)),
+    ("Setup", ("Repository", "Analysis Settings")),
+    ("Results", ("Dashboard", "Commit Trends", "Author Contributions", "Data Analysis", "Anti-pattern Center", "Reports")),
+    ("Batch", ("Repository Comparison",)),
 )
 
 _NAV_ICONS = {
-    "仓库选择": "cil-folder-open.png",
-    "分析配置": "cil-settings.png",
-    "总览仪表板": "cil-speedometer.png",
-    "提交趋势": "cil-chart-line.png",
-    "作者贡献": "cil-people.png",
-    "数据分析": "cil-file.png",
-    "反模式中心": "cil-task.png",
-    "报告区": "cil-description.png",
-    "多仓库对比": "cil-layers.png",
+    "Repository": "cil-folder-open.png",
+    "Analysis Settings": "cil-settings.png",
+    "Dashboard": "cil-speedometer.png",
+    "Commit Trends": "cil-chart-line.png",
+    "Author Contributions": "cil-people.png",
+    "Data Analysis": "cil-file.png",
+    "Anti-pattern Center": "cil-task.png",
+    "Reports": "cil-description.png",
+    "Repository Comparison": "cil-layers.png",
 }
 
 
@@ -78,11 +78,11 @@ class _LegacyNavigation:
 
 
 class MainWindow(QMainWindow):
-    """程序主窗口。"""
+    """text。"""
 
     def __init__(self) -> None:
         super().__init__()
-        self.setWindowTitle("RepoScope — 本地 Git 仓库健康分析")
+        self.setWindowTitle("RepoScope — local Git repository health analysis")
         self.resize(1240, 820)
 
         self._thread: QThread | None = None
@@ -99,9 +99,9 @@ class MainWindow(QMainWindow):
 
         self._build_ui()
         self._apply_stylesheet()
-        self.statusBar().showMessage("就绪 · 在「仓库选择」里选一个本地 Git 仓库")
+        self.statusBar().showMessage("Ready · text「Repository」textlocal Git repository")
 
-    # -- 界面搭建 --------------------------------------------------------
+    # -- text --------------------------------------------------------
     def _build_ui(self) -> None:
         root = QWidget()
         self.setCentralWidget(root)
@@ -111,7 +111,7 @@ class MainWindow(QMainWindow):
 
         outer.addWidget(self._build_topbar())
         self._progress_host = self._build_progress_bar()
-        self._progress_host.setVisible(False)   # 只在分析时出现，空闲时别占一条横杠
+        self._progress_host.setVisible(False)   # textanalyzetext，text
         outer.addWidget(self._progress_host)
 
         body = QHBoxLayout()
@@ -145,9 +145,9 @@ class MainWindow(QMainWindow):
             self.stack.addWidget(page)
 
         self.select_page.analyze_requested.connect(self._start_analysis)
-        self.dashboard_page.open_patterns.connect(lambda: self.goto("反模式中心"))
+        self.dashboard_page.open_patterns.connect(lambda: self.goto("Anti-pattern Center"))
         self.sidebar.currentRowChanged.connect(self._on_nav_changed)
-        self.sidebar.setCurrentRow(self._name_to_row["仓库选择"])
+        self.sidebar.setCurrentRow(self._name_to_row["Repository"])
         self.navigation = _LegacyNavigation(self.stack)
         self.pages = self.stack
         self.overview_values = {"repo_name": QLabel("—")}
@@ -201,7 +201,7 @@ class MainWindow(QMainWindow):
         self.sidebar_toggle = QToolButton()
         self.sidebar_toggle.setObjectName("sidebarToggle")
         self.sidebar_toggle.setIcon(self._icon("cil-menu.png"))
-        self.sidebar_toggle.setToolTip("收起侧栏")
+        self.sidebar_toggle.setToolTip("text")
         self.sidebar_toggle.clicked.connect(self._toggle_sidebar)
         header_layout.addWidget(self.sidebar_toggle)
         host_layout.addWidget(header)
@@ -265,7 +265,7 @@ class MainWindow(QMainWindow):
             item = self.sidebar.item(row)
             if item.data(Qt.UserRole) == "header":
                 item.setHidden(not self._sidebar_expanded)
-        self.sidebar_toggle.setToolTip("收起侧栏" if self._sidebar_expanded else "展开侧栏")
+        self.sidebar_toggle.setToolTip("text" if self._sidebar_expanded else "text")
 
     def _on_nav_changed(self, row: int) -> None:
         page = self._row_to_page.get(row)
@@ -273,7 +273,7 @@ class MainWindow(QMainWindow):
             self.stack.setCurrentIndex(page)
 
     def goto(self, name: str) -> None:
-        """按导航名切页。其它页面（如总览的风险摘要）通过它跳转。"""
+        """text。text（textRisktext）text。"""
         row = self._name_to_row.get(name)
         if row is not None:
             self.sidebar.setCurrentRow(row)
@@ -290,19 +290,19 @@ class MainWindow(QMainWindow):
         mark.setObjectName("brand")
         layout.addWidget(mark)
 
-        self.repo_label = QLabel("未选择仓库")
+        self.repo_label = QLabel("textSelectrepository")
         self.repo_label.setObjectName("topbarRepo")
         layout.addWidget(self.repo_label, 1)
 
-        self.analyze_btn = QPushButton("重新分析")
+        self.analyze_btn = QPushButton("Re-analyze")
         self.analyze_btn.setObjectName("primary")
         self.analyze_btn.setEnabled(False)
         self.analyze_btn.clicked.connect(self._analyze_current)
         layout.addWidget(self.analyze_btn)
 
-        self.export_btn = QPushButton("导出报告")
+        self.export_btn = QPushButton("Export report")
         self.export_btn.setEnabled(False)
-        self.export_btn.clicked.connect(lambda: self.goto("报告区"))
+        self.export_btn.clicked.connect(lambda: self.goto("Reports"))
         layout.addWidget(self.export_btn)
         return bar
 
@@ -316,19 +316,19 @@ class MainWindow(QMainWindow):
         self.progress.setRange(0, 100)
         self.progress.setValue(0)
         self.progress.setTextVisible(False)
-        self.progress_label = QLabel("待分析")
+        self.progress_label = QLabel("Pending analysis")
         self.progress_label.setObjectName("pageHint")
         self.progress_label.setMinimumWidth(240)
         layout.addWidget(self.progress, 1)
         layout.addWidget(self.progress_label)
         return host
 
-    # -- 操作 ------------------------------------------------------------
+    # -- text ------------------------------------------------------------
     def _analyze_current(self) -> None:
         path = self.current_path()
         if not path:
-            self.goto("仓库选择")
-            self.statusBar().showMessage("请先在「仓库选择」里选一个本地 Git 仓库")
+            self.goto("Repository")
+            self.statusBar().showMessage("Please firsttext「Repository」textlocal Git repository")
             return
         self._start_analysis(path)
 
@@ -337,27 +337,27 @@ class MainWindow(QMainWindow):
 
     def _start_analysis(self, path: str) -> None:
         if self._thread is not None:
-            dialogs.show_info(self, "正在分析", "当前任务还没结束，请稍候。")
+            dialogs.show_info(self, "Analyzing", "text，Please wait。")
             return
 
         if not path:
-            dialogs.show_error(self, "缺少仓库路径", "请先在「仓库选择」里选择一个本地 Git 仓库目录。")
+            dialogs.show_error(self, "MissingrepositoryPath", "Please firsttext「Repository」textSelecttextlocal Git repositorydirectory。")
             return
         if not Path(path).is_dir():
-            dialogs.show_error(self, "路径不存在", f"找不到这个目录：\n{path}")
+            dialogs.show_error(self, "Pathdoes not exist", f"Cannot findtextdirectory：\n{path}")
             return
         if not (Path(path) / ".git").exists():
             dialogs.show_error(
-                self, "不是 Git 仓库",
-                f"目录里没有 .git 文件夹：\n{path}\n\n请选择仓库根目录，而不是它的子目录。",
+                self, "Not a Git repository",
+                f"directorytext .git filestext：\n{path}\n\ntextSelectrepositoryroot directory，textsubdirectory。",
             )
             return
         if not self.settings_page.pattern_is_valid():
             dialogs.show_error(
-                self, "提交规范正则写错了",
-                "「分析配置」里的提交信息格式不是合法正则，请先改正再分析。",
+                self, "Commit conventionregextext",
+                "「Analysis Settings」textcommitsInformationtextvalidregex，Please firsttextanalyze。",
             )
-            self.goto("分析配置")
+            self.goto("Analysis Settings")
             return
 
         request: AnalysisRequest = self.settings_page.to_request(path)
@@ -366,9 +366,9 @@ class MainWindow(QMainWindow):
         self.analyze_btn.setEnabled(False)
         self.export_btn.setEnabled(False)
         self.progress.setValue(0)
-        self.progress_label.setText("准备中…")
+        self.progress_label.setText("Preparing…")
         self._progress_host.setVisible(True)
-        self.statusBar().showMessage(f"正在分析 {Path(path).name} …")
+        self.statusBar().showMessage(f"Analyzing {Path(path).name} …")
 
         self._thread = QThread(self)
         self._worker = AnalysisWorker(request)
@@ -395,22 +395,22 @@ class MainWindow(QMainWindow):
             page.set_data(view)
 
         self.progress.setValue(100)
-        self.progress_label.setText(f"完成 · 用时 {view.elapsed_seconds:.1f}s")
-        self._progress_host.setVisible(False)   # 完成后收起，用时信息交给状态栏
+        self.progress_label.setText(f"Complete · elapsed {view.elapsed_seconds:.1f}s")
+        self._progress_host.setVisible(False)   # Completetext，elapsedInformationtext
         self.analyze_btn.setEnabled(True)
         self.export_btn.setEnabled(True)
         self.statusBar().showMessage(
-            f"{view.snapshot.repo_name} · {view.total_commits} 次提交 · "
-            f"{view.author_count} 位作者 · 健康度 {view.health_score:.0f} · "
-            f"{len(view.warnings)} 条反模式 · 用时 {view.elapsed_seconds:.1f}s"
+            f"{view.snapshot.repo_name} · {view.total_commits} textcommits · "
+            f"{view.author_count} textauthors · health score {view.health_score:.0f} · "
+            f"{len(view.warnings)} textanti-patterns · elapsed {view.elapsed_seconds:.1f}s"
         )
-        self.goto("总览仪表板")
+        self.goto("Dashboard")
 
     def _on_failed(self, message: str) -> None:
-        self.progress_label.setText("分析失败")
+        self.progress_label.setText("analyzefailed")
         self._progress_host.setVisible(False)
-        self.statusBar().showMessage("分析失败")
-        dialogs.show_error(self, "分析失败", message)
+        self.statusBar().showMessage("analyzefailed")
+        dialogs.show_error(self, "analyzefailed", message)
 
     def _cleanup(self) -> None:
         if self._thread is not None:
@@ -418,38 +418,38 @@ class MainWindow(QMainWindow):
         self._thread = None
         self._worker = None
 
-    # -- 命令行直启 ------------------------------------------------------
+    # -- text ------------------------------------------------------
     def open_repo(self, path: str) -> None:
-        """启动后立刻分析指定仓库，供 ``--path`` 使用。
+        """textanalyzetextrepository，text ``--path`` text。
 
-        现场演示时不用手点目录：命令一敲，进度条就开始动，比"先点这里再点那里"
-        少一次出错机会。窗口已经 show() 过，所以这里补一小段延迟让进度条先画出来。
+        textdirectory：text，text，text"text"
+        text。text show() text，text。
         """
         resolved = str(Path(path).resolve())
         self.select_page.path_edit.setText(resolved)
         if not Path(resolved).is_dir():
-            dialogs.show_error(self, "路径不存在", f"找不到这个目录：\n{resolved}")
+            dialogs.show_error(self, "Pathdoes not exist", f"Cannot findtextdirectory：\n{resolved}")
             return
         self._start_analysis(resolved)
 
-    # -- 演示模式 --------------------------------------------------------
+    # -- text --------------------------------------------------------
     def load_demo(self) -> None:
-        """直接灌入内置演示数据集，用于彩排和截图。
+        """text，text。
 
-        真实仓库历史太短时（新仓库只有十来个提交），趋势图和热力图会空得看不出效果。
-        ``python run_gui.py --demo`` 就是走这条路，所有页面立刻有数据。
+        textrepositorytext（textrepositorytextcommits），text。
+        ``python main.py --demo`` text，text。
         """
         from . import mock_data
 
         view = mock_data.build("demo/workspace", force_synthetic=True)
-        self.repo_label.setText("演示数据集 · 160 次提交 · 4 位作者")
+        self.repo_label.setText("text · 160 textcommits · 4 textauthors")
         self._on_finished(view)
-        self.analyze_btn.setEnabled(False)   # 演示数据没有真实路径可重跑
+        self.analyze_btn.setEnabled(False)   # textPathtext
         self.statusBar().showMessage(
-            "演示数据模式 · 数值来自内置数据集，接入 metrics.py 后即为真实分析结果"
+            "text · text，text metrics.py textResults"
         )
 
-    # -- 样式 ------------------------------------------------------------
+    # -- text ------------------------------------------------------------
     def _apply_stylesheet(self) -> None:
         qss = Path(__file__).with_name("style.qss")
         if qss.exists():
@@ -465,7 +465,7 @@ def main(demo: bool = False, repo: str | None = None) -> int:
         window.load_demo()
     window.show()
     if repo and not demo:
-        # 等事件循环跑起来再分析：进度条先出现，观众能看见"正在读 git"的过程
+        # textanalyze：text，text"text git"text
         QTimer.singleShot(150, lambda: window.open_repo(repo))
     return app.exec()
 

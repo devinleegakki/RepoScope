@@ -1,8 +1,8 @@
-"""页面之间共用的小部件。
+"""text。
 
-集中在这里的理由很实际：指标卡、标题、等级徽标这三样东西在四五个页面里都出现，
-散着写会导致"同一个东西在总览页是 13px、在报告页是 14px"这种低级不一致，
-评卷老师一眼就能看出来。
+text：text、text、Leveltext，
+text"text 13px、textreporttext 14px"text，
+text。
 """
 
 from __future__ import annotations
@@ -17,7 +17,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-# 等级 → 颜色。涨跌色系在这里统一，别在页面里各写一份。
+# Level → text。text，text。
 LEVEL_COLOR = {
     "high": "#F09595",
     "medium": "#EF9F27",
@@ -25,20 +25,20 @@ LEVEL_COLOR = {
 }
 
 LEVEL_TEXT = {
-    "high": "高风险",
-    "medium": "中风险",
-    "low": "良好",
+    "high": "High risk",
+    "medium": "Medium risk",
+    "low": "Good",
 }
 
 SEVERITY_TEXT = {
-    "high": "高",
-    "medium": "中",
-    "low": "低",
+    "high": "text",
+    "medium": "text",
+    "low": "text",
 }
 
 
 class Card(QFrame):
-    """统一样式的卡片容器。"""
+    """text。"""
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -46,7 +46,7 @@ class Card(QFrame):
 
 
 class MetricCard(Card):
-    """一张指标卡：上面小字标题，下面大数字，右下角一行灰字提示。"""
+    """text：text，text，textNotice。"""
 
     def __init__(self, title: str, hint: str = "") -> None:
         super().__init__()
@@ -73,13 +73,13 @@ class MetricCard(Card):
             self._hint.setText(hint)
 
     def set_tone(self, level: str) -> None:
-        """按等级给数字上色（high / medium / low）。"""
+        """textLeveltext（high / medium / low）。"""
         color = LEVEL_COLOR.get(level)
         self._value.setStyleSheet(f"color: {color};" if color else "")
 
 
 class Badge(QLabel):
-    """小标签：风险等级、页面状态等。"""
+    """texttags：RiskLevel、text。"""
 
     def __init__(self, text: str = "", level: str = "low") -> None:
         super().__init__(text)
@@ -96,7 +96,7 @@ class Badge(QLabel):
 
 
 class PageHeader(QWidget):
-    """页面顶部：标题 + 一行说明。右侧可以挂一个部件（按钮、筛选器）。"""
+    """text：text + text。text（text、text）。"""
 
     def __init__(self, title: str, hint: str = "") -> None:
         super().__init__()
@@ -127,9 +127,9 @@ class PageHeader(QWidget):
 
 
 class EmptyState(QLabel):
-    """空状态提示：明确告诉用户"还没数据"，而不是留一片空白让人以为界面坏了。"""
+    """textNotice：text"text"，text。"""
 
-    def __init__(self, text: str = "尚未分析任何仓库") -> None:
+    def __init__(self, text: str = "No repository analyzed yet") -> None:
         super().__init__(text)
         self.setObjectName("emptyState")
         self.setAlignment(Qt.AlignCenter)

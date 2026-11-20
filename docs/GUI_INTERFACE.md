@@ -1,193 +1,195 @@
-# GUI 接口说明
+# GUI text
 
-面向 LTY（`git_reader`）、TYB（`metrics` / `rules`）、Wyh（CLI / 报告 / 依赖清单）。
-**你不需要读 GUI 代码，只需要看这一页。**
+text LTY（`core/git_reader.py`）、TYB（`reposcope/metrics.py` / `reposcope/rules.py`）、Wyh（CLI / report / text）。
+**text GUI text，text。**
 
 ---
 
-## 一句话
+## text
 
-界面只认 `gui/contract.py` 里的 `AnalysisView` 这一个契约。**谁产出这个结构，界面就能显示；不符合同样能显示**——在 `adapt()` 里做一次字段映射就行，界面代码一行不用改。
+text `gui/contract.py` text `AnalysisView` text。**text，text；text**——text `adapt()` text，text。
 
 ```python
-# 你只需要保证能产出这个（字段名可以不同，告诉我实际名字）
+# text（text，text）
 from gui.contract import AnalysisView
 ```
 
-`gui/contract.py` 只依赖标准库和 `models.py`，**不装 PySide6 也能 import**，可以拿它当对齐字段的清单。
+`gui/contract.py` text `core/models.py`，**text PySide6 text import**，text。
 
 ---
 
-## 30 秒上手
+## 30 text
 
 ```powershell
 py -3.11 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install pyside6 pytest
-.\.venv\Scripts\python.exe run_gui.py --demo     # 内置数据集，界面立刻有内容
+.\.venv\Scripts\python.exe main.py --demo     # text，text
 ```
 
-不想敲命令就双击仓库根目录的 `run_gui.bat`（演示数据）或 `run_real.bat`（分析本仓库）。两个脚本会自己检查环境、缺什么装什么。
+text `scripts/run_gui.bat`（text）text `scripts/run_real.bat`（analyzetextrepository）。text、text。
 
-在 VS Code 里按 `F5` 也行，`.vscode/launch.json` 里已经配好五条。
+text VS Code text `F5` text，`.vscode/launch.json` text。
 
-**Windows 上 `python` 没反应**：那是应用商店的占位程序，用 `py -3.11` 代替，详见根目录 README 的排障一节。
+**Windows text `python` text**：text，text `py -3.11` text，textroot directory README text。
 
 ---
 
-## 现在能跑到什么程度
+## text
 
-| 项 | 状态 |
+| text | text |
 |---|---|
-| 九个页面 | 全部可交互，导航切换不销毁页面 |
-| 后台分析 | `QThread` + `moveToThread`，主线程不阻塞 |
-| 图表 | `PySide6.QtCharts`，随 PySide6 一起装 |
-| 测试 | `pytest -q` → 31 passed（没装 PySide6 时界面那组自动跳过，数据层照常跑） |
-| 截图 | `docs/screens/` 九张，`tools/screenshot.py` 可重新生成 |
+| text | text，text |
+| textanalyze | `QThread` + `moveToThread`，text |
+| text | `PySide6.QtCharts`，text PySide6 text |
+| text | `pytest -q` → 31 passed（text PySide6 text，text） |
+| text | `docs/screens/` text，`tools/screenshot.py` text |
 
-**当前数据链路**：`git_reader` 真实读取 → `gui/mock_data.py` 里一段临时统计（`_compute`，函数头标了 `TEMP`）→ 界面。
+**text**：`git_reader` text → `gui/mock_data.py` text（`_compute`，text `TEMP`）→ text。
 
-也就是说：**数字能跑通、能演示，但算法是我的临时实现，不是 TYB 的 `metrics.py`。** 这部分要替换。
+text：**text、text，text，text TYB text `metrics.py`。** text。
 
 ---
 
-## 你要给我什么
+## text
 
-状态列说明：
+text：
 
-- **TEMP** —— 界面已经有值，但来自 `mock_data._compute` 的临时算法，需换成真实现
-- **缺** —— 字段还没定义，界面位置已画好，缺值时显示「待后端提供」而不是 0
+- **TEMP** —— text，text `mock_data._compute` text，text
+- **text** —— text，text，text「Not provided by backend」text 0
 
-### 1. `AnalysisView` 顶层字段
+### 1. `AnalysisView` text
 
-| 字段 | 类型 | 界面上用在哪 | 谁 | 状态 |
+| text | text | text | text | text |
 |---|---|---|---|---|
-| `snapshot` | `RepositorySnapshot` | 总览副标题、报告头 | LTY | ✅ 真数据 |
-| `health_score` | `float` 0–100 | 健康度大卡、对比表、报告 | TYB | TEMP |
-| `total_commits` | `int` | 总览卡 / 对比表 / 报告 | TYB | TEMP |
-| `author_count` | `int` | 总览卡 / 对比表 | TYB | TEMP |
-| `file_count` | `int` | 总览卡 / 数据分析副标题 | TYB | TEMP |
-| `commit_calendar` | `dict[str, int]` | 热力图 + 趋势折线 | TYB | TEMP |
-| `author_stats` | `list[AuthorStat]` | 作者页条形 + 明细表 | TYB | TEMP |
-| `hotspot_files` | `list[FileStat]` | 数据分析 · 热点 | TYB | TEMP |
-| `large_files` | `list[FileStat]` | 数据分析 · 大文件 | TYB | TEMP |
-| `stale_files` | `list[FileStat]` | 数据分析 · 陈旧 | TYB | TEMP |
-| `warnings` | `list[Warning]` | 反模式中心 + 总览摘要 + 报告第 6 节 | TYB | TEMP |
-| `commit_hygiene` | `CommitHygiene` | 总览「提交规范通过率」卡 + 报告第 7 节 | TYB | TEMP |
-| `risk_level` | `str` | 总览右上角等级徽标 | TYB | TEMP |
-| `elapsed_seconds` | `float` | 状态栏「用时 x.xs」 | 服务层 | TEMP |
+| `snapshot` | `RepositorySnapshot` | text、reporttext | LTY | ✅ text |
+| `health_score` | `float` 0–100 | health scoretext、text、report | TYB | TEMP |
+| `total_commits` | `int` | text / text / report | TYB | TEMP |
+| `author_count` | `int` | text / text | TYB | TEMP |
+| `file_count` | `int` | text / Data Analysistext | TYB | TEMP |
+| `commit_calendar` | `dict[str, int]` | text + text | TYB | TEMP |
+| `author_stats` | `list[AuthorStat]` | authorstext + text | TYB | TEMP |
+| `hotspot_files` | `list[FileStat]` | Data Analysis · text | TYB | TEMP |
+| `large_files` | `list[FileStat]` | Data Analysis · Large files | TYB | TEMP |
+| `stale_files` | `list[FileStat]` | Data Analysis · text | TYB | TEMP |
+| `warnings` | `list[Warning]` | Anti-pattern Center + text + reporttext 6 text | TYB | TEMP |
+| `commit_hygiene` | `CommitHygiene` | text「Commit conventionpass rate」text + reporttext 7 text | TYB | TEMP |
+| `risk_level` | `str` | textLeveltext | TYB | TEMP |
+| `elapsed_seconds` | `float` | text「elapsed x.xs」 | text | TEMP |
 
-### 2. `commit_calendar` —— 请直接给日期字典，别给 commit 列表
+### 2. `commit_calendar` —— text，text commit text
 
 ```python
-commit_calendar = {"2026-11-13": 12, "2026-11-14": 5, ...}   # 日期 → 当天提交数
+commit_calendar = {"2026-11-13": 12, "2026-11-14": 5, ...}   # text → textcommit count
 ```
 
-热力图和趋势图都吃这一份数据（日/周/月三种视图是同一份数据的切片，不是三份新数据）。如果后端给一串 `Commit` 让我在前端按周聚合，那个逻辑会散在界面层，违反「界面不自己算」的约定。
+text（text/text/text，text）。text `Commit` text，text，text「text」text。
 
-### 3. `Warning` —— 反模式中心最需要，优先级最高
+### 3. `Warning` —— Anti-pattern Centertext，text
 
-反模式中心这一页的全部卖点就是「每条规则都能解释」。只给一句话，这页就废了。
+Anti-pattern Centertext「textRulestext」。text，text。
 
-| 字段 | 类型 | 例子 | 用在哪 |
+| text | text | text | text |
 |---|---|---|---|
-| `condition` | `str` | `"单一作者提交占比 ≥ 70%"` | 详情「触发条件」 |
-| `actual` | `str` | `"90%（9 次）"` | 详情「实际值」 |
-| `threshold` | `str` | `"70%"` | 详情「配置阈值」 |
-| `action` | `str` | `"让第二位成员参与核心模块"` | 详情「建议动作」 |
+| `condition` | `str` | `"textauthorscommitstext ≥ 70%"` | Details「Condition」 |
+| `actual` | `str` | `"90%（9 text）"` | Details「Actual value」 |
+| `threshold` | `str` | `"70%"` | Details「Configured threshold」 |
+| `action` | `str` | `"text"` | Details「Suggested action」 |
 
-**为什么是 `str` 不是数字**：不同规则单位不一样（`70%` / `10 MB` / `180 天`），后端拼成一句人话最省事，前端也不用维护单位映射表。
+**text `str` text**：textRulestext（`70%` / `10 MB` / `180 text`），text，text。
 
-**后端没给全时界面怎么表现**：详情页底部出现橙色提示「以下字段待 rules.py 补齐」，报告对应单元格写「待 rules.py 补齐」。**界面不编造**——演示时被问「这个阈值哪来的」必须答得上。
+**text**：DetailstextNotice「text rules.py text」，reporttext「text rules.py text」。**text**——text「textthresholdtext」text。
 
-### 4. `FileStat` 追加三个字段
+### 4. `FileStat` text
 
-| 字段 | 类型 | 用在哪 |
+| text | text | text |
 |---|---|---|
-| `changed_lines` | `int` | 热点表「累计改动」列（`git log --numstat` 求和） |
-| `file_type` | `str` | 大文件表「类型」列 |
-| `is_binary` | `bool` | 大文件榜区分二进制（这类文件不能按行数看） |
+| `changed_lines` | `int` | text「text」text（`git log --numstat` text） |
+| `file_type` | `str` | Large filestext「text」text |
+| `is_binary` | `bool` | Large filestext（textfilestext） |
 
 ### 5. `AuthorStat.recent_90d_share`
 
-`float` 0–1，最近 90 天提交占该人总提交的比例。用途：识别「历史贡献高但人已经不在了」。
+`float` 0–1，text 90 textcommitstextcommitstext。text：text「text」。
 
-**未提供时请留 `-1.0`**（默认就是 -1），界面显示「—」并给 tooltip 说明，不会显示成 0%。
+**text `-1.0`**（defaulttext -1），text「—」text tooltip text，text 0%。
 
-### 6. `CommitHygiene`（新增类型）
+### 6. `CommitHygiene`（text）
 
-| 字段 | 类型 | 说明 |
+| text | text | text |
 |---|---|---|
-| `pass_rate` | `float` | 0–1；`-1` 表示未检查 |
-| `total` / `passed` | `int` | 分母 / 分子 |
-| `pattern` | `str` | 实际用的正则，报告里要写出来，否则通过率无从复核 |
+| `pass_rate` | `float` | 0–1；`-1` text |
+| `total` / `passed` | `int` | text / text |
+| `pattern` | `str` | textregex，reporttext，textpass ratetext |
 | `violations` | `tuple[Violation, ...]` | `commit_hash` / `message` / `reason` |
 
-### 7. `RepoSummary`（多仓库对比表一行）
+### 7. `RepoSummary`（Repository Comparisontext）
 
 `repo_name` / `path` / `commits` / `authors` / `health_score` / `hotspot_count` / `stale_count` / `risk_level`
 
 ---
 
-## 怎么接（三步，大部分是我的活）
+## text（text，text）
 
-1. **TYB**：`metrics.py` 产出尽量对齐上表；名字不一样也行，把实际名字发我。
-2. **我**：在 `gui/contract.py` 的 `adapt()` 里写映射，通常五行。
-3. **我**：`gui/worker.py` 里把 `mock_data.build()` 换成真实服务调用，界面其余部分不动。
+1. **TYB**：`metrics.py` text；text，text。
+2. **text**：text `gui/contract.py` text `adapt()` text，text。
+3. **text**：`gui/worker.py` text `mock_data.build()` text，text。
 
 ---
 
-## 给 Wyh 的依赖清单
+## text Wyh text
 
-`requirements.txt` 请写：
+`requirements.txt` text：
 
 ```text
 PySide6>=6.5
 ```
 
-**只这一行。** 图表用 `PySide6.QtCharts`，它随 `pyside6` 一起装，不需要 pyqtgraph、不需要 matplotlib、不需要 `PyQtChart`。
+**text。** text `PySide6.QtCharts`，text `pyside6` text，text pyqtgraph、text matplotlib、text `PyQtChart`。
 
-> 组长文档里写的 `PyQtChart` 是 PyQt 系列的包名，在 PySide6 里对应 `PySide6.QtCharts`，`pip install PyQtChart` 在这套环境下装不上。评审机器上少装一个包就是图表白屏，这条必须对齐。
+> text `PyQtChart` text PyQt text，text PySide6 text `PySide6.QtCharts`，`pip install PyQtChart` text。text，text。
 
-如果只想装精简版，`PySide6-Essentials` 也含 QtCharts（省掉 WebEngine 那 60MB）。界面在 QtCharts 缺失时会自动降级成表格，不会崩。
-
----
-
-## 三条边界规则（也是 code review 检查项）
-
-1. **`gui/` 只 import 标准库、`models.py`、`PySide6`。** 不 import `git_reader` / `metrics` / `cli`——那些还在改，直连就是每天修界面。
-2. **`models.py` 归 LTY 和 TYB，我只读不改。** 要加字段在群里说，别各自改，不然合并必冲突。
-3. **界面上任何数字都来自传入的对象，页面不自己算。** 这样「图表数据与后端一致」这条验收标准才有保证。
-   - 唯一例外写在注释里：趋势图的日/周/月是同一份 `commit_calendar` 的三种切片。
+text，`PySide6-Essentials` text QtCharts（text WebEngine text 60MB）。text QtCharts text，text。
 
 ---
 
-## 我这边还没确认的三件事（会影响对接，麻烦回一下）
+## textRules（text code review text）
 
-1. **`author_stats.share`** —— 0–1 的小数，还是百分比整数？我按 0–1 写的。
-2. **`warnings.severity`** —— 取值是不是就 `high` / `medium` / `low` 三档？界面按三档配色。
-3. **时间字段带不带时区** —— `Commit.authored_at` 是 naive 还是 aware？两个相减会直接抛 `TypeError`。我这边做了兼容（`mock_data._naive()`），但最好统一成一种。
+1. **`gui/` text import text、`models.py`、`PySide6`。** text import `git_reader` / `metrics` / `cli`——text，text。
+2. **`models.py` text LTY text TYB，text。** text，text，text。
+3. **text，text。** text「text」text。
+   - text：text/text/text `commit_calendar` text。
 
 ---
 
-## 目录（只看前三个就够）
+## text（text，text）
+
+1. **`author_stats.share`** —— 0–1 text，text？text 0–1 text。
+2. **`warnings.severity`** —— text `high` / `medium` / `low` text？text。
+3. **text** —— `Commit.authored_at` text naive text aware？text `TypeError`。text（`mock_data._naive()`），text。
+
+---
+
+## directory（text）
 
 ```text
 gui/
-  contract.py       ← 接口定义，先看这个（所有 TODO 都在这）
-  mock_data.py      ← 真读 git + 临时统计（TYB 到位后删 _compute 整段）
-  worker.py         ← QThread worker，分析只在子线程跑
-  main_window.py    ← 外壳、导航映射、线程调度、演示模式
-  select_page.py      settings_page.py    ← 第 1、2 页：仓库选择 / 分析配置
-  dashboard.py        trends.py           ← 第 3、4 页：总览 / 提交趋势
-  charts.py           tables.py           ← 第 5、6 页：作者贡献 / 数据分析
-  patterns.py         report_page.py      ← 第 7、8 页：反模式中心 / 报告区
-  batch.py                                ← 第 9 页：多仓库对比
-  plotting.py       ← QtCharts 封装 + 无图表库时降级
-  widgets.py        ← 指标卡 / 徽标 / 页头 / 空状态
-  dialogs.py        ← 仓库校验、错误提示、导出对话框
-  style.qss         ← 配色和间距
-run_gui.py          ← 入口（--demo / --path / 无参数）
-docs/DEMO.md        ← 演示执行卡：两种模式、哪几页会空、台本
+  contract.py       ← text，text（text TODO text）
+  mock_data.py      ← text git + text（TYB text _compute text）
+  worker.py         ← QThread worker，analyzetext
+  main_window.py    ← text、text、text、text
+  select_page.py      settings_page.py    ← text 1、2 text：Repository / Analysis Settings
+  dashboard.py        trends.py           ← text 3、4 text：text / Commit Trends
+  charts.py           tables.py           ← text 5、6 text：Author Contributions / Data Analysis
+  patterns.py         report_page.py      ← text 7、8 text：Anti-pattern Center / Reports
+  batch.py                                ← text 9 text：Repository Comparison
+  plotting.py       ← QtCharts text + text
+  widgets.py        ← text / text / text / text
+  dialogs.py        ← repositorycheck、ErrorNotice、text
+  style.qss         ← text
+main.py             ← text（GUI text CLI）
+docs/DEMO.md        ← text：text、text、text
 ```
 
-九页对应组长文档的八个区域——文档里的第八个区域「进度反馈」是常驻顶部进度条，不单独成页。
+text——text「text」text，text。
+
+

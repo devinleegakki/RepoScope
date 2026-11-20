@@ -1,10 +1,10 @@
-"""数据分析页：热点文件、大文件、陈旧文件三个榜单。
+"""Data Analysistext：Hot files、Large files、Stale filestext。
 
-用 ``QAbstractTableModel`` + ``QTableView``（不是 ``QTableWidget``）：
+text ``QAbstractTableModel`` + ``QTableView``（text ``QTableWidget``）：
 
-* 数据量大了也不掉帧，因为视图只取可见行；
-* 排序和筛选交给 ``QSortFilterProxyModel``，模型只负责"第 n 行第 m 列是什么"；
-* 这是 Qt 的 Model/View 架构，报告里可以写成技术点，而 QTableWidget 只是"摆字符串"。
+* text，text；
+* text ``QSortFilterProxyModel``，text"text n text m text"；
+* text Qt text Model/View text，reporttext，text QTableWidget text"text"。
 """
 
 from __future__ import annotations
@@ -30,7 +30,7 @@ from .widgets import Card, PageHeader
 
 
 def human_size(size_bytes: int) -> str:
-    """把字节数变成人能读的大小，例如 ``1.4 MB``。"""
+    """text，text ``1.4 MB``。"""
     size = float(size_bytes)
     for unit in ("B", "KB", "MB", "GB"):
         if size < 1024 or unit == "GB":
@@ -41,23 +41,23 @@ def human_size(size_bytes: int) -> str:
 
 def human_lines(count: int) -> str:
     if count >= 10_000:
-        return f"{count / 1000:.1f}k 行"
-    return f"{count:,} 行"
+        return f"{count / 1000:.1f}k text"
+    return f"{count:,} text"
 
 
 _COLUMNS: dict[str, tuple[str, Callable[[FileStat], str]]] = {
-    "path": ("文件", lambda row: row.path),
-    "change_count": ("修改次数", lambda row: str(row.change_count)),
-    "author_count": ("作者数", lambda row: str(row.author_count)),
-    "changed_lines": ("累计改动", lambda row: human_lines(row.changed_lines)),
-    "size": ("大小", lambda row: human_size(row.size_bytes)),
-    "type": ("类型", lambda row: row.file_type or "—"),
-    "days": ("距今天数", lambda row: str(row.days_since_change)),
+    "path": ("files", lambda row: row.path),
+    "change_count": ("text", lambda row: str(row.change_count)),
+    "author_count": ("author count", lambda row: str(row.author_count)),
+    "changed_lines": ("text", lambda row: human_lines(row.changed_lines)),
+    "size": ("text", lambda row: human_size(row.size_bytes)),
+    "type": ("text", lambda row: row.file_type or "—"),
+    "days": ("text", lambda row: str(row.days_since_change)),
 }
 
 
 class FileTableModel(QAbstractTableModel):
-    """把 ``FileStat`` 列表包成 Qt 模型。列由构造函数决定，一个模型三种用法。"""
+    """text ``FileStat`` text Qt text。text，text。"""
 
     def __init__(self, columns: Sequence[str], parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -82,7 +82,7 @@ class FileTableModel(QAbstractTableModel):
         if role == Qt.ForegroundRole and key == "days" and row.days_since_change >= 180:
             return QColor("#EF9F27")
         if role == Qt.ToolTipRole and key == "changed_lines" and row.changed_lines == 0:
-            return "该字段待后端提供（metrics.py 的 changed_lines）"
+            return "textNot provided by backend（metrics.py text changed_lines）"
         return None
 
     def headerData(self, section: int, orientation: Qt.Orientation, role: int = Qt.DisplayRole):
@@ -97,7 +97,7 @@ class FileTableModel(QAbstractTableModel):
 
 
 class _RankTab(QWidget):
-    """一个榜单 = 模型 + 过滤器 + 视图。三个榜单复用同一个类。"""
+    """text = text + text + text。text。"""
 
     def __init__(self, columns: Sequence[str], empty_hint: str) -> None:
         super().__init__()
@@ -108,14 +108,14 @@ class _RankTab(QWidget):
         self.model = FileTableModel(columns, self)
         self.proxy = QSortFilterProxyModel(self)
         self.proxy.setSourceModel(self.model)
-        self.proxy.setFilterKeyColumn(0)          # 按文件路径过滤
+        self.proxy.setFilterKeyColumn(0)          # textfilesPathtext
         self.proxy.setFilterCaseSensitivity(Qt.CaseInsensitive)
 
         self.view = QTableView()
         self.view.setModel(self.proxy)
         self.view.setSortingEnabled(True)
-        # 关掉表头的排序箭头：QSS 换了表头配色后，Qt 默认画的箭头会变成一个
-        # 孤立的小 V 浮在表头文字上方，看起来像界面出了 bug。排序功能照旧。
+        # text：QSS text，Qt defaulttext
+        # text V text，text bug。text。
         self.view.horizontalHeader().setSortIndicatorShown(False)
         self.view.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.view.setSelectionBehavior(QAbstractItemView.SelectRows)
@@ -136,7 +136,7 @@ class _RankTab(QWidget):
 
 
 class FilesPage(QWidget):
-    """数据分析页：三个榜单 + 一个全局筛选框。"""
+    """Data Analysistext：text + text。"""
 
     def __init__(self) -> None:
         super().__init__()
@@ -145,10 +145,10 @@ class FilesPage(QWidget):
         outer.setSpacing(12)
 
         self.search = QLineEdit()
-        self.search.setPlaceholderText("按文件名筛选…")
+        self.search.setPlaceholderText("textfilestext…")
         self.search.textChanged.connect(self._apply_filter)
 
-        self.header = PageHeader("数据分析", "尚未分析任何仓库")
+        self.header = PageHeader("Data Analysis", "No repository analyzed yet")
         self.header.add_right(self.search)
         outer.addWidget(self.header)
 
@@ -158,7 +158,7 @@ class FilesPage(QWidget):
         card_layout.setSpacing(8)
 
         head = QHBoxLayout()
-        note = QLabel("点表头可排序；三个榜单的判定阈值在「分析配置」里改")
+        note = QLabel("text；textthresholdtext「Analysis Settings」text")
         note.setObjectName("pageHint")
         head.addWidget(note)
         head.addStretch(1)
@@ -166,14 +166,14 @@ class FilesPage(QWidget):
 
         self.tabs = QTabWidget()
         self.hot = _RankTab(["path", "change_count", "author_count", "changed_lines"],
-                            "没有文件达到热点阈值（可在分析配置里调低）")
+                            "textfilestextthreshold（textAnalysis Settingstext）")
         self.large = _RankTab(["path", "size", "type", "change_count"],
-                              "没有文件超过大文件阈值")
+                              "textfilestextLarge filesthreshold")
         self.stale = _RankTab(["path", "days", "change_count", "size"],
-                              "没有文件超过陈旧天数阈值")
-        self.tabs.addTab(self.hot, "热点文件")
-        self.tabs.addTab(self.large, "大文件")
-        self.tabs.addTab(self.stale, "陈旧文件")
+                              "textfilestextthreshold")
+        self.tabs.addTab(self.hot, "Hot files")
+        self.tabs.addTab(self.large, "Large files")
+        self.tabs.addTab(self.stale, "Stale files")
         card_layout.addWidget(self.tabs, 1)
         outer.addWidget(card, 1)
 
@@ -184,13 +184,13 @@ class FilesPage(QWidget):
     def set_data(self, view: AnalysisView | None) -> None:
         if view is None:
             return
-        self.hot.set_rows(view.hotspot_files, "没有文件达到热点阈值（可在分析配置里调低）")
-        self.large.set_rows(view.large_files, "没有文件超过大文件阈值")
-        self.stale.set_rows(view.stale_files, "没有文件超过陈旧天数阈值")
-        self.tabs.setTabText(0, f"热点文件 ({len(view.hotspot_files)})")
-        self.tabs.setTabText(1, f"大文件 ({len(view.large_files)})")
-        self.tabs.setTabText(2, f"陈旧文件 ({len(view.stale_files)})")
+        self.hot.set_rows(view.hotspot_files, "textfilestextthreshold（textAnalysis Settingstext）")
+        self.large.set_rows(view.large_files, "textfilestextLarge filesthreshold")
+        self.stale.set_rows(view.stale_files, "textfilestextthreshold")
+        self.tabs.setTabText(0, f"Hot files ({len(view.hotspot_files)})")
+        self.tabs.setTabText(1, f"Large files ({len(view.large_files)})")
+        self.tabs.setTabText(2, f"Stale files ({len(view.stale_files)})")
         self.header.set_hint(
-            f"热点 {len(view.hotspot_files)} · 大文件 {len(view.large_files)} · "
-            f"陈旧 {len(view.stale_files)} · 共 {view.file_count:,} 个文件被扫描"
+            f"text {len(view.hotspot_files)} · Large files {len(view.large_files)} · "
+            f"text {len(view.stale_files)} · text {view.file_count:,} textfilestext"
         )

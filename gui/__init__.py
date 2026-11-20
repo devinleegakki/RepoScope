@@ -1,7 +1,7 @@
-"""RepoScope 的图形界面层。
+"""RepoScope text。
 
-只依赖 ``models.py``（共享数据模型）和 ``PySide6``。
-其它三个模块通过 ``gui.contract.AnalysisView`` 与界面交接，见该文件说明。
+text ``models.py``（text）text ``PySide6``。
+text ``gui.contract.AnalysisView`` text，textfilestext。
 """
 
 from .contract import AnalysisView

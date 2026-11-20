@@ -1,8 +1,8 @@
-/* RepoScope 深色主题
+/* RepoScope text
  *
- * 配色沿用 GitHub 暗色系：底色 #0d1117，卡片 #161b22，描边 #30363d，主色 #58a6ff。
- * 之所以不自己配色：评审对"像不像一个真工具"的判断几乎全来自第一眼，
- * 而 GitHub 这套配色是开发者最熟悉、最不会觉得刺眼的。
+ * text GitHub text：text #0d1117，text #161b22，text #30363d，text #58a6ff。
+ * text：text"text"text，
+ * text GitHub text、text。
  */
 
 QWidget {
@@ -12,13 +12,13 @@ QWidget {
     font-size: 13px;
 }
 
-/* 文字类控件必须透明：全局的 #0d1117 比卡片底色 #161b22 更深，
- * 不覆盖就会在卡片上"抠"出一个个深色方块，看起来像套了一层边框。 */
+/* text：text #0d1117 text #161b22 text，
+ * text"text"text，text。 */
 QLabel, QCheckBox, QRadioButton {
     background: transparent;
 }
 
-/* ---------- 顶栏 ---------- */
+/* ---------- text ---------- */
 #topbar {
     background: #21252b;
     border-bottom: 1px solid #181a1f;
@@ -40,7 +40,7 @@ QLabel, QCheckBox, QRadioButton {
     background: #21252b;
 }
 
-/* ---------- 侧边导航 ---------- */
+/* ---------- Sidebar navigation ---------- */
 #sidebarHost {
     background: #21252b;
     border-right: 1px solid #181a1f;
@@ -114,7 +114,7 @@ QLabel, QCheckBox, QRadioButton {
     font-weight: 600;
 }
 
-/* ---------- 标题层级 ---------- */
+/* ---------- text ---------- */
 #pageTitle {
     font-size: 20px;
     font-weight: 600;
@@ -159,7 +159,7 @@ QLabel, QCheckBox, QRadioButton {
     padding: 40px 0;
 }
 
-/* ---------- 卡片 ---------- */
+/* ---------- text ---------- */
 #card {
     background: #21252b;
     border: 1px solid #3a3f4b;
@@ -195,7 +195,7 @@ QLabel, QCheckBox, QRadioButton {
     padding: 6px 8px;
 }
 
-/* ---------- 按钮 ---------- */
+/* ---------- text ---------- */
 QPushButton {
     background: #3a3f4b;
     color: #f8f8f2;
@@ -249,7 +249,7 @@ QPushButton#link:hover {
     text-decoration: underline;
 }
 
-/* ---------- 输入类 ---------- */
+/* ---------- text ---------- */
 QLineEdit, QSpinBox, QComboBox {
     background: #1e2127;
     border: 1px solid #3a3f4b;
@@ -275,7 +275,7 @@ QComboBox QAbstractItemView {
     color: #f8f8f2;
 }
 
-/* ---------- 进度条 ---------- */
+/* ---------- text ---------- */
 QProgressBar {
     background: #3a3f4b;
     border: none;
@@ -289,7 +289,7 @@ QProgressBar::chunk {
     border-radius: 3px;
 }
 
-/* ---------- 表格 / 列表 ---------- */
+/* ---------- text / text ---------- */
 QTableView {
     background: #1e2127;
     alternate-background-color: #21252b;
@@ -340,7 +340,7 @@ QListWidget::item:selected {
     font-size: 12px;
 }
 
-/* ---------- 标签页 ---------- */
+/* ---------- tagstext ---------- */
 QTabWidget::pane {
     border: 1px solid #21262d;
     border-radius: 6px;
@@ -365,7 +365,7 @@ QTabBar::tab:hover {
     color: #c9d1d9;
 }
 
-/* ---------- 报告预览 ---------- */
+/* ---------- reportPreview ---------- */
 #reportPreview, #reportSource {
     background: #0d1117;
     border: 1px solid #21262d;
@@ -380,7 +380,7 @@ QTabBar::tab:hover {
     color: #8b949e;
 }
 
-/* ---------- 热力图 ---------- */
+/* ---------- text ---------- */
 #heatmap {
     border: none;
     background: transparent;
@@ -391,7 +391,7 @@ QTabBar::tab:hover {
     border-radius: 2px;
 }
 
-/* ---------- 其它 ---------- */
+/* ---------- text ---------- */
 QScrollArea {
     border: none;
     background: transparent;

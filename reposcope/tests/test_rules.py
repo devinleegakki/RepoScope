@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from metrics import compute_metrics
-from models_analysis import AnalysisConfig
+from reposcope.models_analysis import AnalysisConfig
 from rules import (
     detect_all,
     detect_commit_messages,
@@ -117,3 +117,4 @@ class TestDetectAll:
         m = compute_metrics(base_snapshot, cfg, as_of=as_of)
         w = detect_stale_files(m, cfg)
         assert w.level == "high"
+

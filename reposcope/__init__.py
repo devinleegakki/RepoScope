@@ -21,9 +21,15 @@ from .models_analysis import (
     FileStat,
     RepositoryMetrics,
     Warning,
+    CodeQualityMetrics,
+    OwnershipMetrics,
+    FileOwnershipStat,
+    DependencyMetrics,
+    SecurityFinding,
 )
 from .metrics import compute_metrics
 from .rules import detect_all
+from .static_analysis import run_static_analysis
 
 __all__ = [
     "AnalysisConfig",
@@ -32,6 +38,12 @@ __all__ = [
     "FileStat",
     "RepositoryMetrics",
     "Warning",
+    "CodeQualityMetrics",
+    "OwnershipMetrics",
+    "FileOwnershipStat",
+    "DependencyMetrics",
+    "SecurityFinding",
     "compute_metrics",
     "detect_all",
+    "run_static_analysis",
 ]
