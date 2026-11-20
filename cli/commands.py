@@ -1,4 +1,7 @@
-"""``main.py`` Notesanalyze / check / batch Notes
+"""Command-line handlers for the unified ``main.py`` entry point.
+
+Handlers resolve configuration, invoke ``AnalysisService``, print progress,
+and delegate serialization to ``core.reporters``.
 
 Notes"CLI"Notes"analysis"Notes
 

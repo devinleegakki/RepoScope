@@ -1,4 +1,7 @@
-"""Notes
+"""Main PySide6 window and navigation shell for RepoScope.
+
+The window owns page registration, worker lifecycle, progress updates, and
+application-level navigation.
 
 Notes
     QMainWindow（Notes + QListWidget（Notes + QStackedWidget（Notes

@@ -118,6 +118,20 @@ python tools/screenshot.py
 
 The screenshot utility uses Qt offscreen mode and explicitly loads a CJK-capable system font when available.
 
+## Documentation
+
+- [Walkthrough](docs/WALKTHROUGH.md)
+- [Architecture](docs/ARCHITECTURE.md)
+- [CLI guide](docs/CLI_GUIDE.md)
+- [Configuration](docs/CONFIGURATION.md)
+- [Rules reference](docs/RULES_REFERENCE.md)
+- [API reference](docs/API_REFERENCE.md)
+- [Testing](docs/TESTING.md)
+- [CI/CD](docs/CI_CD.md)
+- [Release checklist](docs/RELEASE.md)
+- [Troubleshooting](docs/TROUBLESHOOTING.md)
+- [Contributing](CONTRIBUTING.md)
+
 ## Continuous integration
 
 GitHub Actions runs on Windows with Python 3.11 and 3.12. The workflow:

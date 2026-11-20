@@ -1,4 +1,7 @@
-"""analysisGUI Notes CLI analysis
+"""Coordinate repository validation, analysis, progress, and batch execution.
+
+This service is shared by the GUI and CLI. Presentation layers should use it
+instead of invoking Git or metric functions directly.
 
 Notes"Notes"）：
 
