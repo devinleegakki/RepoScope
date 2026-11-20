@@ -139,6 +139,22 @@ python -m pytest -q                   # 全部测试（没有 PySide6 时界面�
 
 全部测试目前：31 个已有测试 + WPH 新增的服务/报告/命令行集成测试，全部通过。
 
+### CI/CD（GitHub Actions）
+
+仓库包含两条工作流：
+
+- `.github/workflows/ci.yml`：对 `main` 的 push 和所有 Pull Request 自动运行，使用 Ubuntu 与 Windows、Python 3.11/3.12 共四个环境安装 `requirements-dev.txt`，执行源码编译检查和完整测试。
+- `.github/workflows/release.yml`：推送符合 `v*.*.*` 的 Git tag 后，先在 Python 3.12 上重新测试，再生成 `RepoScope-<版本>.zip` 源码包并创建 GitHub Release。
+
+发布一个版本：
+
+```powershell
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+如果未来需要把 GUI 打包成 Windows `.exe`，可以在 `release.yml` 中增加 PyInstaller 步骤，并将生成的 `.exe` 一并上传到 Release；当前工作流先保证跨平台测试和可复现的源码交付。
+
 ### Windows：`python` 命令没有任何输出
 
 同原 README 说明：如果 `python -V` 无输出，那是应用商店占位程序，用 `py -3.11`（或本机真实解释器）替代，并把真实 Python 加入 `PATH`。
