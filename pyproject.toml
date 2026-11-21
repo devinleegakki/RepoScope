@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "reposcope"
+version = "0.1.0"
+description = "Offline desktop application for assessing the health of local Git repositories"
+requires-python = ">=3.11"
+dependencies = [
+    "PySide6>=6.5",
+    "PyYAML>=6.0",
+]
+
+[tool.setuptools]
+packages = ["cli", "core", "gui", "reposcope"]
+py-modules = ["main"]
+
+[tool.setuptools.package-data]
+reposcope = ["default_rules.yaml"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 120
+exclude = [".git", ".venv", "venv", "build", "dist", ".pytest_cache", "__pycache__"]
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F"]
+ignore = ["E701", "E702"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests", "reposcope/tests"]
+
+[tool.coverage.run]
+branch = true
+source = ["core", "cli", "gui", "reposcope"]
+omit = ["*/__init__.py"]
+disable_warnings = ["module-not-imported"]
+
+[tool.coverage.report]
+exclude_also = [
+    "if TYPE_CHECKING:",
+    "pragma: no cover",
+]
+show_missing = true
+skip_covered = false

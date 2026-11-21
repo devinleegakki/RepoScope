@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from datetime import timedelta
 
 from metrics import compute_metrics
 from reposcope.models_analysis import AnalysisConfig

@@ -7,4 +7,7 @@
 - Regenerate screenshots when UI behavior changes.
 - Check Markdown, HTML, and CSV output.
 - Open and review the pull request and CI results.
-- After merge, verify the main branch workflow and tag the release if applicable.
+- After merge, create and push a semantic version tag, for example `git tag v0.1.0 && git push origin v0.1.0`.
+- Verify the tag workflow completes and the GitHub Release contains `RepoScope-v0.1.0.zip`.
+
+The release workflow validates Ruff, `compileall`, and the complete pytest suite with a 60% coverage minimum before publishing the source archive.

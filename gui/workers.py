@@ -5,7 +5,6 @@ from __future__ import annotations
 from PySide6.QtCore import QObject, Signal, Slot
 
 from core.git_reader import GitReader, GitReaderError
-from core.models import RepositorySnapshot
 
 
 class SnapshotWorker(QObject):

@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 try:  # works both as ``reposcope.metrics`` and as a top-level ``metrics``
     from .models_analysis import (

@@ -214,7 +214,6 @@ def adapt(result: object, snapshot: RepositorySnapshot | None = None) -> Analysi
 
     display 0 analysis
     """
-    from dataclasses import dataclass
     from types import SimpleNamespace
     metrics = getattr(result, "metrics", result)
     snap = snapshot or getattr(result, "snapshot", None)

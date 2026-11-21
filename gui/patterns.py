@@ -31,7 +31,7 @@ from PySide6.QtWidgets import (
 )
 
 from .contract import AnalysisView, Warning
-from .widgets import LEVEL_COLOR, LEVEL_TEXT, SEVERITY_TEXT, Badge, Card, PageHeader
+from .widgets import LEVEL_TEXT, SEVERITY_TEXT, Badge, Card, PageHeader
 
 _EVIDENCE_FIELDS = (
     ("Condition", "condition"),
@@ -127,7 +127,6 @@ class PatternPage(QWidget):
             item = QListWidgetItem(f"{text}\n{warning.message}")
             item.setForeground(QColor("#c9d1d9"))
             item.setData(Qt.UserRole, warning)
-            color = LEVEL_COLOR.get(warning.severity, "#8b949e")
             item.setToolTip(f"{warning.message}\nTarget: {warning.target or '—'}")
             self.list.addItem(item)
             item.setSizeHint(QSize(0, 64))

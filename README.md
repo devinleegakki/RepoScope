@@ -107,7 +107,13 @@ Run the complete test suite:
 
 ```powershell
 $env:QT_QPA_PLATFORM = "offscreen"
-python -m pytest -q
+python -m pytest -q --cov=core --cov=cli --cov=gui --cov=reposcope --cov=main.py --cov-report=term-missing --cov-fail-under=60
+```
+
+Run the code quality check:
+
+```powershell
+python -m ruff check .
 ```
 
 Generate screenshots for all GUI pages:
@@ -137,8 +143,12 @@ The screenshot utility uses Qt offscreen mode and explicitly loads a CJK-capable
 GitHub Actions runs on Windows with Python 3.11 and 3.12. The workflow:
 
 1. installs `config/requirements-dev.txt`;
-2. compiles the project with `python -m compileall -q .`;
-3. runs `python -m pytest -q` with `QT_QPA_PLATFORM=offscreen`.
+2. checks the project with Ruff;
+3. compiles the project with `python -m compileall -q .`;
+4. runs pytest with `QT_QPA_PLATFORM=offscreen` and requires at least 60% coverage;
+5. uploads the coverage XML report as a workflow artifact.
+
+Pushing a tag such as `v0.1.0` runs the release workflow. After the same checks pass, it publishes a `RepoScope-v0.1.0.zip` source archive to a GitHub Release.
 
 ## Requirements
 
