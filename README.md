@@ -134,6 +134,7 @@ The screenshot utility uses Qt offscreen mode and explicitly loads a CJK-capable
 - [API reference](docs/API_REFERENCE.md)
 - [Testing](docs/TESTING.md)
 - [CI/CD](docs/CI_CD.md)
+- [AI code review](docs/AI_CODE_REVIEW.md)
 - [Release checklist](docs/RELEASE.md)
 - [Troubleshooting](docs/TROUBLESHOOTING.md)
 - [Contributing](CONTRIBUTING.md)
@@ -149,6 +150,8 @@ GitHub Actions runs on Windows with Python 3.11 and 3.12. The workflow:
 5. uploads the coverage XML report as a workflow artifact.
 
 Pushing a tag such as `v0.1.0` runs the release workflow. After the same checks pass, it publishes a `RepoScope-v0.1.0.zip` source archive to a GitHub Release.
+
+Pull requests also receive an advisory DeepSeek AI review when the `DEEPSEEK_API_KEY` Actions secret is configured. The workflow uses the OpenAI-compatible endpoint `https://api.deepseek.com` with model `deepseek-flash` (DeepSeek-V4.1-Flash-1017), reviews only the PR diff, and updates one non-blocking PR comment. See [AI code review](docs/AI_CODE_REVIEW.md).
 
 ## Requirements
 
