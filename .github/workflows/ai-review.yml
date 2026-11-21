@@ -1,0 +1,109 @@
+name: AI PR Review
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  review:
+    name: DeepSeek code review
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Review pull request with DeepSeek
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        env:
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          DEEPSEEK_BASE_URL: https://api.deepseek.com
+          DEEPSEEK_MODEL: deepseek-flash
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const marker = '<!-- reposcope-deepseek-review -->';
+            const { owner, repo } = context.repo;
+            const pullNumber = context.payload.pull_request.number;
+
+            if (!process.env.DEEPSEEK_API_KEY) {
+              core.notice('DEEPSEEK_API_KEY is not configured; skipping AI review.');
+              return;
+            }
+
+            const files = await github.paginate(github.rest.pulls.listFiles, {
+              owner,
+              repo,
+              pull_number: pullNumber,
+              per_page: 100,
+            });
+
+            const changedFiles = files.map((file) => {
+              const patch = file.patch || '[binary file or patch unavailable]';
+              return `### ${file.filename} (${file.status}, +${file.additions}/-${file.deletions})\n\`\`\`diff\n${patch}\n\`\`\``;
+            }).join('\n\n');
+
+            const truncatedDiff = changedFiles.length > 120000
+              ? `${changedFiles.slice(0, 120000)}\n\n[Diff truncated for model context.]`
+              : changedFiles;
+
+            const systemPrompt = `You are the senior reviewer for the RepoScope Python desktop application.
+            Review only the supplied pull request diff. Report only actionable issues introduced by this PR.
+            Prioritize functional regressions, security problems, path or Git handling errors, Qt thread/lifecycle issues,
+            CLI/report compatibility, missing tests, and documentation mismatches. Ignore formatting preferences and unrelated
+            pre-existing issues. Do not invent behavior or claim a problem without evidence.
+
+            Return Markdown with:
+            1. A short overall summary.
+            2. Findings ordered by severity: critical, high, medium, low.
+            3. For each finding, include severity, file and line (when available), why it matters, and a concrete fix.
+            4. If there are no actionable findings, say so explicitly.
+            Do not approve, reject, or propose automatic code changes. This is advisory review only.`;
+
+            const userPrompt = `Repository: ${repo}\nPull request: #${pullNumber} ${context.payload.pull_request.title}\n\n${truncatedDiff}`;
+
+            const response = await fetch(`${process.env.DEEPSEEK_BASE_URL}/chat/completions`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}`,
+              },
+              body: JSON.stringify({
+                model: process.env.DEEPSEEK_MODEL,
+                temperature: 0.1,
+                messages: [
+                  { role: 'system', content: systemPrompt },
+                  { role: 'user', content: userPrompt },
+                ],
+              }),
+            });
+
+            if (!response.ok) {
+              const body = await response.text();
+              core.setFailed(`DeepSeek API request failed (${response.status}): ${body.slice(0, 500)}`);
+              return;
+            }
+
+            const payload = await response.json();
+            const review = payload.choices?.[0]?.message?.content?.trim();
+            if (!review) {
+              core.setFailed('DeepSeek returned an empty review.');
+              return;
+            }
+
+            const body = `${marker}\n## DeepSeek AI review\n\n${review}\n\n> Advisory only: confirm findings against the code and CI results.`;
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner,
+              repo,
+              issue_number: pullNumber,
+              per_page: 100,
+            });
+            const existing = comments.find((comment) => comment.body?.includes(marker));
+
+            if (existing) {
+              await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body });
+            } else {
+              await github.rest.issues.createComment({ owner, repo, issue_number: pullNumber, body });
+            }
