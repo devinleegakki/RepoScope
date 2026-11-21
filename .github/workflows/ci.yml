@@ -37,5 +37,17 @@ jobs:
       - name: Compile Python sources
         run: python -m compileall -q .
 
+      - name: Check code quality
+        run: python -m ruff check .
+
       - name: Run tests
-        run: python -m pytest -q
+        run: >-
+          python -m pytest -q
+          --cov=core --cov=cli --cov=gui --cov=reposcope --cov=main.py
+          --cov-report=term-missing --cov-report=xml --cov-fail-under=60
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-python-${{ matrix.python-version }}
+          path: coverage.xml

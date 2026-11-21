@@ -6,7 +6,7 @@ import shutil
 import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Iterable, Optional, Sequence
+from typing import Optional, Sequence
 
 from core.models import Commit, FileRecord, GitReaderErrorInfo, RepositorySnapshot
 

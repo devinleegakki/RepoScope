@@ -10,7 +10,6 @@ Notes ``AnalysisView``，Notes
 
 from __future__ import annotations
 
-import csv
 import html as html_mod
 from datetime import datetime, timedelta
 from pathlib import Path

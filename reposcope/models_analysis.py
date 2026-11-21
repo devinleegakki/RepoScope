@@ -24,7 +24,7 @@ import re
 from dataclasses import dataclass, field
 from datetime import date, datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Protocol, Sequence, Union
+from typing import Any, Dict, List, Mapping, Optional, Protocol, Sequence, Union
 
 try:  # PyYAML is declared in requirements.txt; JSON remains a fallback.
     import yaml
